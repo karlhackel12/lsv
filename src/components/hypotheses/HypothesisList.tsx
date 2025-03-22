@@ -3,6 +3,7 @@ import React from 'react';
 import { Hypothesis } from '@/types/database';
 import HypothesisCard from './HypothesisCard';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export interface HypothesisListProps {
   hypotheses: Hypothesis[];
@@ -23,41 +24,46 @@ const HypothesisList = ({
 }: HypothesisListProps) => {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading hypotheses...</span>
+      <div className="flex items-center justify-center h-64 animate-pulse">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <span className="text-lg font-medium text-validation-gray-600">Loading hypotheses...</span>
       </div>
     );
   }
 
   if (hypotheses.length === 0) {
     return (
-      <div className="bg-white border rounded-lg p-6 text-center">
-        <h3 className="text-lg font-medium mb-2">No hypotheses yet</h3>
-        <p className="text-gray-500 mb-4">
+      <div className="bg-white border rounded-lg p-8 text-center shadow-sm">
+        <h3 className="text-xl font-medium mb-3 text-validation-gray-800">No hypotheses yet</h3>
+        <p className="text-validation-gray-500 mb-6 max-w-md mx-auto">
           Start by creating your first hypothesis to validate your business assumptions.
         </p>
-        <button
+        <Button
           onClick={onCreateNew}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          className="px-6 py-2 bg-validation-blue-600 text-white rounded-lg hover:bg-validation-blue-700 transition-colors shadow-sm"
+          size="lg"
         >
           Create First Hypothesis
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {hypotheses.map((hypothesis) => (
-          <HypothesisCard
-            key={hypothesis.id}
-            hypothesis={hypothesis}
-            onEdit={() => onEdit(hypothesis)}
-            onDelete={() => onDelete(hypothesis)}
-            onStatusChange={onStatusChange}
-          />
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {hypotheses.map((hypothesis, index) => (
+          <div key={hypothesis.id} 
+            className="animate-slideUpFade" 
+            style={{ animationDelay: `${index * 75}ms` }}
+          >
+            <HypothesisCard
+              hypothesis={hypothesis}
+              onEdit={() => onEdit(hypothesis)}
+              onDelete={() => onDelete(hypothesis)}
+              onStatusChange={onStatusChange}
+            />
+          </div>
         ))}
       </div>
     </div>

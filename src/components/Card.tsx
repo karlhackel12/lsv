@@ -14,8 +14,8 @@ const Card = ({ children, className, hover = false, onClick, style }: CardProps)
   return (
     <div 
       className={cn(
-        'bg-white border border-gray-200 rounded-lg shadow-sm',
-        hover && 'hover:shadow-md transition-shadow duration-300',
+        'bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden',
+        hover && 'hover:shadow-md transition-shadow duration-300 transform hover:-translate-y-1',
         onClick && 'cursor-pointer',
         className
       )}

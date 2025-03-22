@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Card from './Card';
 import StatusBadge from './StatusBadge';
@@ -122,6 +121,11 @@ const HypothesesSection = ({ hypotheses, refreshData, projectId }: HypothesesSec
         variant: 'destructive',
       });
     }
+  };
+
+  const handleSaveHypothesis = async (formData: Hypothesis): Promise<void> => {
+    refreshData();
+    return Promise.resolve();
   };
 
   return (
@@ -292,7 +296,7 @@ const HypothesesSection = ({ hypotheses, refreshData, projectId }: HypothesesSec
       <HypothesisForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        onSave={refreshData}
+        onSave={handleSaveHypothesis}
         hypothesis={selectedHypothesis}
         projectId={projectId}
       />

@@ -27,32 +27,32 @@ const mainNavItems = [
   {
     title: 'Dashboard',
     href: '/',
-    icon: <LayoutDashboard className="h-5 w-5 mr-2" />,
+    icon: <LayoutDashboard className="h-5 w-5 mr-3" />,
   },
   {
     title: 'Hypotheses',
     href: '/hypotheses',
-    icon: <Lightbulb className="h-5 w-5 mr-2" />,
+    icon: <Lightbulb className="h-5 w-5 mr-3" />,
   },
   {
     title: 'Experiments',
     href: '/experiments',
-    icon: <FlaskConical className="h-5 w-5 mr-2" />,
+    icon: <FlaskConical className="h-5 w-5 mr-3" />,
   },
   {
     title: 'MVP',
     href: '/mvp',
-    icon: <Layers className="h-5 w-5 mr-2" />,
+    icon: <Layers className="h-5 w-5 mr-3" />,
   },
   {
     title: 'Metrics',
     href: '/metrics',
-    icon: <LineChart className="h-5 w-5 mr-2" />,
+    icon: <LineChart className="h-5 w-5 mr-3" />,
   },
   {
     title: 'Pivot',
     href: '/pivot',
-    icon: <GitFork className="h-5 w-5 mr-2" />,
+    icon: <GitFork className="h-5 w-5 mr-3" />,
   },
 ];
 
@@ -60,15 +60,16 @@ const SideNavigation = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar>
-        <SidebarHeader className="flex items-center">
+        <SidebarHeader className="flex items-center p-4">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center">
               <span className="text-xl font-bold text-validation-blue-600">LSV</span>
+              <span className="ml-2 text-validation-gray-800 font-medium hidden md:block">Lean Startup Validator</span>
             </div>
             <SidebarTrigger />
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="px-3">
           <SidebarMenu>
             {mainNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -80,10 +81,10 @@ const SideNavigation = () => {
                     to={item.href}
                     className={({ isActive }) => 
                       cn(
-                        "flex items-center px-3 py-2 rounded-md text-sm font-medium",
-                        "hover:bg-validation-gray-100 hover:text-validation-gray-900 transition-colors",
+                        "flex items-center px-4 py-3 my-1 rounded-md text-sm font-medium",
+                        "hover:bg-validation-gray-100 hover:text-validation-gray-900 transition-all duration-200",
                         {
-                          "bg-validation-blue-50 text-validation-blue-600": isActive,
+                          "bg-validation-blue-50 text-validation-blue-600 shadow-sm": isActive,
                           "text-validation-gray-600": !isActive,
                         }
                       )
