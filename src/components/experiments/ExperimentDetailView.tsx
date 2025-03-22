@@ -3,11 +3,12 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Edit, LinkIcon, FileText, CheckSquare, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Edit, LinkIcon, FileText, CheckSquare, AlertTriangle, CalendarClock, FormInput } from 'lucide-react';
 import { Experiment, Hypothesis } from '@/types/database';
 import StatusBadge from '@/components/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExperimentTimeline from './ExperimentTimeline';
+import TypeformEmbed from './TypeformEmbed';
 import { useNavigate } from 'react-router-dom';
 
 interface ExperimentDetailViewProps {
@@ -30,6 +31,8 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
       navigate('/hypotheses');
     }
   };
+
+  const hasTypeform = experiment.typeform_id || experiment.typeform_url;
   
   return (
     <div className="animate-fadeIn space-y-8">
@@ -46,6 +49,12 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
               <FileText className="h-4 w-4 mr-1" />
               {experiment.category || 'Experiment'}
             </span>
+            {hasTypeform && (
+              <span className="flex items-center">
+                <FormInput className="h-4 w-4 mr-1" />
+                Survey Form
+              </span>
+            )}
           </div>
         </div>
         <Button variant="outline" onClick={onEdit} className="flex items-center">
@@ -58,6 +67,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="results">Results & Decisions</TabsTrigger>
+          {hasTypeform && <TabsTrigger value="survey-form">Survey Form</TabsTrigger>}
           {experiment.status === 'completed' && <TabsTrigger value="timeline">Timeline</TabsTrigger>}
         </TabsList>
         
@@ -185,6 +195,12 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
             </Card>
           )}
         </TabsContent>
+        
+        {hasTypeform && (
+          <TabsContent value="survey-form" className="mt-4">
+            <TypeformEmbed experiment={experiment} />
+          </TabsContent>
+        )}
         
         {experiment.status === 'completed' && (
           <TabsContent value="timeline" className="mt-4">

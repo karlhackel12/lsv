@@ -24,6 +24,10 @@ export type Database = {
           results: string | null
           status: Database["public"]["Enums"]["experiment_status"]
           title: string
+          typeform_id: string | null
+          typeform_responses_count: number | null
+          typeform_url: string | null
+          typeform_workspace_id: string | null
           updated_at: string
         }
         Insert: {
@@ -40,6 +44,10 @@ export type Database = {
           results?: string | null
           status?: Database["public"]["Enums"]["experiment_status"]
           title: string
+          typeform_id?: string | null
+          typeform_responses_count?: number | null
+          typeform_url?: string | null
+          typeform_workspace_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -56,6 +64,10 @@ export type Database = {
           results?: string | null
           status?: Database["public"]["Enums"]["experiment_status"]
           title?: string
+          typeform_id?: string | null
+          typeform_responses_count?: number | null
+          typeform_url?: string | null
+          typeform_workspace_id?: string | null
           updated_at?: string
         }
         Relationships: [

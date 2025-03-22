@@ -55,6 +55,11 @@ export interface Experiment {
   hypothesis_id?: string;
   category?: 'problem' | 'solution' | 'business-model';
   success_criteria?: string;
+  // Typeform integration fields
+  typeform_id?: string;
+  typeform_url?: string;
+  typeform_workspace_id?: string;
+  typeform_responses_count?: number;
 }
 
 export interface MvpFeature {

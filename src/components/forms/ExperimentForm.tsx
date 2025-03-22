@@ -36,7 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Lightbulb, FlaskConical, Target, ArrowRight, ClipboardCheck } from 'lucide-react';
+import { ChevronDown, Lightbulb, FlaskConical, Target, ArrowRight, ClipboardCheck, FormInput } from 'lucide-react';
 import {
   TEMPLATE_PROBLEM_EXPERIMENTS,
   TEMPLATE_SOLUTION_EXPERIMENTS,
@@ -45,6 +45,8 @@ import {
   TEMPLATE_SOLUTION_CRITERIA,
   TEMPLATE_BUSINESS_MODEL_CRITERIA
 } from '@/types/pivot';
+import TypeformSection from '../experiments/TypeformSection';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type FormData = {
   title: string;
@@ -56,6 +58,10 @@ type FormData = {
   decisions: string | null;
   status: 'planned' | 'in-progress' | 'completed';
   category: 'problem' | 'solution' | 'business-model';
+  typeform_url?: string;
+  typeform_id?: string;
+  typeform_workspace_id?: string;
+  typeform_responses_count?: number;
 };
 
 interface ExperimentFormProps {
@@ -73,6 +79,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
   const [relatedHypotheses, setRelatedHypotheses] = useState<Hypothesis[]>([]);
   const [isLoadingHypotheses, setIsLoadingHypotheses] = useState(false);
   const [selectedHypothesis, setSelectedHypothesis] = useState<Hypothesis | null>(null);
+  const [activeTab, setActiveTab] = useState('details');
 
   const form = useForm<FormData>({
     defaultValues: experiment ? {
@@ -85,6 +92,10 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
       decisions: experiment.decisions || null,
       status: experiment.status || 'planned',
       category: experiment.category || 'problem',
+      typeform_url: experiment.typeform_url || '',
+      typeform_id: experiment.typeform_id || '',
+      typeform_workspace_id: experiment.typeform_workspace_id || '',
+      typeform_responses_count: experiment.typeform_responses_count || 0,
     } : {
       title: '',
       hypothesis: '',
@@ -95,6 +106,10 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
       decisions: null,
       status: 'planned',
       category: 'problem',
+      typeform_url: '',
+      typeform_id: '',
+      typeform_workspace_id: '',
+      typeform_responses_count: 0,
     }
   });
 
@@ -286,306 +301,320 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">Experiment Details</h3>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="details">Experiment Details</TabsTrigger>
+                <TabsTrigger value="methodology">Methodology</TabsTrigger>
+                <TabsTrigger value="data-collection">Data Collection</TabsTrigger>
+              </TabsList>
               
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter experiment title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <TabsContent value="details" className="space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-500 mb-3">Experiment Details</h3>
+                  
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter experiment title" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select experiment category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="problem">Problem Validation</SelectItem>
+                              <SelectItem value="solution">Solution Validation</SelectItem>
+                              <SelectItem value="business-model">Business Model Validation</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-1">
+                            <ClipboardCheck className="h-4 w-4" />
+                            Status
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="planned">
+                                <div className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-gray-400 mr-2"></span>
+                                  Planned
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="in-progress">
+                                <div className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-blue-500 mr-2"></span>
+                                  In Progress
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                <div className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                                  Completed
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                <div className={`p-4 rounded-lg border ${getCategoryColor(category)}`}>
+                  <h3 className="text-sm font-medium mb-3 flex items-center gap-1">
+                    <Target className="h-4 w-4" />
+                    Hypothesis
+                  </h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="hypothesis"
+                    render={({ field }) => (
+                      <FormItem>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select experiment category" />
-                          </SelectTrigger>
+                          <div className="space-y-2">
+                            <Textarea 
+                              placeholder="Enter experiment hypothesis" 
+                              className="h-24 bg-white/80"
+                              {...field} 
+                            />
+                            
+                            {relatedHypotheses.length > 0 && (
+                              <div className="rounded-md bg-blue-50 p-3 mt-2">
+                                <p className="text-xs text-blue-700 mb-2 font-medium">
+                                  Connect to an existing hypothesis:
+                                </p>
+                                <div className="max-h-36 overflow-y-auto space-y-2">
+                                  {relatedHypotheses.map((hypothesis) => (
+                                    <button
+                                      key={hypothesis.id}
+                                      type="button"
+                                      className={`text-xs p-2 rounded w-full text-left transition-colors flex items-center gap-2
+                                        ${selectedHypothesis?.id === hypothesis.id 
+                                          ? 'bg-blue-200 border border-blue-300' 
+                                          : 'bg-white border border-blue-100 hover:bg-blue-100'}`}
+                                      onClick={() => applyHypothesis(hypothesis)}
+                                    >
+                                      <div className={`w-2 h-2 rounded-full ${getHypothesisStatusColor(hypothesis.status)}`} />
+                                      <span className="line-clamp-2">{hypothesis.statement}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="problem">Problem Validation</SelectItem>
-                          <SelectItem value="solution">Solution Validation</SelectItem>
-                          <SelectItem value="business-model">Business Model Validation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-            
-            <div className={`p-4 rounded-lg border ${getCategoryColor(category)}`}>
-              <h3 className="text-sm font-medium mb-3 flex items-center gap-1">
-                <Target className="h-4 w-4" />
-                Hypothesis
-              </h3>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
               
-              <FormField
-                control={form.control}
-                name="hypothesis"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <Textarea 
-                          placeholder="Enter experiment hypothesis" 
-                          className="h-24 bg-white/80"
-                          {...field} 
-                        />
-                        
-                        {relatedHypotheses.length > 0 && (
-                          <div className="rounded-md bg-blue-50 p-3 mt-2">
-                            <p className="text-xs text-blue-700 mb-2 font-medium">
-                              Connect to an existing hypothesis:
-                            </p>
-                            <div className="max-h-36 overflow-y-auto space-y-2">
-                              {relatedHypotheses.map((hypothesis) => (
-                                <button
-                                  key={hypothesis.id}
-                                  type="button"
-                                  className={`text-xs p-2 rounded w-full text-left transition-colors flex items-center gap-2
-                                    ${selectedHypothesis?.id === hypothesis.id 
-                                      ? 'bg-blue-200 border border-blue-300' 
-                                      : 'bg-white border border-blue-100 hover:bg-blue-100'}`}
-                                  onClick={() => applyHypothesis(hypothesis)}
-                                >
-                                  <div className={`w-2 h-2 rounded-full ${getHypothesisStatusColor(hypothesis.status)}`} />
-                                  <span className="line-clamp-2">{hypothesis.statement}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <FormField
-                control={form.control}
-                name="method"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex justify-between items-center mb-2">
-                      <FormLabel className="text-blue-700 font-medium flex items-center gap-1 m-0">
-                        <FlaskConical className="h-4 w-4" />
-                        Experiment Method
-                      </FormLabel>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 bg-white">
-                            <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
-                            Templates
-                            <ChevronDown className="h-4 w-4 ml-1" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[400px]">
-                          <DropdownMenuGroup>
-                            {getExperimentTemplates().map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyMethodTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <p className="text-xs text-blue-600 mb-2">Describe how you will conduct this experiment</p>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="How will you conduct this experiment?" 
-                        className="h-24 bg-white/80"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-              <FormField
-                control={form.control}
-                name="metrics"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex justify-between items-center mb-2">
-                      <FormLabel className="text-green-700 font-medium flex items-center gap-1 m-0">
-                        <Target className="h-4 w-4" />
-                        Success Criteria
-                      </FormLabel>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 bg-white">
-                            <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
-                            Templates
-                            <ChevronDown className="h-4 w-4 ml-1" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[400px]">
-                          <DropdownMenuGroup>
-                            {getCriteriaTemplates().map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyCriteriaTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <p className="text-xs text-green-600 mb-2">Define what will make this experiment successful</p>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="What defines success for this experiment?" 
-                        className="h-24 bg-white/80"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <ClipboardCheck className="h-4 w-4" />
-                      Status
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="planned">
-                          <div className="flex items-center">
-                            <span className="h-2 w-2 rounded-full bg-gray-400 mr-2"></span>
-                            Planned
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="in-progress">
-                          <div className="flex items-center">
-                            <span className="h-2 w-2 rounded-full bg-blue-500 mr-2"></span>
-                            In Progress
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="completed">
-                          <div className="flex items-center">
-                            <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                            Completed
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            {(form.watch('status') === 'completed') && (
-              <div className="space-y-4 bg-amber-50 p-4 rounded-lg border border-amber-100">
-                <h3 className="text-sm font-medium text-amber-800 mb-2">Experiment Results & Learning</h3>
+              <TabsContent value="methodology" className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <FormField
+                    control={form.control}
+                    name="method"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex justify-between items-center mb-2">
+                          <FormLabel className="text-blue-700 font-medium flex items-center gap-1 m-0">
+                            <FlaskConical className="h-4 w-4" />
+                            Experiment Method
+                          </FormLabel>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-8 bg-white">
+                                <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
+                                Templates
+                                <ChevronDown className="h-4 w-4 ml-1" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[400px]">
+                              <DropdownMenuGroup>
+                                {getExperimentTemplates().map((template, index) => (
+                                  <DropdownMenuItem 
+                                    key={index}
+                                    onClick={() => applyMethodTemplate(template)}
+                                    className="cursor-pointer py-2"
+                                  >
+                                    {template}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-xs text-blue-600 mb-2">Describe how you will conduct this experiment</p>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="How will you conduct this experiment?" 
+                            className="h-24 bg-white/80"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="results"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-amber-700">Results</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="What were the results of this experiment?" 
-                          className="h-24 bg-white/80"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <FormField
+                    control={form.control}
+                    name="metrics"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex justify-between items-center mb-2">
+                          <FormLabel className="text-green-700 font-medium flex items-center gap-1 m-0">
+                            <Target className="h-4 w-4" />
+                            Success Criteria
+                          </FormLabel>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-8 bg-white">
+                                <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
+                                Templates
+                                <ChevronDown className="h-4 w-4 ml-1" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[400px]">
+                              <DropdownMenuGroup>
+                                {getCriteriaTemplates().map((template, index) => (
+                                  <DropdownMenuItem 
+                                    key={index}
+                                    onClick={() => applyCriteriaTemplate(template)}
+                                    className="cursor-pointer py-2"
+                                  >
+                                    {template}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-xs text-green-600 mb-2">Define what will make this experiment successful</p>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="What defines success for this experiment?" 
+                            className="h-24 bg-white/80"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 
-                <FormField
-                  control={form.control}
-                  name="insights"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-amber-700">Insights</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="What insights did you gain from this experiment?" 
-                          className="h-24 bg-white/80"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="decisions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-amber-700">Decisions & Next Steps</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="What decisions will you make based on these results?" 
-                          className="h-24 bg-white/80"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
+                {(form.watch('status') === 'completed') && (
+                  <div className="space-y-4 bg-amber-50 p-4 rounded-lg border border-amber-100">
+                    <h3 className="text-sm font-medium text-amber-800 mb-2">Experiment Results & Learning</h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="results"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-amber-700">Results</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="What were the results of this experiment?" 
+                              className="h-24 bg-white/80"
+                              value={field.value || ''} 
+                              onChange={e => field.onChange(e.target.value)} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="insights"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-amber-700">Insights</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="What insights did you gain from this experiment?" 
+                              className="h-24 bg-white/80"
+                              value={field.value || ''} 
+                              onChange={e => field.onChange(e.target.value)} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="decisions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-amber-700">Decisions & Next Steps</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="What decisions will you make based on these results?" 
+                              className="h-24 bg-white/80"
+                              value={field.value || ''} 
+                              onChange={e => field.onChange(e.target.value)} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="data-collection" className="space-y-6">
+                <TypeformSection form={form} showPreview={true} />
+              </TabsContent>
+            </Tabs>
             
             <DialogFooter className="flex justify-between pt-2 border-t">
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
