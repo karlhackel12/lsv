@@ -1,8 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
+import { Experiment, Hypothesis } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
-import { Hypothesis, Experiment } from '@/types/database';
-import { useToast } from '@/hooks/use-toast';
 
 interface ExperimentHypothesisLinkProps {
   experiment: Experiment;
@@ -10,90 +8,70 @@ interface ExperimentHypothesisLinkProps {
   onHypothesisFound: (hypothesis: Hypothesis | null) => void;
 }
 
-const ExperimentHypothesisLink: React.FC<ExperimentHypothesisLinkProps> = ({ 
-  experiment, 
-  projectId,
-  onHypothesisFound
-}) => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  
+const ExperimentHypothesisLink = ({ experiment, projectId, onHypothesisFound }: ExperimentHypothesisLinkProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const findRelatedHypothesis = async () => {
+    const fetchRelatedHypothesis = async () => {
+      setIsLoading(true);
+      
       try {
-        setLoading(true);
-        
-        // First try to find by hypothesis_id if it exists
+        // If we have hypothesis_id, use it to find the related hypothesis
         if (experiment.hypothesis_id) {
-          const { data: directMatch, error: directError } = await supabase
+          const { data, error } = await supabase
             .from('hypotheses')
             .select('*')
             .eq('id', experiment.hypothesis_id)
             .single();
-            
-          if (!directError && directMatch) {
-            // Transform and pass the found hypothesis
-            const transformedHypothesis = {
-              ...directMatch,
-              originalId: directMatch.id,
-              id: directMatch.id
-            };
-            onHypothesisFound(transformedHypothesis);
-            setLoading(false);
-            return;
+          
+          if (error) {
+            console.error('Error fetching related hypothesis by ID:', error);
+            onHypothesisFound(null);
+          } else if (data) {
+            onHypothesisFound(data);
           }
-        }
-        
-        // If no direct match, look for hypotheses that match the experiment hypothesis text
-        const { data, error } = await supabase
-          .from('hypotheses')
-          .select('*')
-          .eq('project_id', projectId)
-          .ilike('statement', `%${experiment.hypothesis}%`);
+        } 
+        // Otherwise, try to match by statement
+        else if (experiment.hypothesis) {
+          const { data, error } = await supabase
+            .from('hypotheses')
+            .select('*')
+            .eq('project_id', projectId)
+            .ilike('statement', `%${experiment.hypothesis.trim()}%`);
           
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          // Transform and pass the found hypothesis
-          const transformedHypothesis = {
-            ...data[0],
-            originalId: data[0].id,
-            id: data[0].id
-          };
-          onHypothesisFound(transformedHypothesis);
-          
-          // Update the experiment to link it to this hypothesis if no hypothesis_id exists
-          if (!experiment.hypothesis_id) {
-            await supabase
-              .from('experiments')
-              .update({ 
-                hypothesis_id: data[0].id,
-                updated_at: new Date().toISOString() 
-              })
-              .eq('id', experiment.originalId || experiment.id);
+          if (error) {
+            console.error('Error fetching related hypothesis by statement:', error);
+            onHypothesisFound(null);
+          } else if (data && data.length > 0) {
+            // Find the most likely match (exact match or closest)
+            const exactMatch = data.find(h => 
+              h.statement.trim().toLowerCase() === experiment.hypothesis.trim().toLowerCase()
+            );
+            
+            if (exactMatch) {
+              onHypothesisFound(exactMatch);
+            } else {
+              // Use the first one as fallback
+              onHypothesisFound(data[0]);
+            }
+          } else {
+            onHypothesisFound(null);
           }
         } else {
           onHypothesisFound(null);
         }
-      } catch (error: any) {
-        console.error('Error finding related hypothesis:', error);
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to find related hypothesis',
-          variant: 'destructive',
-        });
+      } catch (error) {
+        console.error('Unexpected error fetching hypothesis:', error);
         onHypothesisFound(null);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    
-    if (experiment && projectId) {
-      findRelatedHypothesis();
-    }
+
+    fetchRelatedHypothesis();
   }, [experiment, projectId]);
-  
-  return null; // This is a non-visual component
+
+  return null; // This is just a utility component that doesn't render anything
 };
 
 export default ExperimentHypothesisLink;

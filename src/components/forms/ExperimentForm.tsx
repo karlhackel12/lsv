@@ -19,17 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment, Hypothesis } from '@/types/database';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -37,9 +37,9 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, Lightbulb, FlaskConical, Target, ArrowRight, ClipboardCheck } from 'lucide-react';
-import { 
-  TEMPLATE_PROBLEM_EXPERIMENTS, 
-  TEMPLATE_SOLUTION_EXPERIMENTS, 
+import {
+  TEMPLATE_PROBLEM_EXPERIMENTS,
+  TEMPLATE_SOLUTION_EXPERIMENTS,
   TEMPLATE_BUSINESS_MODEL_EXPERIMENTS,
   TEMPLATE_PROBLEM_CRITERIA,
   TEMPLATE_SOLUTION_CRITERIA,
@@ -55,7 +55,7 @@ type FormData = {
   insights: string | null;
   decisions: string | null;
   status: 'planned' | 'in-progress' | 'completed';
-  category?: 'problem' | 'solution' | 'business-model';
+  category: 'problem' | 'solution' | 'business-model';
 };
 
 interface ExperimentFormProps {
@@ -106,7 +106,14 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
 
   // Find selected hypothesis when form loads
   useEffect(() => {
-    if (experiment?.hypothesis && relatedHypotheses.length > 0) {
+    if (experiment?.hypothesis_id && relatedHypotheses.length > 0) {
+      const found = relatedHypotheses.find(h => h.id === experiment.hypothesis_id);
+      if (found) {
+        setSelectedHypothesis(found);
+        form.setValue('hypothesis', found.statement);
+      }
+    } else if (experiment?.hypothesis && relatedHypotheses.length > 0) {
+      // Fallback to matching by statement
       const found = relatedHypotheses.find(h => 
         h.statement.trim().toLowerCase() === experiment.hypothesis.trim().toLowerCase()
       );

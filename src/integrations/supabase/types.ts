@@ -11,9 +11,11 @@ export type Database = {
     Tables: {
       experiments: {
         Row: {
+          category: string | null
           created_at: string
           decisions: string | null
           hypothesis: string
+          hypothesis_id: string | null
           id: string
           insights: string | null
           method: string
@@ -25,9 +27,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           decisions?: string | null
           hypothesis: string
+          hypothesis_id?: string | null
           id?: string
           insights?: string | null
           method: string
@@ -39,9 +43,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           decisions?: string | null
           hypothesis?: string
+          hypothesis_id?: string | null
           id?: string
           insights?: string | null
           method?: string
@@ -53,6 +59,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "experiments_hypothesis_id_fkey"
+            columns: ["hypothesis_id"]
+            isOneToOne: false
+            referencedRelation: "hypotheses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "experiments_project_id_fkey"
             columns: ["project_id"]
