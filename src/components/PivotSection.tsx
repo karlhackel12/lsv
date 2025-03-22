@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { RotateCcw, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { RotateCcw, Plus, Edit, Trash2, AlertCircle, ArrowRight, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { PivotOption } from '@/types/pivot';
+import { PivotOption, Metric, PivotMetricTrigger } from '@/types/database';
+import { Badge } from './ui/badge';
 
 interface PivotSectionProps {
   pivotOptions: PivotOption[];
@@ -24,13 +26,21 @@ interface PivotSectionProps {
   projectId: string;
 }
 
+interface ActiveTrigger {
+  pivotOption: PivotOption;
+  metric: Metric;
+}
+
 const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedPivotOption, setSelectedPivotOption] = useState<any>(null);
+  const [selectedPivotOption, setSelectedPivotOption] = useState<PivotOption | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [pivotOptionToDelete, setPivotOptionToDelete] = useState<any>(null);
-  const [metrics, setMetrics] = useState<any[]>([]);
+  const [pivotOptionToDelete, setPivotOptionToDelete] = useState<PivotOption | null>(null);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [metricTriggers, setMetricTriggers] = useState<PivotMetricTrigger[]>([]);
+  const [activeTriggers, setActiveTriggers] = useState<ActiveTrigger[]>([]);
+  const [isLoadingTriggers, setIsLoadingTriggers] = useState(false);
   
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -43,7 +53,7 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
           .eq('project_id', projectId);
           
         if (error) throw error;
-        setMetrics(data);
+        setMetrics(data || []);
       } catch (err) {
         console.error('Error fetching metrics:', err);
       }
@@ -51,6 +61,53 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     
     fetchMetrics();
   }, [projectId]);
+
+  useEffect(() => {
+    const fetchMetricTriggers = async () => {
+      if (!projectId || pivotOptions.length === 0) return;
+      
+      setIsLoadingTriggers(true);
+      try {
+        const pivotIds = pivotOptions.map(p => p.id || p.originalId);
+        const { data, error } = await supabase
+          .from('pivot_metric_triggers')
+          .select('*')
+          .in('pivot_option_id', pivotIds);
+          
+        if (error) throw error;
+        setMetricTriggers(data || []);
+      } catch (err) {
+        console.error('Error fetching metric triggers:', err);
+      } finally {
+        setIsLoadingTriggers(false);
+      }
+    };
+    
+    fetchMetricTriggers();
+  }, [projectId, pivotOptions]);
+
+  useEffect(() => {
+    // Find active triggers (where metric status is 'error' or 'warning')
+    const findActiveTriggers = () => {
+      const active: ActiveTrigger[] = [];
+      
+      metricTriggers.forEach(trigger => {
+        const metric = metrics.find(m => m.id === trigger.metric_id || m.originalId === trigger.metric_id);
+        const pivotOption = pivotOptions.find(p => p.id === trigger.pivot_option_id || p.originalId === trigger.pivot_option_id);
+        
+        if (metric && pivotOption && (metric.status === 'error' || metric.status === 'warning')) {
+          active.push({
+            pivotOption,
+            metric
+          });
+        }
+      });
+      
+      setActiveTriggers(active);
+    };
+    
+    findActiveTriggers();
+  }, [metrics, pivotOptions, metricTriggers]);
 
   const handleCreateNew = () => {
     setSelectedPivotOption(null);
@@ -60,7 +117,7 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
   const handleEdit = (pivotOption: PivotOption) => {
     const originalPivotOption = {
       ...pivotOption,
-      id: pivotOption.originalId
+      id: pivotOption.originalId || pivotOption.id
     };
     setSelectedPivotOption(originalPivotOption);
     setIsFormOpen(true);
@@ -69,7 +126,7 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
   const handleDelete = (pivotOption: PivotOption) => {
     setPivotOptionToDelete({
       ...pivotOption,
-      id: pivotOption.originalId
+      id: pivotOption.originalId || pivotOption.id
     });
     setIsDeleteDialogOpen(true);
   };
@@ -78,6 +135,13 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     if (!pivotOptionToDelete) return;
     
     try {
+      // First delete any associated metric triggers
+      await supabase
+        .from('pivot_metric_triggers')
+        .delete()
+        .eq('pivot_option_id', pivotOptionToDelete.id);
+      
+      // Then delete the pivot option
       const { error } = await supabase
         .from('pivot_options')
         .delete()
@@ -132,7 +196,53 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
       
       <PivotDecisionSection />
       
-      {metricsAtRisk.length > 0 && (
+      {activeTriggers.length > 0 && (
+        <Card className="mb-8 p-6 bg-red-50 border-red-200">
+          <h3 className="text-xl font-bold mb-4 text-red-800 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            Active Pivot Triggers
+          </h3>
+          <div className="space-y-4">
+            {activeTriggers.map((trigger, index) => (
+              <div key={index} className="bg-white p-4 rounded-md border border-red-200">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">{trigger.metric.name}</h4>
+                      <Badge variant={trigger.metric.status === 'error' ? 'destructive' : 'default'}>
+                        {trigger.metric.status === 'error' ? 'Critical' : 'Warning'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Current: {trigger.metric.current || 'N/A'} / Target: {trigger.metric.target}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <ArrowRight className="h-5 w-5 text-gray-400 mx-2 hidden md:block" />
+                    <div className="md:ml-4">
+                      <h4 className="font-semibold">Suggests Pivot: {trigger.pivotOption.type}</h4>
+                      <p className="text-sm text-gray-600 truncate max-w-[300px]">
+                        {trigger.pivotOption.description}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    size="sm" 
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => handleEdit(trigger.pivotOption)}
+                  >
+                    Review
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      
+      {metricsAtRisk.length > 0 && activeTriggers.length === 0 && (
         <Card className="mb-8 p-6 bg-yellow-50 border-yellow-200">
           <h3 className="text-xl font-bold mb-4 text-yellow-800 flex items-center">
             <AlertCircle className="h-5 w-5 mr-2" />
@@ -189,50 +299,85 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {pivotOptions.map((option) => (
-            <Card 
-              key={option.id} 
-              className="p-6"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h4 className="font-semibold text-lg text-validation-gray-900">{option.type}</h4>
-                <div className="flex space-x-2">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    option.likelihood === 'high' 
-                      ? 'bg-validation-red-50 text-validation-red-700 border border-validation-red-200' 
-                      : option.likelihood === 'medium' 
-                        ? 'bg-validation-yellow-50 text-validation-yellow-700 border border-validation-yellow-200' 
-                        : 'bg-validation-green-50 text-validation-green-700 border border-validation-green-200'
-                  }`}>
-                    {option.likelihood} likelihood
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => handleEdit(option)}
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                    <span className="sr-only">Edit</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 w-7 p-0 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
-                    onClick={() => handleDelete(option)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span className="sr-only">Delete</span>
-                  </Button>
+          {pivotOptions.map((option) => {
+            // Check if this option has any linked metrics
+            const linkedMetricIds = metricTriggers
+              .filter(t => t.pivot_option_id === option.id || t.pivot_option_id === option.originalId)
+              .map(t => t.metric_id);
+              
+            const linkedMetrics = metrics.filter(m => 
+              linkedMetricIds.includes(m.id) || (m.originalId && linkedMetricIds.includes(m.originalId))
+            );
+            
+            return (
+              <Card 
+                key={option.id} 
+                className="p-6"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h4 className="font-semibold text-lg text-validation-gray-900">{option.type}</h4>
+                  <div className="flex space-x-2">
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      option.likelihood === 'high' 
+                        ? 'bg-validation-red-50 text-validation-red-700 border border-validation-red-200' 
+                        : option.likelihood === 'medium' 
+                          ? 'bg-validation-yellow-50 text-validation-yellow-700 border border-validation-yellow-200' 
+                          : 'bg-validation-green-50 text-validation-green-700 border border-validation-green-200'
+                    }`}>
+                      {option.likelihood} likelihood
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => handleEdit(option)}
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 w-7 p-0 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
+                      onClick={() => handleDelete(option)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <p className="text-validation-gray-600 mb-5">{option.description}</p>
-              <div className="bg-validation-gray-50 p-4 rounded-lg border border-validation-gray-200">
-                <p className="text-sm font-semibold text-validation-red-600 mb-1">Trigger Point:</p>
-                <p className="text-validation-gray-700 text-sm">{option.trigger}</p>
-              </div>
-            </Card>
-          ))}
+                <p className="text-validation-gray-600 mb-5">{option.description}</p>
+                
+                {linkedMetrics.length > 0 && (
+                  <div className="mb-5">
+                    <p className="text-sm font-semibold text-validation-gray-700 mb-2">Triggered by metrics:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {linkedMetrics.map(metric => (
+                        <Badge 
+                          key={metric.id} 
+                          variant="outline"
+                          className={`${
+                            metric.status === 'error' 
+                              ? 'bg-red-50 text-red-700 border-red-200' 
+                              : metric.status === 'warning'
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                : ''
+                          }`}
+                        >
+                          {metric.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-validation-gray-50 p-4 rounded-lg border border-validation-gray-200">
+                  <p className="text-sm font-semibold text-validation-red-600 mb-1">Trigger Point:</p>
+                  <p className="text-validation-gray-700 text-sm">{option.trigger}</p>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
       

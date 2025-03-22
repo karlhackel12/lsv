@@ -35,6 +35,15 @@ export interface PivotOption {
   updated_at: string;
 }
 
+export interface PivotMetricTrigger {
+  id: string;
+  pivot_option_id: string;
+  metric_id: string;
+  threshold_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const TEMPLATE_VALUE_HYPOTHESES = [
   "Teachers need {feature} to solve {specific_problem}",
   "Students will consistently use {feature} for {time_period} if it {provides_value}",

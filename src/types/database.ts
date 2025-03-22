@@ -91,6 +91,23 @@ export interface Metric {
   originalId?: string;
 }
 
+export interface MetricThreshold {
+  id: string;
+  metric_id: string;
+  warning_threshold: string;
+  error_threshold: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MetricHistory {
+  id: string;
+  metric_id: string;
+  value: string | null;
+  status: string;
+  recorded_at: string;
+}
+
 export interface PivotOption {
   id: string;
   project_id: string;
@@ -109,6 +126,15 @@ export interface PivotOption {
   implementation_effort?: string;
   evidence?: string;
   status?: string;
+}
+
+export interface PivotMetricTrigger {
+  id: string;
+  pivot_option_id: string;
+  metric_id: string;
+  threshold_type: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Template definitions for feature priority

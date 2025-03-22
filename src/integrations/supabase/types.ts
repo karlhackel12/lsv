@@ -137,6 +137,73 @@ export type Database = {
           },
         ]
       }
+      metric_history: {
+        Row: {
+          id: string
+          metric_id: string
+          recorded_at: string
+          status: string
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          metric_id: string
+          recorded_at?: string
+          status: string
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          metric_id?: string
+          recorded_at?: string
+          status?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_history_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_thresholds: {
+        Row: {
+          created_at: string
+          error_threshold: string
+          id: string
+          metric_id: string
+          updated_at: string
+          warning_threshold: string
+        }
+        Insert: {
+          created_at?: string
+          error_threshold: string
+          id?: string
+          metric_id: string
+          updated_at?: string
+          warning_threshold: string
+        }
+        Update: {
+          created_at?: string
+          error_threshold?: string
+          id?: string
+          metric_id?: string
+          updated_at?: string
+          warning_threshold?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_thresholds_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metrics: {
         Row: {
           category: string
@@ -218,6 +285,48 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pivot_metric_triggers: {
+        Row: {
+          created_at: string
+          id: string
+          metric_id: string
+          pivot_option_id: string
+          threshold_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_id: string
+          pivot_option_id: string
+          threshold_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_id?: string
+          pivot_option_id?: string
+          threshold_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pivot_metric_triggers_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pivot_metric_triggers_pivot_option_id_fkey"
+            columns: ["pivot_option_id"]
+            isOneToOne: false
+            referencedRelation: "pivot_options"
             referencedColumns: ["id"]
           },
         ]
