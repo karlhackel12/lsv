@@ -1,0 +1,84 @@
+
+// Custom types for our database tables
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  stage: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Stage {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string;
+  status: 'complete' | 'in-progress' | 'not-started';
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Hypothesis {
+  id: string;
+  project_id: string;
+  category: string;
+  statement: string;
+  experiment: string;
+  criteria: string;
+  status: 'validated' | 'validating' | 'not-started' | 'invalid';
+  result: string | null;
+  evidence: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Experiment {
+  id: string;
+  project_id: string;
+  title: string;
+  hypothesis: string;
+  status: 'completed' | 'in-progress' | 'planned';
+  method: string;
+  metrics: string;
+  results: string | null;
+  insights: string | null;
+  decisions: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MvpFeature {
+  id: string;
+  project_id: string;
+  feature: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'in-progress' | 'planned' | 'completed' | 'post-mvp';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Metric {
+  id: string;
+  project_id: string;
+  category: string;
+  name: string;
+  target: string;
+  current: string | null;
+  status: 'success' | 'warning' | 'error' | 'not-started';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PivotOption {
+  id: string;
+  project_id: string;
+  type: string;
+  description: string;
+  trigger: string;
+  likelihood: 'high' | 'medium' | 'low';
+  created_at: string;
+  updated_at: string;
+}

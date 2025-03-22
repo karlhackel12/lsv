@@ -9,7 +9,303 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      experiments: {
+        Row: {
+          created_at: string
+          decisions: string | null
+          hypothesis: string
+          id: string
+          insights: string | null
+          method: string
+          metrics: string
+          project_id: string | null
+          results: string | null
+          status: Database["public"]["Enums"]["experiment_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decisions?: string | null
+          hypothesis: string
+          id?: string
+          insights?: string | null
+          method: string
+          metrics: string
+          project_id?: string | null
+          results?: string | null
+          status?: Database["public"]["Enums"]["experiment_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decisions?: string | null
+          hypothesis?: string
+          id?: string
+          insights?: string | null
+          method?: string
+          metrics?: string
+          project_id?: string | null
+          results?: string | null
+          status?: Database["public"]["Enums"]["experiment_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hypotheses: {
+        Row: {
+          category: string
+          created_at: string
+          criteria: string
+          evidence: string | null
+          experiment: string
+          id: string
+          project_id: string | null
+          result: string | null
+          statement: string
+          status: Database["public"]["Enums"]["hypothesis_status"]
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          criteria: string
+          evidence?: string | null
+          experiment: string
+          id?: string
+          project_id?: string | null
+          result?: string | null
+          statement: string
+          status?: Database["public"]["Enums"]["hypothesis_status"]
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          criteria?: string
+          evidence?: string | null
+          experiment?: string
+          id?: string
+          project_id?: string | null
+          result?: string | null
+          statement?: string
+          status?: Database["public"]["Enums"]["hypothesis_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypotheses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics: {
+        Row: {
+          category: string
+          created_at: string
+          current: string | null
+          id: string
+          name: string
+          project_id: string | null
+          status: Database["public"]["Enums"]["metric_status"]
+          target: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current?: string | null
+          id?: string
+          name: string
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["metric_status"]
+          target: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current?: string | null
+          id?: string
+          name?: string
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["metric_status"]
+          target?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mvp_features: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          notes: string | null
+          priority: Database["public"]["Enums"]["feature_priority"]
+          project_id: string | null
+          status: Database["public"]["Enums"]["feature_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["feature_priority"]
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["feature_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["feature_priority"]
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["feature_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mvp_features_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pivot_options: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          likelihood: Database["public"]["Enums"]["pivot_likelihood"]
+          project_id: string | null
+          trigger: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          likelihood?: Database["public"]["Enums"]["pivot_likelihood"]
+          project_id?: string | null
+          trigger: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          likelihood?: Database["public"]["Enums"]["pivot_likelihood"]
+          project_id?: string | null
+          trigger?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pivot_options_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          stage: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stages: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          position: number
+          project_id: string | null
+          status: Database["public"]["Enums"]["stage_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id: string
+          name: string
+          position: number
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["stage_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          position?: number
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["stage_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +314,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      experiment_status: "completed" | "in-progress" | "planned"
+      feature_priority: "high" | "medium" | "low"
+      feature_status: "in-progress" | "planned" | "completed" | "post-mvp"
+      hypothesis_status: "validated" | "validating" | "not-started" | "invalid"
+      metric_status: "success" | "warning" | "error" | "not-started"
+      pivot_likelihood: "high" | "medium" | "low"
+      stage_status: "complete" | "in-progress" | "not-started"
     }
     CompositeTypes: {
       [_ in never]: never
