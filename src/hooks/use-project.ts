@@ -40,7 +40,7 @@ export function useProject() {
 
   useEffect(() => {
     // Set the first project as current if none is selected and projects are loaded
-    if (projects.length > 0 && !currentProject) {
+    if (projects && projects.length > 0 && !currentProject) {
       console.log('Setting initial project:', projects[0]);
       setCurrentProject(projects[0]);
     }
@@ -56,7 +56,7 @@ export function useProject() {
   // Load selected project from localStorage on init
   useEffect(() => {
     const savedProjectId = localStorage.getItem('selectedProjectId');
-    if (savedProjectId && projects.length > 0) {
+    if (savedProjectId && projects && projects.length > 0) {
       const savedProject = projects.find(p => p.id === savedProjectId);
       if (savedProject) {
         console.log('Loading saved project:', savedProject);

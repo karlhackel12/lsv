@@ -158,13 +158,26 @@ const Dashboard = () => {
     return stages.indexOf(stage);
   };
 
-  const stageIndex = getStageIndex(currentProject.stage);
+  // Add null check for currentProject before accessing stage
+  const stageIndex = currentProject && currentProject.stage ? getStageIndex(currentProject.stage) : 0;
   const progress = ((stageIndex + 1) / 6) * 100;
 
   if (loading) {
     return (
       <div className="p-8 text-center">
         <p className="text-validation-gray-500">Loading project data...</p>
+      </div>
+    );
+  }
+
+  // Add a check to handle case when currentProject is null
+  if (!currentProject) {
+    return (
+      <div className="p-8 text-center">
+        <Card className="bg-validation-yellow-50 border border-validation-yellow-200 p-4 shadow-md">
+          <h3 className="font-semibold mb-2 text-validation-yellow-700">No Project Selected</h3>
+          <p className="text-validation-yellow-600">Please select or create a project to view the dashboard.</p>
+        </Card>
       </div>
     );
   }

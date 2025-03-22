@@ -40,20 +40,6 @@ const Index = () => {
       />
       
       <div className="grid grid-cols-1 gap-6">
-        {currentProject && (
-          <Card className="p-6 shadow-md bg-white">
-            <h2 className="text-xl font-bold mb-4 text-validation-gray-900">{currentProject.name}</h2>
-            <p className="text-validation-gray-600 mb-6">{currentProject.description}</p>
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-validation-gray-800">Current Stage</h3>
-              <div className="bg-validation-gray-100 p-3 rounded-md border border-validation-gray-200">
-                <span className="font-medium text-validation-gray-900">{currentProject.stage}</span>
-              </div>
-            </div>
-          </Card>
-        )}
-        
         {isLoading ? (
           <div className="flex justify-center">
             <p>Loading projects...</p>
