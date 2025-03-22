@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Lightbulb, ChevronDown, X } from 'lucide-react';
+import { Lightbulb, ChevronDown, X, Info } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InfoCircle } from 'lucide-react';
 
 interface HypothesisStatementFieldProps {
   form: UseFormReturn<Hypothesis>;
@@ -46,7 +45,7 @@ const HypothesisStatementField = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <InfoCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                    <Info className="h-4 w-4 text-gray-400 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs bg-white text-gray-800 p-2 text-xs rounded shadow-md">
                     A good hypothesis statement follows this format: "We believe that [doing this] for [these people] will achieve [this outcome]"

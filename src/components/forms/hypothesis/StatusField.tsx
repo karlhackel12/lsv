@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { UseFormReturn } from 'react-hook-form';
 import { Hypothesis } from '@/types/database';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -34,7 +34,7 @@ const StatusField = ({ form }: StatusFieldProps) => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <InfoCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs bg-white text-gray-800 p-2 text-xs rounded shadow-md">
                   Track the current status of your hypothesis testing process.

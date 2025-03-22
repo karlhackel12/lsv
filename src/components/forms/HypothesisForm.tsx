@@ -23,7 +23,7 @@ import HypothesisStatementField from './hypothesis/HypothesisStatementField';
 import TextField from './hypothesis/TextField';
 import StatusField from './hypothesis/StatusField';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 import Card from '@/components/Card';
 
 export interface HypothesisFormProps {
