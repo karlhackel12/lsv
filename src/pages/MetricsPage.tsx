@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, LineChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MetricsSection from '@/components/MetricsSection';
 import MetricCharts from '@/components/MetricCharts';
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import PageIntroduction from '@/components/PageIntroduction';
 
 const MetricsPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -96,6 +97,39 @@ const MetricsPage = () => {
 
   return (
     <div className="p-6">
+      <PageIntroduction
+        title="Product Metrics & Key Performance Indicators"
+        icon={<LineChart className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              Metrics provide quantitative evidence to guide your product decisions and track your progress toward product-market fit.
+              Effective product metrics:
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Are tied to specific hypotheses:</strong> Directly measure what you're trying to validate</li>
+              <li><strong>Show user behavior:</strong> Reflect what users do, not just what they say</li>
+              <li><strong>Have clear targets:</strong> Define success criteria with specific thresholds</li>
+              <li><strong>Drive decisions:</strong> Lead to clear actions based on results</li>
+            </ul>
+            <p className="mt-2">
+              <strong>AARRR Framework (Pirate Metrics):</strong>
+            </p>
+            <ul className="list-disc pl-5">
+              <li><strong>Acquisition:</strong> How users discover your product (traffic sources, cost per acquisition)</li>
+              <li><strong>Activation:</strong> How users have their first positive experience (conversion rate, onboarding completion)</li>
+              <li><strong>Retention:</strong> How users return to your product (churn rate, daily/weekly active users)</li>
+              <li><strong>Revenue:</strong> How your product generates money (ARPU, LTV, conversion to paid)</li>
+              <li><strong>Referral:</strong> How users tell others about your product (viral coefficient, NPS)</li>
+            </ul>
+            <p className="mt-2">
+              Focus on the North Star Metric that best indicates product-market fit for your specific business model,
+              and establish pivot triggers for when metrics indicate a change in strategy is needed.
+            </p>
+          </>
+        }
+      />
+
       {pivotTriggers.length > 0 && (
         <Card className="mb-6 border-yellow-200 bg-yellow-50">
           <CardHeader className="pb-2">

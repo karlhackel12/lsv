@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import HypothesisList from '@/components/hypotheses/HypothesisList';
 import HypothesisForm from '@/components/forms/HypothesisForm';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lightbulb } from 'lucide-react';
+import PageIntroduction from '@/components/PageIntroduction';
 
 const HypothesesPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -168,6 +169,36 @@ const HypothesesPage = () => {
 
   return (
     <div className="p-6">
+      <PageIntroduction
+        title="Hypothesis-Driven Development"
+        icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              Hypothesis-driven development is a scientific approach to building products that test specific assumptions.
+              Each hypothesis follows this structure:
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Statement:</strong> "We believe that [doing this / building this / creating this] for [these people/personas] will achieve [this outcome]."</li>
+              <li><strong>Evidence criteria:</strong> "We'll know we're right when we see [this measurable outcome]."</li>
+            </ul>
+            <p className="mt-2">
+              <strong>Types of hypotheses:</strong>
+            </p>
+            <ul className="list-disc pl-5">
+              <li><strong>Problem hypothesis:</strong> Tests if the problem exists and is significant enough to solve</li>
+              <li><strong>Solution hypothesis:</strong> Tests if your proposed solution actually addresses the problem</li>
+              <li><strong>Implementation hypothesis:</strong> Tests specific features or approaches to implementing the solution</li>
+              <li><strong>Business model hypothesis:</strong> Tests if people will pay for your solution and if the business model is viable</li>
+            </ul>
+            <p className="mt-2">
+              Create and test your most critical hypotheses first, especially those that could invalidate your entire product idea.
+              This "fail fast" approach saves time and resources by quickly eliminating ideas that won't work.
+            </p>
+          </>
+        }
+      />
+      
       {/* Hypothesis form dialog */}
       {isFormOpen && (
         <HypothesisForm

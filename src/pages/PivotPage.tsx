@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, GitBranch } from 'lucide-react';
 import PivotSection from '@/components/PivotSection';
 import { PivotOption } from '@/types/pivot';
+import PageIntroduction from '@/components/PageIntroduction';
 
 const PivotPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -80,6 +81,44 @@ const PivotPage = () => {
 
   return (
     <div className="p-6">
+      <PageIntroduction
+        title="Pivot Planning and Decision Framework"
+        icon={<GitBranch className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              A pivot is a structured course correction designed to test a new fundamental hypothesis about your product,
+              business model, or growth strategy. It's not a failure, but rather a critical part of the startup process.
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Pivot triggers:</strong> Specific metric thresholds that indicate when to consider a pivot</li>
+              <li><strong>Evidence-based:</strong> Decisions based on data from experiments and customer feedback</li>
+              <li><strong>Preserves value:</strong> Maintains what you've learned while changing direction</li>
+              <li><strong>Strategic change:</strong> Addresses fundamental assumptions, not just tactics</li>
+            </ul>
+            <p className="mt-2">
+              <strong>Common pivot types:</strong>
+            </p>
+            <ul className="list-disc pl-5">
+              <li><strong>Zoom-in pivot:</strong> A single feature becomes the whole product</li>
+              <li><strong>Zoom-out pivot:</strong> The product becomes a feature of a larger solution</li>
+              <li><strong>Customer segment pivot:</strong> Changing which customers you're serving</li>
+              <li><strong>Customer need pivot:</strong> Solving a different problem for the same customers</li>
+              <li><strong>Platform pivot:</strong> Changing from an application to a platform or vice versa</li>
+              <li><strong>Business architecture pivot:</strong> Switching between high margin/low volume and low margin/high volume</li>
+              <li><strong>Value capture pivot:</strong> Changing your revenue model or monetization strategy</li>
+              <li><strong>Engine of growth pivot:</strong> Changing your customer acquisition strategy</li>
+              <li><strong>Channel pivot:</strong> Changing how you deliver your product to customers</li>
+              <li><strong>Technology pivot:</strong> Using a different technology to solve the same problem</li>
+            </ul>
+            <p className="mt-2">
+              When considering a pivot, clearly document your current state, the new hypothesis you're testing,
+              and the specific metrics that will validate or invalidate this new direction.
+            </p>
+          </>
+        }
+      />
+
       {currentProject && !isLoadingPivotOptions && (
         <PivotSection
           pivotOptions={pivotOptions}

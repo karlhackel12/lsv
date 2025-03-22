@@ -4,6 +4,8 @@ import Dashboard from '@/components/Dashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/use-project';
 import Card from '@/components/Card';
+import PageIntroduction from '@/components/PageIntroduction';
+import { LayoutGrid, Lightbulb } from 'lucide-react';
 
 const Index = () => {
   const { user } = useAuth();
@@ -12,6 +14,30 @@ const Index = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Dashboard</h1>
+      
+      <PageIntroduction
+        title="Product Validation Dashboard"
+        icon={<LayoutGrid className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              Welcome to your Product Validation Dashboard. This dashboard helps you track your progress through the 
+              validation journey using Lean Startup methodology:
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Problem Validation:</strong> Verify that the problem you're solving is real and significant</li>
+              <li><strong>Solution Validation:</strong> Test if your proposed solution addresses the problem effectively</li>
+              <li><strong>MVP (Minimum Viable Product):</strong> Build the simplest version that allows you to test your key assumptions</li>
+              <li><strong>Product-Market Fit:</strong> Achieve measurable traction that proves market demand</li>
+              <li><strong>Scale:</strong> Grow your customer base and business model</li>
+            </ul>
+            <p className="mt-2">
+              Use the accordion sections below to track your hypotheses, experiments, MVP features, and key metrics. 
+              This evidence-based approach will guide your product decisions and increase your chances of success.
+            </p>
+          </>
+        }
+      />
       
       <div className="grid grid-cols-1 gap-6">
         {currentProject && (

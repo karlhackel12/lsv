@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExperimentList from '@/components/experiments/ExperimentList';
 import ExperimentForm from '@/components/forms/ExperimentForm';
 import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FlaskConical } from 'lucide-react';
+import PageIntroduction from '@/components/PageIntroduction';
 
 const ExperimentsPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -134,6 +135,40 @@ const ExperimentsPage = () => {
 
   return (
     <div className="p-6">
+      <PageIntroduction
+        title="Experiment Design and Execution"
+        icon={<FlaskConical className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              Experiments are structured tests designed to validate or invalidate your hypotheses using the scientific method.
+              Each experiment should:
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Test one specific hypothesis:</strong> Focus on a single assumption at a time</li>
+              <li><strong>Define clear success metrics:</strong> Establish what data will prove or disprove your hypothesis</li>
+              <li><strong>Be designed for speed and learning:</strong> Quick experiments provide faster insights</li>
+              <li><strong>Use appropriate methods:</strong> Choose the right technique for your current stage</li>
+            </ul>
+            <p className="mt-2">
+              <strong>Common experiment types:</strong>
+            </p>
+            <ul className="list-disc pl-5">
+              <li><strong>Customer interviews:</strong> Talk directly to potential users about their problems and needs</li>
+              <li><strong>Landing page tests:</strong> Gauge interest in your solution with a simple landing page</li>
+              <li><strong>Concierge MVP:</strong> Manually deliver your service to early customers to learn their needs</li>
+              <li><strong>Wizard of Oz:</strong> Fake the technology while manually providing the service behind the scenes</li>
+              <li><strong>Feature prototypes:</strong> Test specific features with simple implementations before full development</li>
+              <li><strong>A/B tests:</strong> Compare two versions to see which performs better</li>
+            </ul>
+            <p className="mt-2">
+              Document all experimental results, whether positive or negative - both provide valuable learning opportunities
+              that guide your next steps.
+            </p>
+          </>
+        }
+      />
+
       {/* Experiment form dialog */}
       {isFormOpen && (
         <ExperimentForm

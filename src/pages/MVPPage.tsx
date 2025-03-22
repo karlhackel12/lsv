@@ -4,11 +4,12 @@ import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { MvpFeature } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Layers } from 'lucide-react';
 import MVPTable from '@/components/MVPTable';
 import MVPFeatureForm from '@/components/forms/MVPFeatureForm';
 import CurrentlyWorkingOn from '@/components/CurrentlyWorkingOn';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PageIntroduction from '@/components/PageIntroduction';
 
 const MVPPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -117,6 +118,38 @@ const MVPPage = () => {
 
   return (
     <div className="p-6">
+      <PageIntroduction
+        title="Minimum Viable Product (MVP) Development"
+        icon={<Layers className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              An MVP is the smallest version of your product that provides enough value for early customers while allowing you to 
+              collect the maximum amount of validated learning with minimal effort.
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Focus on core value:</strong> Include only features that directly test your most critical hypotheses</li>
+              <li><strong>Prioritize ruthlessly:</strong> Use the impact vs. effort matrix to select features</li>
+              <li><strong>Embrace constraints:</strong> Limited resources force creative solutions and prevent over-engineering</li>
+              <li><strong>Release early:</strong> Getting real user feedback quickly is more valuable than perfection</li>
+            </ul>
+            <p className="mt-2">
+              <strong>MVP Feature Prioritization Framework:</strong>
+            </p>
+            <ul className="list-disc pl-5">
+              <li><strong>Must Have:</strong> Features critical to test your core value proposition</li>
+              <li><strong>Should Have:</strong> Features that significantly enhance the user experience</li>
+              <li><strong>Could Have:</strong> Nice-to-have features that can wait for future iterations</li>
+              <li><strong>Won't Have:</strong> Features explicitly excluded from your MVP (but might come later)</li>
+            </ul>
+            <p className="mt-2">
+              Remember that an MVP is not just a product with fewer features - it's a process designed to 
+              test your most important assumptions with real users as quickly as possible.
+            </p>
+          </>
+        }
+      />
+      
       {/* Feature form dialog */}
       {isFormOpen && (
         <MVPFeatureForm
