@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight } from 'lucide-react';
@@ -152,15 +151,6 @@ const Dashboard = () => {
     return stages.indexOf(stage);
   };
 
-  // Check if there's no current project
-  if (!currentProject) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-validation-gray-500">No project selected. Please select or create a project.</p>
-      </div>
-    );
-  }
-
   const stageIndex = getStageIndex(currentProject.stage);
   const progress = ((stageIndex + 1) / 6) * 100;
 
@@ -174,7 +164,7 @@ const Dashboard = () => {
 
   return (
     <div className="grid gap-6">
-      <Card className="col-span-2 p-6">
+      <Card className="col-span-2 p-6 bg-white">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-validation-gray-900">Project Overview</h2>
         </div>
@@ -193,10 +183,10 @@ const Dashboard = () => {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
+        <Card className="p-6 bg-white">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2" />
+              <Lightbulb className="h-5 w-5 mr-2 text-validation-blue-600" />
               Top Hypotheses
             </h2>
             <Link to="/hypotheses" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
@@ -209,7 +199,7 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {hypotheses.map((hypothesis) => (
-                <div key={hypothesis.id} className="flex justify-between items-center">
+                <div key={hypothesis.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div>
                     <h3 className="text-lg font-semibold text-validation-gray-900">{hypothesis.statement}</h3>
                     <p className="text-validation-gray-600 text-sm">{hypothesis.experiment}</p>
@@ -221,10 +211,10 @@ const Dashboard = () => {
           )}
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-white">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
-              <FlaskConical className="h-5 w-5 mr-2" />
+              <FlaskConical className="h-5 w-5 mr-2 text-validation-blue-600" />
               Latest Experiments
             </h2>
             <Link to="/experiments" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
@@ -237,7 +227,7 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {experiments.map((experiment) => (
-                <div key={experiment.id} className="flex justify-between items-center">
+                <div key={experiment.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div>
                     <h3 className="text-lg font-semibold text-validation-gray-900">{experiment.title}</h3>
                     <p className="text-validation-gray-600 text-sm">{experiment.hypothesis}</p>
@@ -251,10 +241,10 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
+        <Card className="p-6 bg-white">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
-              <Layers className="h-5 w-5 mr-2" />
+              <Layers className="h-5 w-5 mr-2 text-validation-blue-600" />
               MVP Features
             </h2>
             <Link to="/mvp" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
@@ -267,7 +257,7 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {mvpFeatures.map((feature) => (
-                <div key={feature.id} className="flex justify-between items-center">
+                <div key={feature.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div>
                     <h3 className="text-lg font-semibold text-validation-gray-900">{feature.feature}</h3>
                     <p className="text-validation-gray-600 text-sm">{feature.notes}</p>
@@ -279,10 +269,10 @@ const Dashboard = () => {
           )}
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-white">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
-              <LineChart className="h-5 w-5 mr-2" />
+              <LineChart className="h-5 w-5 mr-2 text-validation-blue-600" />
               Key Metrics
             </h2>
             <Link to="/metrics" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
@@ -295,7 +285,7 @@ const Dashboard = () => {
           ) : (
             <div className="space-y-4">
               {metrics.map((metric) => (
-                <div key={metric.id} className="flex justify-between items-center">
+                <div key={metric.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div>
                     <h3 className="text-lg font-semibold text-validation-gray-900">{metric.name}</h3>
                     <p className="text-validation-gray-600 text-sm">Target: {metric.target}</p>

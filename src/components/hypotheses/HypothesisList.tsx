@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 export interface HypothesisListProps {
   hypotheses: Hypothesis[];
   onEdit: (hypothesis: Hypothesis) => void;
-  onDelete: (hypothesis: Hypothesis) => Promise<void>;
+  onDelete: (hypothesis: Hypothesis) => Promise<void> | void;
   onCreateNew: () => void;
   isLoading?: boolean;
   onStatusChange?: (hypothesis: Hypothesis, newStatus: 'validated' | 'validating' | 'not-started' | 'invalid') => void;

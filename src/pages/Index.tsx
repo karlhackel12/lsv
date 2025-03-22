@@ -15,33 +15,33 @@ const Index = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {currentProject && (
-          <Card className="p-6 col-span-1 lg:col-span-2">
-            <h2 className="text-xl font-bold mb-4">{currentProject.name}</h2>
+          <Card className="p-6 col-span-1 lg:col-span-2 shadow-md bg-white">
+            <h2 className="text-xl font-bold mb-4 text-validation-gray-900">{currentProject.name}</h2>
             <p className="text-validation-gray-600 mb-6">{currentProject.description}</p>
             
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Current Stage</h3>
-              <div className="bg-validation-gray-100 p-3 rounded-md">
-                <span className="font-medium">{currentProject.stage}</span>
+              <h3 className="text-lg font-medium text-validation-gray-800">Current Stage</h3>
+              <div className="bg-validation-gray-100 p-3 rounded-md border border-validation-gray-200">
+                <span className="font-medium text-validation-gray-900">{currentProject.stage}</span>
               </div>
             </div>
           </Card>
         )}
         
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-4">Quick Stats</h2>
+        <Card className="p-6 shadow-md bg-white">
+          <h2 className="text-xl font-bold mb-4 text-validation-gray-900">Quick Stats</h2>
           <div className="space-y-4">
-            <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-validation-gray-600">Hypotheses</span>
-              <span className="font-medium">4</span>
+            <div className="flex justify-between items-center border-b border-validation-gray-200 pb-2">
+              <span className="text-validation-gray-700 font-medium">Hypotheses</span>
+              <span className="font-medium text-validation-blue-600">4</span>
             </div>
-            <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-validation-gray-600">Experiments</span>
-              <span className="font-medium">2</span>
+            <div className="flex justify-between items-center border-b border-validation-gray-200 pb-2">
+              <span className="text-validation-gray-700 font-medium">Experiments</span>
+              <span className="font-medium text-validation-blue-600">2</span>
             </div>
-            <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-validation-gray-600">MVP Features</span>
-              <span className="font-medium">8</span>
+            <div className="flex justify-between items-center border-b border-validation-gray-200 pb-2">
+              <span className="text-validation-gray-700 font-medium">MVP Features</span>
+              <span className="font-medium text-validation-blue-600">8</span>
             </div>
           </div>
         </Card>
@@ -52,18 +52,18 @@ const Index = () => {
           <p>Loading projects...</p>
         </div>
       ) : error ? (
-        <Card className="bg-validation-red-50 border border-validation-red-200 p-4">
-          <h3 className="font-semibold">Error loading projects</h3>
-          <p>{error instanceof Error ? error.message : "Unknown error"}</p>
+        <Card className="bg-validation-red-50 border border-validation-red-200 p-4 shadow-md">
+          <h3 className="font-semibold text-validation-red-700">Error loading projects</h3>
+          <p className="text-validation-red-600">{error instanceof Error ? error.message : "Unknown error"}</p>
         </Card>
       ) : (
         <>
           {projects?.length > 0 ? (
             <Dashboard />
           ) : (
-            <Card className="bg-validation-yellow-50 border border-validation-yellow-200 p-4">
-              <h3 className="font-semibold mb-2">No Projects Found</h3>
-              <p>You need to create a project first.</p>
+            <Card className="bg-validation-yellow-50 border border-validation-yellow-200 p-4 shadow-md">
+              <h3 className="font-semibold mb-2 text-validation-yellow-700">No Projects Found</h3>
+              <p className="text-validation-yellow-600">You need to create a project first.</p>
             </Card>
           )}
         </>
