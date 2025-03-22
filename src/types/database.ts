@@ -62,7 +62,6 @@ export interface MvpFeature {
   created_at: string;
   updated_at: string;
   originalId?: string;
-  // Add the missing properties to match the expected type
   name?: string;
   description?: string;
   effort?: string;

@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import HypothesesPage from "./pages/HypothesesPage";
 import React from "react"; // Make sure React is imported
 
 // Create a client
@@ -32,8 +33,8 @@ const App: React.FC = () => {
               <Route element={<ProtectedRoute />}>
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Index />} />
+                  <Route path="/hypotheses" element={<HypothesesPage />} />
                   {/* These routes will be implemented later */}
-                  <Route path="/hypotheses" element={<div>Hypotheses Page</div>} />
                   <Route path="/experiments" element={<div>Experiments Page</div>} />
                   <Route path="/mvp" element={<div>MVP Page</div>} />
                   <Route path="/metrics" element={<div>Metrics Page</div>} />

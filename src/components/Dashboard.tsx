@@ -1,271 +1,296 @@
-
-import React, { useState, useEffect } from 'react';
-import { BarChart, Lightbulb, CheckSquare, Target, Gauge, RotateCcw } from 'lucide-react';
-import TabNavigation, { TabItem } from './TabNavigation';
-import OverviewSection from './OverviewSection';
-import HypothesesSection from './HypothesesSection';
-import ExperimentsSection from './ExperimentsSection';
-import MVPSection from './MVPSection';
-import MetricsSection from './MetricsSection';
-import PivotSection from './PivotSection';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight } from 'lucide-react';
+import Card from './Card';
+import ProgressBar from './ProgressBar';
+import StatusBadge from './StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
-import { Project, Stage, Hypothesis, Experiment, MvpFeature, Metric, PivotOption } from '@/types/database';
+import { Project, Hypothesis, Experiment, MvpFeature, Metric, PivotOption } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
-// Interface for the transformed Stage data that OverviewSection expects
-interface TransformedStage {
-  id: string;
-  name: string;
-  complete: boolean;
-  inProgress?: boolean;
-  description: string;
+interface DashboardProps {
+  project: Project;
 }
 
-const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+const Dashboard = ({ project }: DashboardProps) => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  
-  // State for storing data from Supabase
-  const [project, setProject] = useState<Project | null>(null);
-  const [stages, setStages] = useState<Stage[]>([]);
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [mvpFeatures, setMvpFeatures] = useState<MvpFeature[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [pivotOptions, setPivotOptions] = useState<PivotOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('Fetching data for user:', user?.id);
-
-      // Fetch project data
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
-
-      if (projectError) {
-        console.error('Project fetch error:', projectError);
-        throw new Error(`Error fetching project: ${projectError.message}`);
-      }
-      
-      if (!projectData) {
-        toast({
-          title: 'No projects found',
-          description: 'You need to create a project first.',
-          variant: 'default',
-        });
-        setLoading(false);
-        return;
-      }
-
-      console.log('Fetched project:', projectData);
-      
-      // Fetch stages data
-      const { data: stagesData, error: stagesError } = await supabase
-        .from('stages')
-        .select('*')
-        .eq('project_id', projectData.id)
-        .order('position', { ascending: true });
-
-      if (stagesError) throw new Error(`Error fetching stages: ${stagesError.message}`);
-      console.log('Fetched stages:', stagesData);
-
-      // Fetch hypotheses data
-      const { data: hypothesesData, error: hypothesesError } = await supabase
-        .from('hypotheses')
-        .select('*')
-        .eq('project_id', projectData.id);
-
-      if (hypothesesError) throw new Error(`Error fetching hypotheses: ${hypothesesError.message}`);
-      console.log('Fetched hypotheses:', hypothesesData);
-
-      // Fetch experiments data
-      const { data: experimentsData, error: experimentsError } = await supabase
-        .from('experiments')
-        .select('*')
-        .eq('project_id', projectData.id);
-
-      if (experimentsError) throw new Error(`Error fetching experiments: ${experimentsError.message}`);
-      console.log('Fetched experiments:', experimentsData);
-
-      // Fetch mvp features data
-      const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
-        .from('mvp_features')
-        .select('*')
-        .eq('project_id', projectData.id);
-
-      if (mvpFeaturesError) throw new Error(`Error fetching MVP features: ${mvpFeaturesError.message}`);
-      console.log('Fetched MVP features:', mvpFeaturesData);
-
-      // Fetch metrics data
-      const { data: metricsData, error: metricsError } = await supabase
-        .from('metrics')
-        .select('*')
-        .eq('project_id', projectData.id);
-
-      if (metricsError) throw new Error(`Error fetching metrics: ${metricsError.message}`);
-      console.log('Fetched metrics:', metricsData);
-
-      // Fetch pivot options data
-      const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
-        .from('pivot_options')
-        .select('*')
-        .eq('project_id', projectData.id);
-
-      if (pivotOptionsError) throw new Error(`Error fetching pivot options: ${pivotOptionsError.message}`);
-      console.log('Fetched pivot options:', pivotOptionsData);
-
-      // Update state with fetched data
-      setProject(projectData as Project);
-      setStages(stagesData || []);
-      setHypotheses(hypothesesData || []);
-      setExperiments(experimentsData || []);
-      
-      // Make sure we set the missing properties for mvpFeatures
-      const mvpFeaturesWithMissingProps = (mvpFeaturesData || []).map(feature => ({
-        ...feature,
-        name: feature.feature, // Use feature as name
-        description: feature.notes || '', // Use notes as description
-        effort: 'medium', // Default value
-        impact: 'medium', // Default value
-      }));
-      setMvpFeatures(mvpFeaturesWithMissingProps);
-      
-      setMetrics(metricsData || []);
-      setPivotOptions(pivotOptionsData || []);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
-      toast({
-        title: 'Error loading data',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      console.error('Error fetching data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user, toast]);
+    const fetchProjectData = async () => {
+      try {
+        setLoading(true);
+        const projectId = project.id;
 
-  // Transform Stage data to match the format expected by OverviewSection
-  const transformStages = (stages: Stage[]): TransformedStage[] => {
-    return stages.map(stage => ({
-      id: stage.id,
-      name: stage.name,
-      complete: stage.status === 'complete',
-      inProgress: stage.status === 'in-progress',
-      description: stage.description
-    }));
+        // Fetch hypotheses
+        const { data: hypothesesData, error: hypothesesError } = await supabase
+          .from('hypotheses')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (hypothesesError) throw hypothesesError;
+
+        // Fetch experiments
+        const { data: experimentsData, error: experimentsError } = await supabase
+          .from('experiments')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (experimentsError) throw experimentsError;
+
+        // Fetch MVP features
+        const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
+          .from('mvp_features')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (mvpFeaturesError) throw mvpFeaturesError;
+
+        // Fetch metrics
+        const { data: metricsData, error: metricsError } = await supabase
+          .from('metrics')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (metricsError) throw metricsError;
+
+        // Fetch pivot options
+        const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
+          .from('pivot_options')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (pivotOptionsError) throw pivotOptionsError;
+
+        // Transform the data to include originalId for all records
+        const transformedHypotheses = hypothesesData.map(item => ({
+          ...item,
+          originalId: item.id,
+          id: item.id // Keep id as string
+        }));
+
+        const transformedExperiments = experimentsData.map(item => ({
+          ...item,
+          originalId: item.id,
+          id: item.id
+        }));
+
+        const transformedMvpFeatures = mvpFeaturesData.map(item => ({
+          ...item,
+          originalId: item.id,
+          id: item.id,
+          // Add required fields to match MvpFeature interface
+          name: item.feature,
+          description: item.notes || '',
+          effort: 'medium', // Default value
+          impact: item.priority
+        }));
+
+        const transformedMetrics = metricsData.map(item => ({
+          ...item,
+          originalId: item.id,
+          id: item.id
+        }));
+
+        const transformedPivotOptions = pivotOptionsData.map(item => ({
+          ...item,
+          originalId: item.id,
+          id: item.id,
+          name: item.type,
+          pivot_type: item.type,
+          potential_impact: item.likelihood,
+          implementation_effort: 'medium', // Default value
+          evidence: ''
+        }));
+
+        // Set the state with transformed data
+        setHypotheses(transformedHypotheses);
+        setExperiments(transformedExperiments);
+        setMvpFeatures(transformedMvpFeatures);
+        setMetrics(transformedMetrics);
+        setPivotOptions(transformedPivotOptions);
+
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to load project data',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (project && project.id) {
+      fetchProjectData();
+    }
+  }, [project, toast]);
+
+  const getStageIndex = (stage: string): number => {
+    const stages = ['problem-validation', 'solution-validation', 'mvp', 'product-market-fit', 'scale', 'mature'];
+    return stages.indexOf(stage);
   };
 
-  const tabs: TabItem[] = [
-    { id: 'overview', label: 'Overview', icon: BarChart },
-    { id: 'hypotheses', label: 'Hypotheses', icon: Lightbulb },
-    { id: 'experiments', label: 'Experiments', icon: CheckSquare },
-    { id: 'mvp', label: 'MVP', icon: Target },
-    { id: 'metrics', label: 'Metrics', icon: Gauge },
-    { id: 'pivot', label: 'Pivot', icon: RotateCcw }
-  ];
+  const stageIndex = getStageIndex(project.stage);
+  const progress = ((stageIndex + 1) / 6) * 100;
 
-  const renderTab = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-validation-blue-500"></div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="bg-validation-red-50 border border-validation-red-200 rounded-lg p-4 text-validation-red-800">
-          <h3 className="text-lg font-semibold mb-2">Error Loading Data</h3>
-          <p>{error}</p>
-          <button 
-            className="mt-4 bg-validation-red-100 hover:bg-validation-red-200 text-validation-red-800 px-4 py-2 rounded-md transition-colors"
-            onClick={() => fetchData()}
-          >
-            Retry
-          </button>
-        </div>
-      );
-    }
-
-    if (!project) {
-      return (
-        <div className="bg-validation-yellow-50 border border-validation-yellow-200 rounded-lg p-4 text-validation-yellow-800">
-          <h3 className="text-lg font-semibold mb-2">No Project Found</h3>
-          <p>No project data is available. Please check your database configuration or create a new project.</p>
-        </div>
-      );
-    }
-
-    const projectId = project.id;
-
-    switch (activeTab) {
-      case 'overview':
-        return <OverviewSection project={project} stages={transformStages(stages)} />;
-      case 'hypotheses':
-        return <HypothesesSection 
-          hypotheses={hypotheses} 
-          refreshData={fetchData}
-          projectId={projectId}
-        />;
-      case 'experiments':
-        return <ExperimentsSection 
-          experiments={experiments} 
-          refreshData={fetchData}
-          projectId={projectId}
-        />;
-      case 'mvp':
-        return <MVPSection 
-          mvpFeatures={mvpFeatures} 
-          refreshData={fetchData}
-          projectId={projectId}
-        />;
-      case 'metrics':
-        return <MetricsSection 
-          metrics={metrics} 
-          refreshData={fetchData}
-          projectId={projectId}
-        />;
-      case 'pivot':
-        return <PivotSection 
-          pivotOptions={pivotOptions} 
-          refreshData={fetchData}
-          projectId={projectId}
-        />;
-      default:
-        return <OverviewSection project={project} stages={transformStages(stages)} />;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-validation-gray-500">Loading project data...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16">
-      <TabNavigation 
-        tabs={tabs} 
-        activeTab={activeTab} 
-        onChange={setActiveTab} 
-        className="mb-8 animate-slideDownFade" 
-      />
-      
-      <div>
-        {renderTab()}
+    <div className="grid gap-6">
+      <Card className="col-span-2 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-validation-gray-900">Project Overview</h2>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-validation-gray-900">{project.name}</h3>
+          <p className="text-validation-gray-600">{project.description}</p>
+        </div>
+        <div className="mt-4">
+          <h4 className="text-sm font-medium text-validation-gray-500">Current Stage</h4>
+          <div className="flex items-center justify-between">
+            <p className="text-validation-gray-700">{project.stage.replace('-', ' ')}</p>
+            <StatusBadge status={project.stage} />
+          </div>
+          <ProgressBar progress={progress} />
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
+              <Lightbulb className="h-5 w-5 mr-2" />
+              Top Hypotheses
+            </h2>
+            <Link to="/hypotheses" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
+              View All
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+          {hypotheses.length === 0 ? (
+            <p className="text-validation-gray-500">No hypotheses created yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {hypotheses.map((hypothesis) => (
+                <div key={hypothesis.id} className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold text-validation-gray-900">{hypothesis.statement}</h3>
+                    <p className="text-validation-gray-600 text-sm">{hypothesis.experiment}</p>
+                  </div>
+                  <StatusBadge status={hypothesis.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
+              <FlaskConical className="h-5 w-5 mr-2" />
+              Latest Experiments
+            </h2>
+            <Link to="/experiments" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
+              View All
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+          {experiments.length === 0 ? (
+            <p className="text-validation-gray-500">No experiments created yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {experiments.map((experiment) => (
+                <div key={experiment.id} className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold text-validation-gray-900">{experiment.title}</h3>
+                    <p className="text-validation-gray-600 text-sm">{experiment.hypothesis}</p>
+                  </div>
+                  <StatusBadge status={experiment.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
+              <Layers className="h-5 w-5 mr-2" />
+              MVP Features
+            </h2>
+            <Link to="/mvp" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
+              View All
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+          {mvpFeatures.length === 0 ? (
+            <p className="text-validation-gray-500">No MVP features defined yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {mvpFeatures.map((feature) => (
+                <div key={feature.id} className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold text-validation-gray-900">{feature.feature}</h3>
+                    <p className="text-validation-gray-600 text-sm">{feature.notes}</p>
+                  </div>
+                  <StatusBadge status={feature.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-validation-gray-900 flex items-center">
+              <LineChart className="h-5 w-5 mr-2" />
+              Key Metrics
+            </h2>
+            <Link to="/metrics" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
+              View All
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+          {metrics.length === 0 ? (
+            <p className="text-validation-gray-500">No metrics defined yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {metrics.map((metric) => (
+                <div key={metric.id} className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold text-validation-gray-900">{metric.name}</h3>
+                    <p className="text-validation-gray-600 text-sm">Target: {metric.target}</p>
+                  </div>
+                  <StatusBadge status={metric.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

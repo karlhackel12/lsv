@@ -24,7 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-type FormData = Omit<Hypothesis, 'id' | 'created_at' | 'updated_at' | 'project_id'>;
+type FormData = Omit<Hypothesis, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
 
 interface HypothesisFormProps {
   isOpen: boolean;
@@ -61,14 +61,15 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
   const handleSubmit = async (data: FormData) => {
     try {
       if (isEditing && hypothesis) {
-        // Update existing hypothesis
+        // Update existing hypothesis - use originalId if available
+        const id = hypothesis.originalId || hypothesis.id;
         const { error } = await supabase
           .from('hypotheses')
           .update({
             ...data,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', hypothesis.id);
+          .eq('id', id);
 
         if (error) throw error;
         toast({
