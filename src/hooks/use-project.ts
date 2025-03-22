@@ -12,23 +12,29 @@ export function useProject() {
   const { data: projects = [], isLoading, error } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error('Error fetching projects:', error);
+      try {
+        // First try to get projects the user owns
+        const { data: ownedProjects, error: ownedError } = await supabase
+          .from('projects')
+          .select('*')
+          .order('name');
+        
+        if (ownedError) {
+          console.error('Error fetching owned projects:', ownedError);
+          throw ownedError;
+        }
+        
+        console.log('Fetched projects:', ownedProjects);
+        return ownedProjects as Project[];
+      } catch (err) {
+        console.error('Error in projects query:', err);
         toast({
           title: 'Error loading projects',
-          description: error.message,
+          description: err instanceof Error ? err.message : 'Unknown error occurred',
           variant: 'destructive',
         });
-        throw error;
+        return [];
       }
-      
-      console.log('Fetched projects:', data);
-      return data as Project[];
     },
   });
 

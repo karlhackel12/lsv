@@ -50,20 +50,10 @@ const Dashboard = () => {
         .from('projects')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (projectError) {
         console.error('Project fetch error:', projectError);
-        if (projectError.code === 'PGRST116') {
-          // No rows returned is expected for new users
-          toast({
-            title: 'No projects found',
-            description: 'You need to create a project first.',
-            variant: 'default',
-          });
-          setLoading(false);
-          return;
-        }
         throw new Error(`Error fetching project: ${projectError.message}`);
       }
       
@@ -173,15 +163,6 @@ const Dashboard = () => {
     }));
   };
 
-  // Transform data with string IDs to have proper typing while preserving all other properties
-  const transformIds = <T extends { id: string }>(items: T[]): (T & { originalId: string })[] => {
-    return items.map((item) => {
-      const originalId = item.id;
-      // Return a new object with all properties from the original item and add originalId
-      return { ...item, originalId };
-    });
-  };
-
   const tabs: TabItem[] = [
     { id: 'overview', label: 'Overview', icon: BarChart },
     { id: 'hypotheses', label: 'Hypotheses', icon: Lightbulb },
@@ -231,31 +212,31 @@ const Dashboard = () => {
         return <OverviewSection project={project} stages={transformStages(stages)} />;
       case 'hypotheses':
         return <HypothesesSection 
-          hypotheses={transformIds(hypotheses)} 
+          hypotheses={hypotheses} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'experiments':
         return <ExperimentsSection 
-          experiments={transformIds(experiments)} 
+          experiments={experiments} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'mvp':
         return <MVPSection 
-          mvpFeatures={transformIds(mvpFeatures)} 
+          mvpFeatures={mvpFeatures} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'metrics':
         return <MetricsSection 
-          metrics={transformIds(metrics)} 
+          metrics={metrics} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'pivot':
         return <PivotSection 
-          pivotOptions={transformIds(pivotOptions)} 
+          pivotOptions={pivotOptions} 
           refreshData={fetchData}
           projectId={projectId}
         />;
