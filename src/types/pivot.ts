@@ -36,3 +36,24 @@ export const TEMPLATE_GROWTH_HYPOTHESES = [
   "{percentage} of users will upgrade to paid tier within {timeframe}",
   "User retention will exceed {percentage} at {time_period} due to {feature}"
 ];
+
+export const TEMPLATE_PROBLEM_EXPERIMENTS = [
+  "Conduct {number} structured interviews with {target_users} focusing on {problem_area}",
+  "Create landing page describing {solution} and measure email signup rate",
+  "Run {number} observation sessions watching {users} attempt to solve {problem}",
+  "Distribute survey to {user_segment} with questions about {problem_frequency/severity}"
+];
+
+export const TEMPLATE_SOLUTION_EXPERIMENTS = [
+  "Provide {number} users access to {MVP_feature} and track {usage_metric}",
+  "A/B test {current_solution} against {new_solution} measuring {key_metric}",
+  "Create Wizard of Oz prototype of {feature} and observe {user_behavior}",
+  "Run usability tests on {prototype} measuring {completion_metric}"
+];
+
+export const TEMPLATE_BUSINESS_MODEL_EXPERIMENTS = [
+  "Offer {product} at {price_point} to {number} users measuring conversion rate",
+  "Test {monetization_approach} with {user_segment} tracking {revenue_metric}",
+  "Compare {pricing_tiers} using split testing measuring overall revenue",
+  "Implement {acquisition_channel} with {budget} measuring CAC and conversion"
+];

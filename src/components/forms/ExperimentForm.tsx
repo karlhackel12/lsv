@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, Lightbulb } from 'lucide-react';
 import { Experiment } from '@/types/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  TEMPLATE_PROBLEM_EXPERIMENTS,
+  TEMPLATE_SOLUTION_EXPERIMENTS,
+  TEMPLATE_BUSINESS_MODEL_EXPERIMENTS
+} from '@/types/pivot';
 
 type FormData = Omit<Experiment, 'id' | 'created_at' | 'updated_at' | 'project_id'>;
 
@@ -37,6 +50,7 @@ interface ExperimentFormProps {
 const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: ExperimentFormProps) => {
   const { toast } = useToast();
   const isEditing = !!experiment;
+  const [experimentType, setExperimentType] = useState<'problem' | 'solution' | 'business-model'>('problem');
 
   const form = useForm<FormData>({
     defaultValues: experiment ? {
@@ -104,6 +118,10 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
     }
   };
 
+  const applyTemplate = (template: string) => {
+    form.setValue('method', template);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
@@ -141,14 +159,81 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
               )}
             />
             
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium">Experiment Type</label>
+              <Select
+                onValueChange={(value: 'problem' | 'solution' | 'business-model') => setExperimentType(value)}
+                defaultValue={experimentType}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="problem">Problem Validation</SelectItem>
+                  <SelectItem value="solution">Solution Validation</SelectItem>
+                  <SelectItem value="business-model">Business Model Validation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <FormField
               control={form.control}
               name="method"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Method</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Method</FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <Lightbulb className="h-4 w-4 mr-2" />
+                          Templates
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[400px]">
+                        <DropdownMenuGroup>
+                          {experimentType === 'problem' ? (
+                            TEMPLATE_PROBLEM_EXPERIMENTS.map((template, index) => (
+                              <DropdownMenuItem 
+                                key={index}
+                                onClick={() => applyTemplate(template)}
+                                className="cursor-pointer py-2"
+                              >
+                                {template}
+                              </DropdownMenuItem>
+                            ))
+                          ) : experimentType === 'solution' ? (
+                            TEMPLATE_SOLUTION_EXPERIMENTS.map((template, index) => (
+                              <DropdownMenuItem 
+                                key={index}
+                                onClick={() => applyTemplate(template)}
+                                className="cursor-pointer py-2"
+                              >
+                                {template}
+                              </DropdownMenuItem>
+                            ))
+                          ) : (
+                            TEMPLATE_BUSINESS_MODEL_EXPERIMENTS.map((template, index) => (
+                              <DropdownMenuItem 
+                                key={index}
+                                onClick={() => applyTemplate(template)}
+                                className="cursor-pointer py-2"
+                              >
+                                {template}
+                              </DropdownMenuItem>
+                            ))
+                          )}
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <FormControl>
-                    <Textarea placeholder="How will you conduct this experiment?" {...field} />
+                    <Textarea 
+                      placeholder="How will you conduct this experiment? Select a template or write your own."
+                      {...field} 
+                      className="h-24"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

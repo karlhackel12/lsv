@@ -111,84 +111,6 @@ const ExperimentsPage = () => {
     setSelectedExperiment(null);
   };
 
-  const handleFormSubmit = async (formData: Experiment) => {
-    try {
-      if (selectedExperiment) {
-        // Update existing experiment
-        const { error } = await supabase
-          .from('experiments')
-          .update({
-            title: formData.title,
-            hypothesis: formData.hypothesis,
-            method: formData.method,
-            metrics: formData.metrics,
-            status: formData.status,
-            results: formData.results,
-            insights: formData.insights,
-            decisions: formData.decisions,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedExperiment.originalId || selectedExperiment.id);
-          
-        if (error) throw error;
-        
-        setExperiments(prevExperiments =>
-          prevExperiments.map(e => 
-            e.id === selectedExperiment.id 
-              ? { ...formData, id: e.id, originalId: e.originalId } 
-              : e
-          )
-        );
-        
-        toast({
-          title: 'Success',
-          description: 'Experiment updated successfully',
-        });
-      } else {
-        // Create new experiment
-        const { data, error } = await supabase
-          .from('experiments')
-          .insert({
-            project_id: currentProject?.id,
-            title: formData.title,
-            hypothesis: formData.hypothesis,
-            method: formData.method,
-            metrics: formData.metrics,
-            status: formData.status,
-            results: formData.results,
-            insights: formData.insights,
-            decisions: formData.decisions,
-          })
-          .select();
-          
-        if (error) throw error;
-        
-        const newExperiment = {
-          ...data[0],
-          originalId: data[0].id,
-          id: data[0].id,
-        };
-        
-        setExperiments(prevExperiments => [newExperiment, ...prevExperiments]);
-        
-        toast({
-          title: 'Success',
-          description: 'Experiment created successfully',
-        });
-      }
-      
-      // Close the form
-      handleFormClose();
-    } catch (err) {
-      console.error('Error saving experiment:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to save experiment',
-        variant: 'destructive',
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -215,7 +137,7 @@ const ExperimentsPage = () => {
         <ExperimentForm
           isOpen={isFormOpen}
           onClose={handleFormClose}
-          onSubmit={handleFormSubmit}
+          onSave={fetchExperiments}
           experiment={selectedExperiment}
           projectId={currentProject?.id || ''}
         />
@@ -224,10 +146,8 @@ const ExperimentsPage = () => {
       {/* Experiment detail view */}
       {isDetailViewOpen && selectedExperiment && currentProject && (
         <ExperimentDetailView
-          isOpen={isDetailViewOpen}
-          onClose={handleDetailViewClose}
           experiment={selectedExperiment}
-          onEdit={handleEditExperiment}
+          onEdit={() => handleEditExperiment(selectedExperiment)}
           projectId={currentProject.id}
           refreshData={fetchExperiments}
         />
