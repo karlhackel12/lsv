@@ -43,7 +43,7 @@ interface ExperimentFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  experiment?: Experiment;
+  experiment?: Experiment | null;
   projectId: string;
 }
 

@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
-import { PivotOption } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import PivotSection from '@/components/PivotSection';
+import { PivotOption } from '@/types/pivot';
 
 const PivotPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -26,10 +26,11 @@ const PivotPage = () => {
         
       if (error) throw error;
       
-      // Transform the data to include numeric ID for easier handling in UI
-      const transformedData = data.map((item, index) => ({
+      // Transform the data to include originalId for easier handling in UI
+      // Ensure all properties have correct types
+      const transformedData: PivotOption[] = data.map((item) => ({
         ...item,
-        id: index + 1,
+        id: item.id,
         originalId: item.id,
       }));
       

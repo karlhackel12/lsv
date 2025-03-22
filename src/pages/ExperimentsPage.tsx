@@ -144,11 +144,10 @@ const ExperimentsPage = () => {
       )}
       
       {/* Experiment detail view */}
-      {isDetailViewOpen && selectedExperiment && currentProject && (
+      {isDetailViewOpen && selectedExperiment && (
         <ExperimentDetailView
           experiment={selectedExperiment}
           onEdit={() => handleEditExperiment(selectedExperiment)}
-          projectId={currentProject.id}
           refreshData={fetchExperiments}
         />
       )}

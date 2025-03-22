@@ -23,6 +23,18 @@ export interface PivotWorkflow {
   updated_at: string;
 }
 
+export interface PivotOption {
+  id: string;
+  originalId?: string;
+  type: string;
+  description: string;
+  trigger: string;
+  likelihood: 'high' | 'medium' | 'low';
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const TEMPLATE_VALUE_HYPOTHESES = [
   "Teachers need {feature} to solve {specific_problem}",
   "Students will consistently use {feature} for {time_period} if it {provides_value}",
