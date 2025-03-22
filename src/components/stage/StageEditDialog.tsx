@@ -39,7 +39,7 @@ interface StageEditDialogProps {
 const StageEditDialog = ({ isOpen, onClose, stage, onSave }: StageEditDialogProps) => {
   const [name, setName] = useState(stage?.name || '');
   const [description, setDescription] = useState(stage?.description || '');
-  const [status, setStatus] = useState(stage?.status || 'not-started');
+  const [status, setStatus] = useState<'complete' | 'in-progress' | 'not-started'>(stage?.status || 'not-started');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
@@ -59,7 +59,7 @@ const StageEditDialog = ({ isOpen, onClose, stage, onSave }: StageEditDialogProp
       await onSave({
         name,
         description,
-        status: status as 'complete' | 'in-progress' | 'not-started',
+        status,
       });
       onClose();
     } catch (error) {
@@ -113,7 +113,7 @@ const StageEditDialog = ({ isOpen, onClose, stage, onSave }: StageEditDialogProp
               </Label>
               <Select 
                 value={status} 
-                onValueChange={(value) => setStatus(value)}
+                onValueChange={(value: 'complete' | 'in-progress' | 'not-started') => setStatus(value)}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select a status" />

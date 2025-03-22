@@ -141,16 +141,58 @@ export function useProject() {
     }
   };
 
-  // Create a new default stage if none exist
+  // Create default stages if none exist
   const createDefaultStages = async (projectId: string) => {
     try {
       const defaultStages = [
-        { id: 'problem-validation', name: 'Problem Validation', description: 'Identify and validate the problem your solution addresses', position: 1, status: 'in-progress', project_id: projectId },
-        { id: 'solution-validation', name: 'Solution Validation', description: 'Test your proposed solution with potential users', position: 2, status: 'not-started', project_id: projectId },
-        { id: 'mvp', name: 'MVP Development', description: 'Build a minimum viable product to test with users', position: 3, status: 'not-started', project_id: projectId },
-        { id: 'product-market-fit', name: 'Product-Market Fit', description: 'Achieve measurable traction that proves market demand', position: 4, status: 'not-started', project_id: projectId },
-        { id: 'scale', name: 'Scale', description: 'Scale your solution to reach more users', position: 5, status: 'not-started', project_id: projectId },
-        { id: 'mature', name: 'Mature', description: 'Optimize and expand your validated business', position: 6, status: 'not-started', project_id: projectId },
+        { 
+          id: 'problem-validation', 
+          name: 'Problem Validation', 
+          description: 'Identify and validate the problem your solution addresses', 
+          position: 1, 
+          status: 'in-progress' as const, 
+          project_id: projectId 
+        },
+        { 
+          id: 'solution-validation', 
+          name: 'Solution Validation', 
+          description: 'Test your proposed solution with potential users', 
+          position: 2, 
+          status: 'not-started' as const, 
+          project_id: projectId 
+        },
+        { 
+          id: 'mvp', 
+          name: 'MVP Development', 
+          description: 'Build a minimum viable product to test with users', 
+          position: 3, 
+          status: 'not-started' as const, 
+          project_id: projectId 
+        },
+        { 
+          id: 'product-market-fit', 
+          name: 'Product-Market Fit', 
+          description: 'Achieve measurable traction that proves market demand', 
+          position: 4, 
+          status: 'not-started' as const, 
+          project_id: projectId 
+        },
+        { 
+          id: 'scale', 
+          name: 'Scale', 
+          description: 'Scale your solution to reach more users', 
+          position: 5, 
+          status: 'not-started' as const, 
+          project_id: projectId 
+        },
+        { 
+          id: 'mature', 
+          name: 'Mature', 
+          description: 'Optimize and expand your validated business', 
+          position: 6, 
+          status: 'not-started' as const, 
+          project_id: projectId 
+        },
       ];
       
       const { error } = await supabase
