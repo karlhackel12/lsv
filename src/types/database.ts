@@ -1,3 +1,4 @@
+
 // Custom types for our database tables
 export interface Project {
   id: string;
@@ -104,3 +105,18 @@ export interface PivotOption {
   evidence?: string;
   status?: string;
 }
+
+// Template definitions for feature priority
+export const TEMPLATE_FEATURE_PRIORITY = {
+  "high": "Essential for validating core value proposition",
+  "medium": "Important for user experience but not critical for validation",
+  "low": "Nice-to-have feature that can be deferred to post-MVP"
+};
+
+// Template definitions for feature status
+export const TEMPLATE_FEATURE_STATUS = {
+  "planned": "Defined and prioritized but not yet in development",
+  "in-progress": "Currently being developed and tested",
+  "completed": "Finished and ready for user testing",
+  "post-mvp": "Deferred to next development phase"
+};

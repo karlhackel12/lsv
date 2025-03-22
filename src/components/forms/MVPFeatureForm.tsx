@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MvpFeature } from '@/types/database';
+import { MvpFeature, TEMPLATE_FEATURE_PRIORITY, TEMPLATE_FEATURE_STATUS } from '@/types/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +31,7 @@ interface MVPFeatureFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  feature?: MvpFeature;
+  feature?: MvpFeature | null;
   projectId: string;
 }
 
@@ -140,6 +141,9 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
                       <SelectItem value="low">Low</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    {TEMPLATE_FEATURE_PRIORITY[field.value as keyof typeof TEMPLATE_FEATURE_PRIORITY]}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -167,6 +171,9 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
                       <SelectItem value="post-mvp">Post-MVP</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    {TEMPLATE_FEATURE_STATUS[field.value as keyof typeof TEMPLATE_FEATURE_STATUS]}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
