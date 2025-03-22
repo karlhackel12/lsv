@@ -253,6 +253,20 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
     }
   };
 
+  // Fixed function to get the correct status color indicator
+  const getHypothesisStatusColor = (status: string) => {
+    switch (status) {
+      case 'validated':
+        return 'bg-green-500';
+      case 'invalid':
+        return 'bg-red-500';
+      case 'validating':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-400';
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
@@ -346,7 +360,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                                       : 'bg-white border border-blue-100 hover:bg-blue-100'}`}
                                   onClick={() => applyHypothesis(hypothesis)}
                                 >
-                                  <div className={`w-2 h-2 rounded-full ${hypothesis.status === 'validated' ? 'bg-green-500' : hypothesis.status === 'invalidated' ? 'bg-red-500' : 'bg-gray-400'}`} />
+                                  <div className={`w-2 h-2 rounded-full ${getHypothesisStatusColor(hypothesis.status)}`} />
                                   <span className="line-clamp-2">{hypothesis.statement}</span>
                                 </button>
                               ))}
