@@ -92,9 +92,58 @@ export function useHypotheses(refreshData: () => void) {
 
   const handleSaveHypothesis = async (formData: Hypothesis): Promise<void> => {
     try {
+      // Determine if we're updating an existing hypothesis or creating a new one
+      if (selectedHypothesis) {
+        // Update existing hypothesis
+        const { error } = await supabase
+          .from('hypotheses')
+          .update({
+            statement: formData.statement,
+            category: formData.category,
+            status: formData.status,
+            criteria: formData.criteria,
+            experiment: formData.experiment,
+            evidence: formData.evidence,
+            result: formData.result,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedHypothesis.id);
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Hypothesis updated',
+          description: 'The hypothesis has been successfully updated.',
+        });
+      } else {
+        // Create new hypothesis
+        const { error } = await supabase
+          .from('hypotheses')
+          .insert({
+            statement: formData.statement,
+            category: formData.category,
+            status: formData.status || 'not-started',
+            criteria: formData.criteria,
+            experiment: formData.experiment,
+            project_id: formData.project_id,
+          });
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Hypothesis created',
+          description: 'A new hypothesis has been created successfully.',
+        });
+      }
+      
       refreshData();
       return Promise.resolve();
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'An error occurred while saving.',
+        variant: 'destructive',
+      });
       return Promise.reject(error);
     }
   };

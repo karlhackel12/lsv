@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,7 +45,6 @@ import {
   TEMPLATE_BUSINESS_MODEL_CRITERIA
 } from '@/types/pivot';
 
-// Define the form data type based on database schema
 type FormData = {
   title: string;
   hypothesis: string;
@@ -71,6 +69,8 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
   const { toast } = useToast();
   const isEditing = !!experiment;
   const [category, setCategory] = useState(experiment?.category || 'problem');
+  const [relatedHypotheses, setRelatedHypotheses] = useState<Hypothesis[]>([]);
+  const [isLoadingHypotheses, setIsLoadingHypotheses] = useState(false);
 
   const form = useForm<FormData>({
     defaultValues: experiment ? {
@@ -96,19 +96,61 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
     }
   });
 
-  // Update templates when category changes
+  useEffect(() => {
+    if (isOpen && projectId) {
+      fetchRelatedHypotheses();
+    }
+  }, [isOpen, projectId]);
+
+  const fetchRelatedHypotheses = async () => {
+    try {
+      setIsLoadingHypotheses(true);
+      const { data, error } = await supabase
+        .from('hypotheses')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('updated_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      if (data) {
+        setRelatedHypotheses(data.map(h => ({
+          ...h,
+          originalId: h.id,
+          id: h.id
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching hypotheses:', error);
+    } finally {
+      setIsLoadingHypotheses(false);
+    }
+  };
+
   React.useEffect(() => {
     setCategory(form.watch('category') || 'problem');
   }, [form.watch('category')]);
 
   const handleSubmit = async (data: FormData) => {
     try {
+      const hypothesisText = data.hypothesis;
+      let hypothesis_id = experiment?.hypothesis_id;
+      
+      const matchingHypothesis = relatedHypotheses.find(h => 
+        h.statement.trim().toLowerCase() === hypothesisText.trim().toLowerCase()
+      );
+      
+      if (matchingHypothesis) {
+        hypothesis_id = matchingHypothesis.id;
+      }
+      
       if (isEditing && experiment) {
         const id = experiment.originalId || experiment.id;
         const { error } = await supabase
           .from('experiments')
           .update({
             ...data,
+            hypothesis_id,
             updated_at: new Date().toISOString(),
           })
           .eq('id', id);
@@ -123,6 +165,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
           .from('experiments')
           .insert({
             ...data,
+            hypothesis_id,
             project_id: projectId,
           });
 
@@ -152,7 +195,6 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
     form.setValue('metrics', template);
   };
 
-  // Helper function to get experiment templates based on category
   const getExperimentTemplates = () => {
     switch (category) {
       case 'problem':
@@ -166,7 +208,6 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
     }
   };
 
-  // Helper function to get criteria templates based on category
   const getCriteriaTemplates = () => {
     switch (category) {
       case 'problem':
@@ -210,17 +251,40 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Hypothesis</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Enter experiment hypothesis" 
-                      className="h-24"
-                      {...field} 
-                    />
+                    <div className="space-y-2">
+                      <Textarea 
+                        placeholder="Enter experiment hypothesis" 
+                        className="h-24"
+                        {...field} 
+                      />
+                      
+                      {relatedHypotheses.length > 0 && (
+                        <div className="rounded-md bg-blue-50 p-2 mt-2">
+                          <p className="text-xs text-blue-700 mb-1">
+                            Existing hypotheses in this project:
+                          </p>
+                          <div className="max-h-24 overflow-y-auto">
+                            {relatedHypotheses.map((hypothesis) => (
+                              <button
+                                key={hypothesis.id}
+                                type="button"
+                                className="text-xs bg-white border border-blue-200 rounded px-2 py-1 mr-2 mb-1 hover:bg-blue-100 transition-colors"
+                                onClick={() => form.setValue('hypothesis', hypothesis.statement)}
+                              >
+                                {hypothesis.statement.substring(0, 40)}
+                                {hypothesis.statement.length > 40 ? '...' : ''}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="category"
