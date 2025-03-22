@@ -33,14 +33,14 @@ const HypothesisList = ({
 
   if (hypotheses.length === 0) {
     return (
-      <div className="bg-white border rounded-lg p-8 text-center shadow-sm">
+      <div className="bg-white border rounded-lg p-4 md:p-8 text-center shadow-sm">
         <h3 className="text-xl font-medium mb-3 text-validation-gray-800">No hypotheses yet</h3>
         <p className="text-validation-gray-500 mb-6 max-w-md mx-auto">
           Start by creating your first hypothesis to validate your business assumptions.
         </p>
         <Button
           onClick={onCreateNew}
-          className="px-6 py-2 bg-validation-blue-600 text-white rounded-lg hover:bg-validation-blue-700 transition-colors shadow-sm"
+          className="px-4 md:px-6 py-2 bg-validation-blue-600 text-white rounded-lg hover:bg-validation-blue-700 transition-colors shadow-sm"
           size="lg"
         >
           Create First Hypothesis
@@ -50,8 +50,8 @@ const HypothesisList = ({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {hypotheses.map((hypothesis, index) => (
           <div key={hypothesis.id} 
             className="animate-slideUpFade" 

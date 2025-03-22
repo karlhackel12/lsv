@@ -16,10 +16,10 @@ interface HypothesisCardProps {
 const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: HypothesisCardProps) => {
   return (
     <Card 
-      className="p-6 h-full flex flex-col animate-slideUpFade" 
+      className="p-4 md:p-6 h-full flex flex-col animate-slideUpFade" 
       hover={true}
     >
-      <div className="flex justify-between mb-5">
+      <div className="flex flex-wrap justify-between gap-2 mb-3 md:mb-5">
         <span className={`text-xs font-semibold inline-block px-3 py-1 rounded-full ${
           hypothesis.category === 'value' 
             ? 'bg-validation-blue-50 text-validation-blue-700 border border-validation-blue-200' 
@@ -32,10 +32,10 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
         </div>
       </div>
       
-      <h3 className="text-lg font-semibold mb-4 text-validation-gray-900 line-clamp-2">{hypothesis.statement}</h3>
+      <h3 className="text-lg font-semibold mb-3 md:mb-4 text-validation-gray-900 line-clamp-2">{hypothesis.statement}</h3>
       
-      <div className="grid grid-cols-1 gap-5 mb-5 flex-grow">
-        <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-4 mb-4 flex-grow">
+        <div className="space-y-2 md:space-y-3">
           <div>
             <p className="text-sm font-medium text-validation-gray-500 mb-1">Experiment</p>
             <p className="text-validation-gray-700 line-clamp-3">{hypothesis.experiment}</p>
@@ -49,7 +49,7 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
           {(hypothesis.result || hypothesis.evidence) && (
             <div className="pt-2">
               {hypothesis.result && (
-                <div className="mb-3">
+                <div className="mb-2 md:mb-3">
                   <p className="text-sm font-medium text-validation-gray-500 mb-1">Results</p>
                   <p className="text-validation-gray-700 line-clamp-2">
                     {hypothesis.result}
@@ -70,7 +70,7 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
         </div>
       </div>
       
-      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+      <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-gray-100">
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
@@ -93,7 +93,7 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
         </div>
 
         {(hypothesis.status === 'validating' || hypothesis.status === 'not-started') && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {hypothesis.status === 'not-started' && (
               <Button 
                 size="sm"
@@ -104,7 +104,7 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
               </Button>
             )}
             {hypothesis.status === 'validating' && (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button 
                   size="sm"
                   className="bg-validation-green-600 hover:bg-validation-green-700"

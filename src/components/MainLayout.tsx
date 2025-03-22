@@ -6,11 +6,11 @@ import MainHeader from '@/components/MainHeader';
 
 const MainLayout = () => {
   return (
-    <div className="flex min-h-screen bg-validation-gray-50">
+    <div className="flex min-h-screen bg-validation-gray-50 overflow-hidden">
       <SideNavigation />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col w-full">
         <MainHeader />
-        <main className="flex-1 p-4 md:p-5 lg:p-6 overflow-x-hidden">
+        <main className="flex-1 p-3 md:p-5 lg:p-6 overflow-y-auto">
           <div className="w-full h-full">
             <Outlet />
           </div>

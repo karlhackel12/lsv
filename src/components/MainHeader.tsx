@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ChevronDown, 
   User, 
   LogOut, 
   Settings, 
@@ -37,12 +36,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/database';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const MainHeader = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const isMobile = useIsMobile();
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
@@ -76,21 +77,27 @@ const MainHeader = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-validation-gray-200">
-      <div className="flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center space-x-2 w-64">
+      <div className="flex h-14 md:h-16 items-center justify-between px-3 md:px-6">
+        <div className="flex items-center space-x-2 w-full max-w-xs">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-full justify-between"
+                className="w-full justify-between truncate"
               >
-                {selectedProject ? selectedProject.name : "Select project..."}
+                {selectedProject ? (
+                  <span className="truncate max-w-[120px] md:max-w-[200px]">
+                    {selectedProject.name}
+                  </span>
+                ) : (
+                  "Select project..."
+                )}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-0">
+            <PopoverContent className="w-[220px] p-0 md:w-[280px]">
               <Command>
                 <CommandInput placeholder="Search projects..." />
                 <CommandList>
@@ -108,7 +115,7 @@ const MainHeader = () => {
                             selectedProject?.id === project.id ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {project.name}
+                        <span className="truncate">{project.name}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -131,7 +138,7 @@ const MainHeader = () => {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "User"}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
+                  <p className="text-xs leading-none text-muted-foreground truncate">
                     {user?.email}
                   </p>
                 </div>

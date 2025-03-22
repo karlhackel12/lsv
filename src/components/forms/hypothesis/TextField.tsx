@@ -13,7 +13,7 @@ interface TextFieldProps {
   height?: string;
 }
 
-const TextField = ({ form, name, label, placeholder, height = "h-20" }: TextFieldProps) => {
+const TextField = ({ form, name, label, placeholder, height = "min-h-[5rem]" }: TextFieldProps) => {
   return (
     <FormField
       control={form.control}
@@ -24,7 +24,7 @@ const TextField = ({ form, name, label, placeholder, height = "h-20" }: TextFiel
           <FormControl>
             <Textarea
               placeholder={placeholder}
-              className={height}
+              className={`${height} w-full resize-none`}
               {...field}
             />
           </FormControl>

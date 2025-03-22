@@ -92,16 +92,17 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply overflow-x-hidden;
   }
 
   body {
-    @apply bg-validation-gray-50 text-validation-gray-900 font-sans;
+    @apply bg-validation-gray-50 text-validation-gray-900 font-sans min-h-screen overflow-x-hidden;
   }
 
   /* Custom scrollbar for webkit browsers */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -133,6 +134,23 @@
 
   .hover-lift {
     @apply transition-all duration-300 ease-out hover:translate-y-[-2px] hover:shadow-subtle-lg;
+  }
+  
+  /* Responsive grid container */
+  .responsive-grid {
+    @apply grid grid-cols-1 gap-4 w-full;
+    @apply sm:grid-cols-2 sm:gap-5;
+    @apply lg:grid-cols-3 lg:gap-6;
+  }
+  
+  /* Mobile-friendly padding */
+  .mobile-padding {
+    @apply p-3 sm:p-4 md:p-5 lg:p-6;
+  }
+  
+  /* Prevent content overflow */
+  .content-container {
+    @apply w-full max-w-full overflow-hidden;
   }
 }
 
@@ -188,4 +206,23 @@
 
 .animate-delay-500 {
   animation-delay: 500ms !important;
+}
+
+/* Responsive spacing helpers */
+@media (max-width: 640px) {
+  .sm-only-flex {
+    display: flex !important;
+  }
+  
+  .sm-only-hidden {
+    display: none !important;
+  }
+  
+  .sm-only-p-2 {
+    padding: 0.5rem !important;
+  }
+  
+  .sm-only-gap-2 {
+    gap: 0.5rem !important;
+  }
 }
