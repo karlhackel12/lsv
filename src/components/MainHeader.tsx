@@ -76,21 +76,21 @@ const MainHeader = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-validation-gray-200">
-      <div className="flex h-16 items-center px-4 md:px-6">
-        <div className="flex-1 flex items-center space-x-2">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6">
+        <div className="flex items-center space-x-2 w-64">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-[240px] justify-between"
+                className="w-full justify-between"
               >
                 {selectedProject ? selectedProject.name : "Select project..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[240px] p-0">
+            <PopoverContent className="w-[280px] p-0">
               <Command>
                 <CommandInput placeholder="Search projects..." />
                 <CommandList>
