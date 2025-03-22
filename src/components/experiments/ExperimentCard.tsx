@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Card from '@/components/Card';
 import StatusBadge from '@/components/StatusBadge';
@@ -12,10 +12,18 @@ interface ExperimentCardProps {
   index: number;
   onEdit: (experiment: Experiment) => void;
   onDelete: (experiment: Experiment) => void;
+  onViewDetail: (experiment: Experiment) => void;
   refreshData: () => void;
 }
 
-const ExperimentCard = ({ experiment, index, onEdit, onDelete, refreshData }: ExperimentCardProps) => {
+const ExperimentCard = ({ 
+  experiment, 
+  index, 
+  onEdit, 
+  onDelete, 
+  onViewDetail,
+  refreshData 
+}: ExperimentCardProps) => {
   return (
     <Card 
       key={experiment.id} 
@@ -29,7 +37,16 @@ const ExperimentCard = ({ experiment, index, onEdit, onDelete, refreshData }: Ex
           <p className="text-validation-gray-600 italic mb-2">Testing: {experiment.hypothesis}</p>
         </div>
         <div className="flex space-x-2">
-          <StatusBadge status={experiment.status} />
+          <StatusBadge status={experiment.status as any} />
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={() => onViewDetail(experiment)}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span className="sr-only">View</span>
+          </Button>
           <Button 
             variant="outline" 
             size="sm"
@@ -88,11 +105,23 @@ const ExperimentCard = ({ experiment, index, onEdit, onDelete, refreshData }: Ex
             </p>
           </div>
           
-          <ExperimentStatusActions 
-            experiment={experiment} 
-            refreshData={refreshData}
-            onEdit={onEdit}
-          />
+          <div className="flex flex-col space-y-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex justify-center items-center"
+              onClick={() => onViewDetail(experiment)}
+            >
+              <Eye className="h-3.5 w-3.5 mr-2" />
+              View Details
+            </Button>
+            
+            <ExperimentStatusActions 
+              experiment={experiment} 
+              refreshData={refreshData}
+              onEdit={onEdit}
+            />
+          </div>
         </div>
       </div>
     </Card>

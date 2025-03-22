@@ -186,7 +186,7 @@ const Dashboard = () => {
             <p className="text-validation-gray-700">{currentProject.stage.replace('-', ' ')}</p>
             <StatusBadge status={currentProject.stage as any} />
           </div>
-          <ProgressBar value={progress} max={100} variant="default" size="default" />
+          <ProgressBar value={progress} max={100} variant="default" size="md" />
         </div>
       </Card>
 

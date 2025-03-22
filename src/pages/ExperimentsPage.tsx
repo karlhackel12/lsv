@@ -1,26 +1,26 @@
 
 import React, { useEffect, useState } from 'react';
-import HypothesesSection from '@/components/HypothesesSection';
 import { useProject } from '@/hooks/use-project';
 import MainLayout from '@/components/MainLayout';
-import { Hypothesis } from '@/types/database';
+import { Experiment } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ExperimentsSection from '@/components/ExperimentsSection';
 
-const HypothesesPage = () => {
+const ExperimentsPage = () => {
   const { currentProject, isLoading, error } = useProject();
   const { toast } = useToast();
-  const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
-  const [loadingHypotheses, setLoadingHypotheses] = useState(true);
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [loadingExperiments, setLoadingExperiments] = useState(true);
 
-  const fetchHypotheses = async () => {
+  const fetchExperiments = async () => {
     if (!currentProject?.id) return;
     
     try {
-      setLoadingHypotheses(true);
+      setLoadingExperiments(true);
       
       const { data, error } = await supabase
-        .from('hypotheses')
+        .from('experiments')
         .select('*')
         .eq('project_id', currentProject.id)
         .order('created_at', { ascending: false });
@@ -33,31 +33,31 @@ const HypothesesPage = () => {
         id: item.id
       }));
       
-      setHypotheses(transformedData);
+      setExperiments(transformedData);
     } catch (err: any) {
       toast({
-        title: 'Error fetching hypotheses',
-        description: err.message || 'Failed to load hypotheses',
+        title: 'Error fetching experiments',
+        description: err.message || 'Failed to load experiments',
         variant: 'destructive',
       });
     } finally {
-      setLoadingHypotheses(false);
+      setLoadingExperiments(false);
     }
   };
 
   useEffect(() => {
     if (currentProject) {
-      fetchHypotheses();
+      fetchExperiments();
     } else {
-      setLoadingHypotheses(false);
+      setLoadingExperiments(false);
     }
   }, [currentProject]);
 
-  if (isLoading || loadingHypotheses) {
+  if (isLoading || loadingExperiments) {
     return (
       <MainLayout>
         <div className="container mx-auto px-4 py-8">
-          <p className="text-center">Loading project data...</p>
+          <p className="text-center">Loading experiments data...</p>
         </div>
       </MainLayout>
     );
@@ -78,9 +78,9 @@ const HypothesesPage = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <HypothesesSection 
-          hypotheses={hypotheses} 
-          refreshData={fetchHypotheses} 
+        <ExperimentsSection 
+          experiments={experiments} 
+          refreshData={fetchExperiments} 
           projectId={currentProject.id} 
         />
       </div>
@@ -88,4 +88,4 @@ const HypothesesPage = () => {
   );
 };
 
-export default HypothesesPage;
+export default ExperimentsPage;

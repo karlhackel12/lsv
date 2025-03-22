@@ -10,6 +10,7 @@ interface ExperimentListProps {
   onEdit: (experiment: Experiment) => void;
   onDelete: (experiment: Experiment) => void;
   onCreateNew: () => void;
+  onViewDetail: (experiment: Experiment) => void;
 }
 
 const ExperimentList = ({ 
@@ -17,7 +18,8 @@ const ExperimentList = ({
   refreshData, 
   onEdit, 
   onDelete, 
-  onCreateNew 
+  onCreateNew,
+  onViewDetail
 }: ExperimentListProps) => {
   if (experiments.length === 0) {
     return <EmptyExperimentState onCreateNew={onCreateNew} />;
@@ -32,6 +34,7 @@ const ExperimentList = ({
           index={index}
           onEdit={onEdit}
           onDelete={onDelete}
+          onViewDetail={onViewDetail}
           refreshData={refreshData}
         />
       ))}

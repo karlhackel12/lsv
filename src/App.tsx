@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import MainLayout from "./components/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HypothesesPage from "./pages/HypothesesPage";
+import ExperimentsPage from "./pages/ExperimentsPage";
 import React from "react"; // Make sure React is imported
 
 // Create a client
@@ -34,8 +35,8 @@ const App: React.FC = () => {
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Index />} />
                   <Route path="/hypotheses" element={<HypothesesPage />} />
+                  <Route path="/experiments" element={<ExperimentsPage />} />
                   {/* These routes will be implemented later */}
-                  <Route path="/experiments" element={<div>Experiments Page</div>} />
                   <Route path="/mvp" element={<div>MVP Page</div>} />
                   <Route path="/metrics" element={<div>Metrics Page</div>} />
                   <Route path="/pivot" element={<div>Pivot Page</div>} />
