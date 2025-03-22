@@ -12,6 +12,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project, Stage, Hypothesis, Experiment, MvpFeature, Metric, PivotOption } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
+// Interface for the transformed Stage data that OverviewSection expects
+interface TransformedStage {
+  id: string;
+  name: string;
+  complete: boolean;
+  inProgress?: boolean;
+  description: string;
+}
+
+// Interface for components with numeric IDs
+interface ComponentWithNumericId {
+  id: number;
+  [key: string]: any;
+}
+
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
@@ -117,6 +132,25 @@ const Dashboard = () => {
     fetchData();
   }, [toast]);
 
+  // Transform Stage data to match the format expected by OverviewSection
+  const transformStages = (stages: Stage[]): TransformedStage[] => {
+    return stages.map(stage => ({
+      id: stage.id,
+      name: stage.name,
+      complete: stage.status === 'complete',
+      inProgress: stage.status === 'in-progress',
+      description: stage.description
+    }));
+  };
+
+  // Transform data with string IDs to have numeric IDs for components
+  const transformToNumericIds = <T extends { id: string }>(items: T[]): ComponentWithNumericId[] => {
+    return items.map((item, index) => ({
+      ...item,
+      id: index + 1
+    }));
+  };
+
   const tabs: TabItem[] = [
     { id: 'overview', label: 'Overview', icon: BarChart },
     { id: 'hypotheses', label: 'Hypotheses', icon: Lightbulb },
@@ -161,19 +195,19 @@ const Dashboard = () => {
 
     switch (activeTab) {
       case 'overview':
-        return <OverviewSection project={project} stages={stages} />;
+        return <OverviewSection project={project} stages={transformStages(stages)} />;
       case 'hypotheses':
-        return <HypothesesSection hypotheses={hypotheses} />;
+        return <HypothesesSection hypotheses={transformToNumericIds(hypotheses)} />;
       case 'experiments':
-        return <ExperimentsSection experiments={experiments} />;
+        return <ExperimentsSection experiments={transformToNumericIds(experiments)} />;
       case 'mvp':
-        return <MVPSection mvpFeatures={mvpFeatures} />;
+        return <MVPSection mvpFeatures={transformToNumericIds(mvpFeatures)} />;
       case 'metrics':
-        return <MetricsSection metrics={metrics} />;
+        return <MetricsSection metrics={transformToNumericIds(metrics)} />;
       case 'pivot':
-        return <PivotSection pivotOptions={pivotOptions} />;
+        return <PivotSection pivotOptions={transformToNumericIds(pivotOptions)} />;
       default:
-        return <OverviewSection project={project} stages={stages} />;
+        return <OverviewSection project={project} stages={transformStages(stages)} />;
     }
   };
 
