@@ -1,6 +1,8 @@
 
 import React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,8 +25,31 @@ import { PivotOption } from '@/types/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
-type FormData = Omit<PivotOption, 'id' | 'created_at' | 'updated_at' | 'project_id'>;
+// Create a schema for form validation
+const formSchema = z.object({
+  type: z.string().min(2, {
+    message: "Type must be at least 2 characters.",
+  }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+  trigger: z.string().min(10, {
+    message: "Trigger point must be at least 10 characters.",
+  }),
+  likelihood: z.enum(['high', 'medium', 'low']),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 interface PivotOptionFormProps {
   isOpen: boolean;
@@ -39,6 +64,7 @@ const PivotOptionForm = ({ isOpen, onClose, onSave, pivotOption, projectId }: Pi
   const isEditing = !!pivotOption;
 
   const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: pivotOption ? {
       type: pivotOption.type,
       description: pivotOption.description,
@@ -172,6 +198,28 @@ const PivotOptionForm = ({ isOpen, onClose, onSave, pivotOption, projectId }: Pi
                 </FormItem>
               )}
             />
+            
+            {isEditing && (
+              <div className="mt-6">
+                <Label className="mb-2 block">Previous Pivot Options</Label>
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Likelihood</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">{pivotOption?.type}</TableCell>
+                        <TableCell>{pivotOption?.likelihood}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
             
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
