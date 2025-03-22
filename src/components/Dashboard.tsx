@@ -125,11 +125,21 @@ const Dashboard = () => {
       console.log('Fetched pivot options:', pivotOptionsData);
 
       // Update state with fetched data
-      setProject(projectData);
+      setProject(projectData as Project);
       setStages(stagesData || []);
       setHypotheses(hypothesesData || []);
       setExperiments(experimentsData || []);
-      setMvpFeatures(mvpFeaturesData || []);
+      
+      // Make sure we set the missing properties for mvpFeatures
+      const mvpFeaturesWithMissingProps = (mvpFeaturesData || []).map(feature => ({
+        ...feature,
+        name: feature.feature, // Use feature as name
+        description: feature.notes || '', // Use notes as description
+        effort: 'medium', // Default value
+        impact: 'medium', // Default value
+      }));
+      setMvpFeatures(mvpFeaturesWithMissingProps);
+      
       setMetrics(metricsData || []);
       setPivotOptions(pivotOptionsData || []);
     } catch (err) {

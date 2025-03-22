@@ -7,6 +7,7 @@ export interface Project {
   stage: string;
   created_at: string;
   updated_at: string;
+  owner_id?: string;
 }
 
 export interface Stage {
@@ -61,6 +62,11 @@ export interface MvpFeature {
   created_at: string;
   updated_at: string;
   originalId?: string;
+  // Add the missing properties to match the expected type
+  name?: string;
+  description?: string;
+  effort?: string;
+  impact?: string;
 }
 
 export interface Metric {
