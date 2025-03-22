@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BarChart, Lightbulb, CheckSquare, Target, Gauge, RotateCcw } from 'lucide-react';
 import TabNavigation, { TabItem } from './TabNavigation';
@@ -38,93 +39,93 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch project data
-        const { data: projectData, error: projectError } = await supabase
-          .from('projects')
-          .select('*')
-          .limit(1)
-          .single();
+      // Fetch project data
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .limit(1)
+        .single();
 
-        if (projectError) throw new Error(`Error fetching project: ${projectError.message}`);
-        if (!projectData) throw new Error('No project found');
+      if (projectError) throw new Error(`Error fetching project: ${projectError.message}`);
+      if (!projectData) throw new Error('No project found');
 
-        // Fetch stages data
-        const { data: stagesData, error: stagesError } = await supabase
-          .from('stages')
-          .select('*')
-          .eq('project_id', projectData.id)
-          .order('position', { ascending: true });
+      // Fetch stages data
+      const { data: stagesData, error: stagesError } = await supabase
+        .from('stages')
+        .select('*')
+        .eq('project_id', projectData.id)
+        .order('position', { ascending: true });
 
-        if (stagesError) throw new Error(`Error fetching stages: ${stagesError.message}`);
+      if (stagesError) throw new Error(`Error fetching stages: ${stagesError.message}`);
 
-        // Fetch hypotheses data
-        const { data: hypothesesData, error: hypothesesError } = await supabase
-          .from('hypotheses')
-          .select('*')
-          .eq('project_id', projectData.id);
+      // Fetch hypotheses data
+      const { data: hypothesesData, error: hypothesesError } = await supabase
+        .from('hypotheses')
+        .select('*')
+        .eq('project_id', projectData.id);
 
-        if (hypothesesError) throw new Error(`Error fetching hypotheses: ${hypothesesError.message}`);
+      if (hypothesesError) throw new Error(`Error fetching hypotheses: ${hypothesesError.message}`);
 
-        // Fetch experiments data
-        const { data: experimentsData, error: experimentsError } = await supabase
-          .from('experiments')
-          .select('*')
-          .eq('project_id', projectData.id);
+      // Fetch experiments data
+      const { data: experimentsData, error: experimentsError } = await supabase
+        .from('experiments')
+        .select('*')
+        .eq('project_id', projectData.id);
 
-        if (experimentsError) throw new Error(`Error fetching experiments: ${experimentsError.message}`);
+      if (experimentsError) throw new Error(`Error fetching experiments: ${experimentsError.message}`);
 
-        // Fetch mvp features data
-        const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
-          .from('mvp_features')
-          .select('*')
-          .eq('project_id', projectData.id);
+      // Fetch mvp features data
+      const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
+        .from('mvp_features')
+        .select('*')
+        .eq('project_id', projectData.id);
 
-        if (mvpFeaturesError) throw new Error(`Error fetching MVP features: ${mvpFeaturesError.message}`);
+      if (mvpFeaturesError) throw new Error(`Error fetching MVP features: ${mvpFeaturesError.message}`);
 
-        // Fetch metrics data
-        const { data: metricsData, error: metricsError } = await supabase
-          .from('metrics')
-          .select('*')
-          .eq('project_id', projectData.id);
+      // Fetch metrics data
+      const { data: metricsData, error: metricsError } = await supabase
+        .from('metrics')
+        .select('*')
+        .eq('project_id', projectData.id);
 
-        if (metricsError) throw new Error(`Error fetching metrics: ${metricsError.message}`);
+      if (metricsError) throw new Error(`Error fetching metrics: ${metricsError.message}`);
 
-        // Fetch pivot options data
-        const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
-          .from('pivot_options')
-          .select('*')
-          .eq('project_id', projectData.id);
+      // Fetch pivot options data
+      const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
+        .from('pivot_options')
+        .select('*')
+        .eq('project_id', projectData.id);
 
-        if (pivotOptionsError) throw new Error(`Error fetching pivot options: ${pivotOptionsError.message}`);
+      if (pivotOptionsError) throw new Error(`Error fetching pivot options: ${pivotOptionsError.message}`);
 
-        // Update state with fetched data
-        setProject(projectData);
-        setStages(stagesData || []);
-        setHypotheses(hypothesesData || []);
-        setExperiments(experimentsData || []);
-        setMvpFeatures(mvpFeaturesData || []);
-        setMetrics(metricsData || []);
-        setPivotOptions(pivotOptionsData || []);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-        setError(errorMessage);
-        toast({
-          title: 'Error loading data',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        console.error('Error fetching data:', err);
-      } finally {
-        setLoading(false);
-      }
+      // Update state with fetched data
+      setProject(projectData);
+      setStages(stagesData || []);
+      setHypotheses(hypothesesData || []);
+      setExperiments(experimentsData || []);
+      setMvpFeatures(mvpFeaturesData || []);
+      setMetrics(metricsData || []);
+      setPivotOptions(pivotOptionsData || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
+      toast({
+        title: 'Error loading data',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [toast]);
 
@@ -140,13 +141,14 @@ const Dashboard = () => {
   };
 
   // Transform data with string IDs to have numeric IDs while preserving all other properties
-  const transformToNumericIds = <T extends { id: string }>(items: T[]): WithNumericId<T>[] => {
+  const transformToNumericIds = <T extends { id: string }>(items: T[]): (WithNumericId<T> & { originalId: string })[] => {
     return items.map((item, index) => {
       const { id, ...rest } = item;
       return {
         ...rest,
-        id: index + 1
-      } as WithNumericId<T>;
+        id: index + 1,
+        originalId: id
+      } as WithNumericId<T> & { originalId: string };
     });
   };
 
@@ -175,9 +177,9 @@ const Dashboard = () => {
           <p>{error}</p>
           <button 
             className="mt-4 bg-validation-red-100 hover:bg-validation-red-200 text-validation-red-800 px-4 py-2 rounded-md transition-colors"
-            onClick={() => window.location.reload()}
+            onClick={() => fetchData()}
           >
-            Reload Page
+            Retry
           </button>
         </div>
       );
@@ -192,19 +194,41 @@ const Dashboard = () => {
       );
     }
 
+    const projectId = project.id;
+
     switch (activeTab) {
       case 'overview':
         return <OverviewSection project={project} stages={transformStages(stages)} />;
       case 'hypotheses':
-        return <HypothesesSection hypotheses={transformToNumericIds(hypotheses)} />;
+        return <HypothesesSection 
+          hypotheses={transformToNumericIds(hypotheses)} 
+          refreshData={fetchData}
+          projectId={projectId}
+        />;
       case 'experiments':
-        return <ExperimentsSection experiments={transformToNumericIds(experiments)} />;
+        return <ExperimentsSection 
+          experiments={transformToNumericIds(experiments)} 
+          refreshData={fetchData}
+          projectId={projectId}
+        />;
       case 'mvp':
-        return <MVPSection mvpFeatures={transformToNumericIds(mvpFeatures)} />;
+        return <MVPSection 
+          mvpFeatures={transformToNumericIds(mvpFeatures)} 
+          refreshData={fetchData}
+          projectId={projectId}
+        />;
       case 'metrics':
-        return <MetricsSection metrics={transformToNumericIds(metrics)} />;
+        return <MetricsSection 
+          metrics={transformToNumericIds(metrics)} 
+          refreshData={fetchData}
+          projectId={projectId}
+        />;
       case 'pivot':
-        return <PivotSection pivotOptions={transformToNumericIds(pivotOptions)} />;
+        return <PivotSection 
+          pivotOptions={transformToNumericIds(pivotOptions)} 
+          refreshData={fetchData}
+          projectId={projectId}
+        />;
       default:
         return <OverviewSection project={project} stages={transformStages(stages)} />;
     }
