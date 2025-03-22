@@ -1,58 +1,53 @@
 
 import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { MvpFeature } from '@/types/database';
-import { Clock, User } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 
-interface CurrentlyWorkingOnProps {
+export interface CurrentlyWorkingOnProps {
   features: MvpFeature[];
 }
 
-const CurrentlyWorkingOn: React.FC<CurrentlyWorkingOnProps> = ({ features }) => {
-  const inProgressFeatures = features.filter(f => f.status === 'in-progress');
+const CurrentlyWorkingOn = ({ features }: CurrentlyWorkingOnProps) => {
+  // Filter to get just the features that are in progress
+  const inProgressFeatures = features.filter(
+    (feature) => feature.status === 'in-progress'
+  );
 
   if (inProgressFeatures.length === 0) {
     return (
-      <Card className="p-6 text-center bg-gray-50">
-        <p className="text-gray-600">No features currently in progress.</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Currently Working On</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            No features are currently in progress.
+          </p>
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {inProgressFeatures.map(feature => (
-        <Card key={feature.id} className="p-4 border-l-4 border-l-blue-500 animate-pulse">
-          <div className="flex justify-between items-start">
+    <Card>
+      <CardHeader>
+        <CardTitle>Currently Working On</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {inProgressFeatures.map((feature, index) => (
+          <React.Fragment key={feature.id}>
+            {index > 0 && <Separator className="my-2" />}
             <div>
-              <h3 className="font-medium text-lg">{feature.feature}</h3>
-              <p className="text-sm text-gray-600 mt-1">{feature.notes}</p>
+              <p className="font-medium">{feature.feature}</p>
+              {feature.notes && (
+                <p className="text-sm text-muted-foreground">{feature.notes}</p>
+              )}
             </div>
-            <div className="flex items-center text-blue-600 text-sm">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>In Progress</span>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center text-sm text-gray-500">
-            <div className="flex items-center mr-4">
-              <User className="h-4 w-4 mr-1" />
-              <span>Development Team</span>
-            </div>
-            <div>
-              <span>Priority: </span>
-              <span className={`font-medium ${
-                feature.priority === 'high' ? 'text-red-600' : 
-                feature.priority === 'medium' ? 'text-yellow-600' : 
-                'text-green-600'
-              }`}>
-                {feature.priority.charAt(0).toUpperCase() + feature.priority.slice(1)}
-              </span>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
+          </React.Fragment>
+        ))}
+      </CardContent>
+    </Card>
   );
 };
 

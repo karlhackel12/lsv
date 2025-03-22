@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,116 +19,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Hypothesis } from '@/types/database';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { 
+import {
+  TEMPLATE_VALUE_HYPOTHESES,
+  TEMPLATE_GROWTH_HYPOTHESES,
+} from '@/types/pivot';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, Lightbulb } from 'lucide-react';
-import { TEMPLATE_VALUE_HYPOTHESES, TEMPLATE_GROWTH_HYPOTHESES } from '@/types/pivot';
 
-type FormData = Omit<Hypothesis, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
-
-interface HypothesisFormProps {
+export interface HypothesisFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (formData: Hypothesis) => Promise<void>;
   hypothesis?: Hypothesis;
-  projectId: string;
 }
 
-const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: HypothesisFormProps) => {
-  const { toast } = useToast();
+const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis }: HypothesisFormProps) => {
   const isEditing = !!hypothesis;
-  const [category, setCategory] = useState(hypothesis?.category || 'value');
 
-  const form = useForm<FormData>({
-    defaultValues: hypothesis ? {
-      category: hypothesis.category,
-      statement: hypothesis.statement,
-      experiment: hypothesis.experiment,
-      criteria: hypothesis.criteria,
-      status: hypothesis.status,
-      result: hypothesis.result || null,
-      evidence: hypothesis.evidence || null,
-    } : {
-      category: 'value',
+  const form = useForm<Hypothesis>({
+    defaultValues: hypothesis || {
       statement: '',
-      experiment: '',
+      category: 'value',
       criteria: '',
+      experiment: '',
       status: 'not-started',
-      result: null,
-      evidence: null,
-    }
+      evidence: '',
+      result: '',
+    },
   });
 
-  // Update templates when category changes
-  useEffect(() => {
-    setCategory(form.watch('category'));
-  }, [form.watch('category')]);
-
-  const handleSubmit = async (data: FormData) => {
-    try {
-      if (isEditing && hypothesis) {
-        // Update existing hypothesis - use originalId if available
-        const id = hypothesis.originalId || hypothesis.id;
-        const { error } = await supabase
-          .from('hypotheses')
-          .update({
-            ...data,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', id);
-
-        if (error) throw error;
-        toast({
-          title: 'Hypothesis updated',
-          description: 'The hypothesis has been successfully updated.',
-        });
-      } else {
-        // Create new hypothesis
-        const { error } = await supabase
-          .from('hypotheses')
-          .insert({
-            ...data,
-            project_id: projectId,
-          });
-
-        if (error) throw error;
-        toast({
-          title: 'Hypothesis created',
-          description: 'A new hypothesis has been created successfully.',
-        });
-      }
-      
-      onSave();
-      onClose();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'An error occurred. Please try again.',
-        variant: 'destructive',
-      });
-    }
+  const handleSubmit = async (data: Hypothesis) => {
+    await onSave(data);
+    onClose();
   };
 
-  const applyTemplate = (template: string) => {
+  const applyHypothesisTemplate = (template: string) => {
     form.setValue('statement', template);
   };
 
+  const getHypothesisTemplates = () => {
+    const category = form.watch('category');
+    return category === 'value' ? TEMPLATE_VALUE_HYPOTHESES : TEMPLATE_GROWTH_HYPOTHESES;
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Hypothesis' : 'Create New Hypothesis'}</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -137,13 +91,10 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -155,7 +106,7 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="statement"
@@ -173,57 +124,31 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-[400px]">
                         <DropdownMenuGroup>
-                          {category === 'value' ? (
-                            TEMPLATE_VALUE_HYPOTHESES.map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))
-                          ) : (
-                            TEMPLATE_GROWTH_HYPOTHESES.map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))
-                          )}
+                          {getHypothesisTemplates().map((template, index) => (
+                            <DropdownMenuItem
+                              key={index}
+                              onClick={() => applyHypothesisTemplate(template)}
+                              className="cursor-pointer py-2"
+                            >
+                              {template}
+                            </DropdownMenuItem>
+                          ))}
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Enter hypothesis statement or select a template"
-                      {...field} 
+                    <Textarea
+                      placeholder="Enter your hypothesis statement..."
                       className="h-24"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <FormField
-              control={form.control}
-              name="experiment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Test Experiment</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="How will you test this hypothesis?" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
+
             <FormField
               control={form.control}
               name="criteria"
@@ -231,60 +156,61 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
                 <FormItem>
                   <FormLabel>Success Criteria</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="What defines success for this hypothesis?" {...field} />
+                    <Textarea
+                      placeholder="What would make this hypothesis true?"
+                      className="h-20"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
-              name="status"
+              name="experiment"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="not-started">Not Started</SelectItem>
-                      <SelectItem value="validating">Validating</SelectItem>
-                      <SelectItem value="validated">Validated</SelectItem>
-                      <SelectItem value="invalid">Invalid</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Experiment Plan</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="How will you test this hypothesis?"
+                      className="h-20"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            {(form.watch('status') === 'validated' || form.watch('status') === 'invalid') && (
+
+            {isEditing && (
               <>
                 <FormField
                   control={form.control}
-                  name="result"
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Results</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="What were the results?"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)}
-                        />
-                      </FormControl>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="not-started">Not Started</SelectItem>
+                          <SelectItem value="in-progress">In Progress</SelectItem>
+                          <SelectItem value="validated">Validated</SelectItem>
+                          <SelectItem value="invalidated">Invalidated</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="evidence"
@@ -292,10 +218,28 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
                     <FormItem>
                       <FormLabel>Evidence</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="What evidence supports the results?"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)}
+                        <Textarea
+                          placeholder="What evidence did you collect?"
+                          className="h-20"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="result"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Result</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="What was the outcome of testing this hypothesis?"
+                          className="h-20"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -304,9 +248,11 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
                 />
               </>
             )}
-            
+
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
               <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
             </DialogFooter>
           </form>

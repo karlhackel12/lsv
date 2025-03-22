@@ -1,5 +1,4 @@
 
-// This is a new file that integrates the success criteria templates
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -47,7 +46,18 @@ import {
   TEMPLATE_BUSINESS_MODEL_CRITERIA
 } from '@/types/pivot';
 
-type FormData = Omit<Experiment, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
+// Define the form data type based on database schema
+type FormData = {
+  title: string;
+  hypothesis: string;
+  method: string;
+  metrics: string;
+  results: string | null;
+  insights: string | null;
+  decisions: string | null;
+  status: 'not-started' | 'in-progress' | 'completed' | 'abandoned';
+  category?: 'problem' | 'solution' | 'business-model';
+};
 
 interface ExperimentFormProps {
   isOpen: boolean;
@@ -64,29 +74,31 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
 
   const form = useForm<FormData>({
     defaultValues: experiment ? {
-      name: experiment.name,
-      description: experiment.description,
-      hypothesis_id: experiment.hypothesis_id,
-      category: experiment.category || 'problem',
-      method: experiment.method,
-      success_criteria: experiment.success_criteria,
-      status: experiment.status,
+      title: experiment.title || '',
+      hypothesis: experiment.hypothesis || '',
+      method: experiment.method || '',
+      metrics: experiment.metrics || '',
       results: experiment.results || null,
+      insights: experiment.insights || null,
+      decisions: experiment.decisions || null,
+      status: experiment.status || 'not-started',
+      category: experiment.category || 'problem',
     } : {
-      name: '',
-      description: '',
-      hypothesis_id: null,
-      category: 'problem',
+      title: '',
+      hypothesis: '',
       method: '',
-      success_criteria: '',
-      status: 'not-started',
+      metrics: '',
       results: null,
+      insights: null,
+      decisions: null,
+      status: 'not-started',
+      category: 'problem',
     }
   });
 
   // Update templates when category changes
   React.useEffect(() => {
-    setCategory(form.watch('category'));
+    setCategory(form.watch('category') || 'problem');
   }, [form.watch('category')]);
 
   const handleSubmit = async (data: FormData) => {
@@ -137,7 +149,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
   };
 
   const applyCriteriaTemplate = (template: string) => {
-    form.setValue('success_criteria', template);
+    form.setValue('metrics', template);
   };
 
   // Helper function to get experiment templates based on category
@@ -179,12 +191,12 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter experiment name" {...field} />
+                    <Input placeholder="Enter experiment title" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -193,13 +205,13 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
             
             <FormField
               control={form.control}
-              name="description"
+              name="hypothesis"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Hypothesis</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Enter experiment description" 
+                      placeholder="Enter experiment hypothesis" 
                       className="h-24"
                       {...field} 
                     />
@@ -279,7 +291,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
             
             <FormField
               control={form.control}
-              name="success_criteria"
+              name="metrics"
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">

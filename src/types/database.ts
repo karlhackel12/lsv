@@ -1,4 +1,3 @@
-
 // Custom types for our database tables
 export interface Project {
   id: string;
@@ -38,18 +37,23 @@ export interface Hypothesis {
 
 export interface Experiment {
   id: string;
-  project_id: string;
+  originalId?: string;
   title: string;
   hypothesis: string;
-  status: 'completed' | 'in-progress' | 'planned';
   method: string;
   metrics: string;
   results: string | null;
   insights: string | null;
   decisions: string | null;
+  project_id: string;
+  status: 'not-started' | 'in-progress' | 'completed' | 'abandoned';
   created_at: string;
   updated_at: string;
-  originalId?: string;
+  name?: string;
+  description?: string;
+  hypothesis_id?: string;
+  category?: 'problem' | 'solution' | 'business-model';
+  success_criteria?: string;
 }
 
 export interface MvpFeature {

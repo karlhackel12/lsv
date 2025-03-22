@@ -30,14 +30,7 @@ const HypothesesPage = () => {
         
       if (error) throw error;
       
-      // Transform the data to include originalId (needed for database operations)
-      const transformedData = data.map(item => ({
-        ...item,
-        originalId: item.id,
-        id: item.id
-      }));
-      
-      setHypotheses(transformedData);
+      setHypotheses(data);
     } catch (err) {
       console.error('Error fetching hypotheses:', err);
       toast({
@@ -66,13 +59,68 @@ const HypothesesPage = () => {
     setIsFormOpen(true);
   };
 
+  const handleSaveHypothesis = async (formData: Hypothesis) => {
+    try {
+      if (selectedHypothesis) {
+        // Update existing hypothesis
+        const { error } = await supabase
+          .from('hypotheses')
+          .update({
+            statement: formData.statement,
+            category: formData.category,
+            status: formData.status,
+            criteria: formData.criteria,
+            experiment: formData.experiment,
+            evidence: formData.evidence,
+            result: formData.result,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedHypothesis.id);
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Success',
+          description: 'Hypothesis updated successfully',
+        });
+      } else {
+        // Create new hypothesis
+        const { error } = await supabase
+          .from('hypotheses')
+          .insert({
+            statement: formData.statement,
+            category: formData.category,
+            status: 'not-started',
+            criteria: formData.criteria,
+            experiment: formData.experiment,
+            project_id: currentProject?.id,
+          });
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Success',
+          description: 'New hypothesis created successfully',
+        });
+      }
+      
+      await fetchHypotheses();
+    } catch (err) {
+      console.error('Error saving hypothesis:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to save hypothesis',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleDeleteHypothesis = async (hypothesis: Hypothesis) => {
     try {
-      const id = hypothesis.originalId || hypothesis.id;
       const { error } = await supabase
         .from('hypotheses')
         .delete()
-        .eq('id', id);
+        .eq('id', hypothesis.id);
         
       if (error) throw error;
       
@@ -99,83 +147,6 @@ const HypothesesPage = () => {
     setSelectedHypothesis(null);
   };
 
-  const handleFormSubmit = async (formData: Hypothesis) => {
-    try {
-      // Create or update hypothesis
-      if (selectedHypothesis) {
-        // Update existing hypothesis
-        const { error } = await supabase
-          .from('hypotheses')
-          .update({
-            statement: formData.statement,
-            category: formData.category,
-            experiment: formData.experiment,
-            criteria: formData.criteria,
-            status: formData.status,
-            result: formData.result,
-            evidence: formData.evidence,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedHypothesis.originalId || selectedHypothesis.id);
-          
-        if (error) throw error;
-        
-        setHypotheses(prevHypotheses =>
-          prevHypotheses.map(h => 
-            h.id === selectedHypothesis.id 
-              ? { ...formData, id: h.id, originalId: h.originalId } 
-              : h
-          )
-        );
-        
-        toast({
-          title: 'Success',
-          description: 'Hypothesis updated successfully',
-        });
-      } else {
-        // Create new hypothesis
-        const { data, error } = await supabase
-          .from('hypotheses')
-          .insert({
-            project_id: currentProject?.id,
-            statement: formData.statement,
-            category: formData.category,
-            experiment: formData.experiment,
-            criteria: formData.criteria,
-            status: formData.status,
-            result: formData.result,
-            evidence: formData.evidence,
-          })
-          .select();
-          
-        if (error) throw error;
-        
-        const newHypothesis = {
-          ...data[0],
-          originalId: data[0].id,
-          id: data[0].id,
-        };
-        
-        setHypotheses(prevHypotheses => [newHypothesis, ...prevHypotheses]);
-        
-        toast({
-          title: 'Success',
-          description: 'Hypothesis created successfully',
-        });
-      }
-      
-      // Close the form
-      handleFormClose();
-    } catch (err) {
-      console.error('Error saving hypothesis:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to save hypothesis',
-        variant: 'destructive',
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -197,13 +168,15 @@ const HypothesesPage = () => {
 
   return (
     <div className="p-6">
-      {/* Add hypothesis form dialog */}
-      <HypothesisForm
-        isOpen={isFormOpen}
-        onClose={handleFormClose}
-        onSubmit={handleFormSubmit}
-        hypothesis={selectedHypothesis}
-      />
+      {/* Hypothesis form dialog */}
+      {isFormOpen && (
+        <HypothesisForm
+          isOpen={isFormOpen}
+          onClose={handleFormClose}
+          onSave={handleSaveHypothesis}
+          hypothesis={selectedHypothesis || undefined}
+        />
+      )}
       
       {/* Main content */}
       <Tabs defaultValue="list" className="w-full">
@@ -213,11 +186,11 @@ const HypothesesPage = () => {
         </TabsList>
         <TabsContent value="list" className="mt-6">
           <HypothesisList 
-            hypotheses={hypotheses} 
-            isLoading={isLoadingHypotheses}
+            hypotheses={hypotheses}
             onEdit={handleEditHypothesis}
             onDelete={handleDeleteHypothesis}
             onCreateNew={handleCreateHypothesis}
+            isLoading={isLoadingHypotheses}
           />
         </TabsContent>
         <TabsContent value="create" className="mt-6">

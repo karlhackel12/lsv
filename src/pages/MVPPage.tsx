@@ -4,19 +4,21 @@ import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { MvpFeature } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MVPSection from '@/components/MVPSection';
 import { Loader2 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import MVPTable from '@/components/MVPTable';
+import MVPFeatureForm from '@/components/forms/MVPFeatureForm';
 import CurrentlyWorkingOn from '@/components/CurrentlyWorkingOn';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const MVPPage = () => {
   const { currentProject, isLoading, error } = useProject();
   const [mvpFeatures, setMvpFeatures] = useState<MvpFeature[]>([]);
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<MvpFeature | null>(null);
   const { toast } = useToast();
 
-  const fetchMVPFeatures = async () => {
+  const fetchMvpFeatures = async () => {
     if (!currentProject) return;
     
     try {
@@ -25,27 +27,16 @@ const MVPPage = () => {
         .from('mvp_features')
         .select('*')
         .eq('project_id', currentProject.id)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
         
       if (error) throw error;
       
-      // Transform the data to match the expected format and include originalId
-      const transformedData = data.map(item => ({
-        ...item,
-        originalId: item.id,
-        id: item.id,
-        name: item.feature,
-        description: item.notes || '',
-        effort: item.priority, // Use priority as effort for now
-        impact: item.priority === 'high' ? 'high' : item.priority === 'medium' ? 'medium' : 'low', // Derive impact from priority
-      }));
-      
-      setMvpFeatures(transformedData);
+      setMvpFeatures(data);
     } catch (err) {
       console.error('Error fetching MVP features:', err);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to load MVP features',
+        description: 'Failed to load MVP features',
         variant: 'destructive',
       });
     } finally {
@@ -55,9 +46,55 @@ const MVPPage = () => {
 
   useEffect(() => {
     if (currentProject) {
-      fetchMVPFeatures();
+      fetchMvpFeatures();
     }
   }, [currentProject]);
+
+  const handleCreateFeature = () => {
+    setSelectedFeature(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditFeature = (feature: MvpFeature) => {
+    setSelectedFeature(feature);
+    setIsFormOpen(true);
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedFeature(null);
+  };
+
+  const handleFormSave = () => {
+    fetchMvpFeatures();
+    setIsFormOpen(false);
+    setSelectedFeature(null);
+  };
+
+  const handleDeleteFeature = async (feature: MvpFeature) => {
+    try {
+      const { error } = await supabase
+        .from('mvp_features')
+        .delete()
+        .eq('id', feature.id);
+        
+      if (error) throw error;
+      
+      setMvpFeatures(prev => prev.filter(f => f.id !== feature.id));
+      
+      toast({
+        title: 'Feature deleted',
+        description: 'The feature has been successfully deleted.',
+      });
+    } catch (err) {
+      console.error('Error deleting feature:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete feature',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -80,84 +117,51 @@ const MVPPage = () => {
 
   return (
     <div className="p-6">
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="all">All Features</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-          <TabsTrigger value="phases">Phases</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-6">
-          {currentProject && (
-            <MVPSection 
-              mvpFeatures={mvpFeatures} 
-              refreshData={fetchMVPFeatures}
-              projectId={currentProject.id}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="in-progress" className="mt-6">
-          {currentProject && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold mb-4">Currently Working On</h2>
-              <CurrentlyWorkingOn mvpFeatures={mvpFeatures} />
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="phases" className="mt-6">
-          <MVPPhases mvpFeatures={mvpFeatures} />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-const MVPPhases = ({ mvpFeatures }: { mvpFeatures: MvpFeature[] }) => {
-  // Define the phases
-  const phases = [
-    { id: 'foundation', name: 'Foundation Phase', description: 'Core infrastructure and basic features' },
-    { id: 'teacher', name: 'Teacher Features Phase', description: 'Features for teachers and instructors' },
-    { id: 'student', name: 'Student Features Phase', description: 'Features for students and learners' },
-    { id: 'business', name: 'Business Model Phase', description: 'Features related to monetization and business operations' },
-  ];
-
-  // For this example, we'll randomly assign features to phases for visualization purposes
-  // In a real application, you would have a phase field in your database
-  
-  // Create a function to calculate completion for each phase
-  const calculatePhaseCompletion = (phaseId: string) => {
-    // In a real application, you would filter features by phase
-    // Here we're just using a deterministic pseudo-random assignment for demo purposes
-    const phaseFeatures = mvpFeatures.filter((_, index) => index % phases.length === phases.findIndex(p => p.id === phaseId));
-    
-    if (phaseFeatures.length === 0) return 0;
-    
-    const completed = phaseFeatures.filter(f => f.status === 'completed').length;
-    return Math.round((completed / phaseFeatures.length) * 100);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">MVP Progress by Phase</h2>
-        <p className="text-gray-600">Track the progress of your MVP across different development phases.</p>
-      </div>
+      {/* Feature form dialog */}
+      {isFormOpen && (
+        <MVPFeatureForm
+          isOpen={isFormOpen}
+          onClose={handleFormClose}
+          onSave={handleFormSave}
+          feature={selectedFeature}
+          projectId={currentProject?.id || ''}
+        />
+      )}
       
-      {phases.map(phase => (
-        <div key={phase.id} className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-2">{phase.name}</h3>
-          <p className="text-gray-600 mb-4">{phase.description}</p>
-          
-          <div className="mb-2 flex justify-between items-center">
-            <span className="text-sm font-medium">Completion:</span>
-            <span className="text-sm font-medium">{calculatePhaseCompletion(phase.id)}%</span>
-          </div>
-          
-          <Progress value={calculatePhaseCompletion(phase.id)} className="h-2.5" />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="all">All Features</TabsTrigger>
+              <TabsTrigger value="add">Add Feature</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all" className="mt-6">
+              <MVPTable
+                features={mvpFeatures}
+                isLoading={isLoadingFeatures}
+                onEdit={handleEditFeature}
+                onDelete={handleDeleteFeature}
+              />
+            </TabsContent>
+            
+            <TabsContent value="add" className="mt-6">
+              <div className="flex items-center justify-center p-12">
+                <button
+                  onClick={handleCreateFeature}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Add New Feature
+                </button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
-      ))}
+        
+        <div className="lg:col-span-1">
+          <CurrentlyWorkingOn features={mvpFeatures} />
+        </div>
+      </div>
     </div>
   );
 };
