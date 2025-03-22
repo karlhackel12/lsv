@@ -11,16 +11,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  SidebarProvider,
   Sidebar,
-  SidebarTrigger,
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const mainNavItems = [
   {
@@ -56,8 +54,6 @@ const mainNavItems = [
 ];
 
 const SideNavigation = () => {
-  const isMobile = useIsMobile();
-
   return (
     <Sidebar>
       <SidebarHeader className="flex items-center p-4">

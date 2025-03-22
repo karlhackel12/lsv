@@ -17,7 +17,7 @@ const TextField = ({ form, name, label, placeholder, height = "min-h-[5rem]" }: 
   return (
     <FormField
       control={form.control}
-      name={name}
+      name={name as any}
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
