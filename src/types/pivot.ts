@@ -69,3 +69,24 @@ export const TEMPLATE_BUSINESS_MODEL_EXPERIMENTS = [
   "Compare {pricing_tiers} using split testing measuring overall revenue",
   "Implement {acquisition_channel} with {budget} measuring CAC and conversion"
 ];
+
+export const TEMPLATE_PROBLEM_CRITERIA = [
+  ">75% of interviewed users report this as a top 3 problem",
+  ">30% email signup rate on landing page",
+  ">50% of users currently using workarounds for this problem",
+  "Problem severity rated >8/10 by >60% of users"
+];
+
+export const TEMPLATE_SOLUTION_CRITERIA = [
+  ">65% daily active usage rate",
+  ">40% improvement over control group",
+  ">80% task completion rate with prototype",
+  "NPS score >40 after using solution"
+];
+
+export const TEMPLATE_BUSINESS_MODEL_CRITERIA = [
+  ">70% conversion rate at target price point",
+  "CAC <$X with >$Y LTV (3:1 ratio minimum)",
+  ">60% retention at 60 days",
+  ">0.5 viral coefficient (referrals per user)"
+];
