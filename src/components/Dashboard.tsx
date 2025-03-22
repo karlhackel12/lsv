@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight } from 'lucide-react';
@@ -7,13 +8,11 @@ import StatusBadge from './StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { Project, Hypothesis, Experiment, MvpFeature, Metric, PivotOption } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useProject } from '@/hooks/use-project';
 
-interface DashboardProps {
-  project: Project;
-}
-
-const Dashboard = ({ project }: DashboardProps) => {
+const Dashboard = () => {
   const { toast } = useToast();
+  const { currentProject } = useProject();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [mvpFeatures, setMvpFeatures] = useState<MvpFeature[]>([]);
@@ -23,9 +22,14 @@ const Dashboard = ({ project }: DashboardProps) => {
 
   useEffect(() => {
     const fetchProjectData = async () => {
+      if (!currentProject?.id) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const projectId = project.id;
+        const projectId = currentProject.id;
 
         // Fetch hypotheses
         const { data: hypothesesData, error: hypothesesError } = await supabase
@@ -136,17 +140,26 @@ const Dashboard = ({ project }: DashboardProps) => {
       }
     };
 
-    if (project && project.id) {
+    if (currentProject && currentProject.id) {
       fetchProjectData();
     }
-  }, [project, toast]);
+  }, [currentProject, toast]);
 
   const getStageIndex = (stage: string): number => {
     const stages = ['problem-validation', 'solution-validation', 'mvp', 'product-market-fit', 'scale', 'mature'];
     return stages.indexOf(stage);
   };
 
-  const stageIndex = getStageIndex(project.stage);
+  // Check if there's no current project
+  if (!currentProject) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-validation-gray-500">No project selected. Please select or create a project.</p>
+      </div>
+    );
+  }
+
+  const stageIndex = getStageIndex(currentProject.stage);
   const progress = ((stageIndex + 1) / 6) * 100;
 
   if (loading) {
@@ -164,16 +177,16 @@ const Dashboard = ({ project }: DashboardProps) => {
           <h2 className="text-2xl font-bold text-validation-gray-900">Project Overview</h2>
         </div>
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-validation-gray-900">{project.name}</h3>
-          <p className="text-validation-gray-600">{project.description}</p>
+          <h3 className="text-lg font-semibold text-validation-gray-900">{currentProject.name}</h3>
+          <p className="text-validation-gray-600">{currentProject.description}</p>
         </div>
         <div className="mt-4">
           <h4 className="text-sm font-medium text-validation-gray-500">Current Stage</h4>
           <div className="flex items-center justify-between">
-            <p className="text-validation-gray-700">{project.stage.replace('-', ' ')}</p>
-            <StatusBadge status={project.stage} />
+            <p className="text-validation-gray-700">{currentProject.stage.replace('-', ' ')}</p>
+            <StatusBadge status={currentProject.stage as any} />
           </div>
-          <ProgressBar progress={progress} />
+          <ProgressBar value={progress} max={100} variant="default" size="default" />
         </div>
       </Card>
 
@@ -199,7 +212,7 @@ const Dashboard = ({ project }: DashboardProps) => {
                     <h3 className="text-lg font-semibold text-validation-gray-900">{hypothesis.statement}</h3>
                     <p className="text-validation-gray-600 text-sm">{hypothesis.experiment}</p>
                   </div>
-                  <StatusBadge status={hypothesis.status} />
+                  <StatusBadge status={hypothesis.status as any} />
                 </div>
               ))}
             </div>
@@ -227,7 +240,7 @@ const Dashboard = ({ project }: DashboardProps) => {
                     <h3 className="text-lg font-semibold text-validation-gray-900">{experiment.title}</h3>
                     <p className="text-validation-gray-600 text-sm">{experiment.hypothesis}</p>
                   </div>
-                  <StatusBadge status={experiment.status} />
+                  <StatusBadge status={experiment.status as any} />
                 </div>
               ))}
             </div>
@@ -257,7 +270,7 @@ const Dashboard = ({ project }: DashboardProps) => {
                     <h3 className="text-lg font-semibold text-validation-gray-900">{feature.feature}</h3>
                     <p className="text-validation-gray-600 text-sm">{feature.notes}</p>
                   </div>
-                  <StatusBadge status={feature.status} />
+                  <StatusBadge status={feature.status as any} />
                 </div>
               ))}
             </div>
@@ -285,7 +298,7 @@ const Dashboard = ({ project }: DashboardProps) => {
                     <h3 className="text-lg font-semibold text-validation-gray-900">{metric.name}</h3>
                     <p className="text-validation-gray-600 text-sm">Target: {metric.target}</p>
                   </div>
-                  <StatusBadge status={metric.status} />
+                  <StatusBadge status={metric.status as any} />
                 </div>
               ))}
             </div>

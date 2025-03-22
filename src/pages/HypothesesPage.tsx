@@ -5,9 +5,9 @@ import { useProject } from '@/hooks/use-project';
 import MainLayout from '@/components/MainLayout';
 
 const HypothesesPage = () => {
-  const { project, loading, error } = useProject();
+  const { currentProject, isLoading, error } = useProject();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <MainLayout>
         <div className="container mx-auto px-4 py-8">
@@ -17,12 +17,12 @@ const HypothesesPage = () => {
     );
   }
 
-  if (error || !project) {
+  if (error || !currentProject) {
     return (
       <MainLayout>
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-validation-red-500">
-            {error || 'Project not found'}
+            {error instanceof Error ? error.message : 'Project not found'}
           </p>
         </div>
       </MainLayout>
@@ -32,7 +32,7 @@ const HypothesesPage = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <HypothesesSection hypotheses={[]} refreshData={() => {}} projectId={project.id} />
+        <HypothesesSection hypotheses={[]} refreshData={() => {}} projectId={currentProject.id} />
       </div>
     </MainLayout>
   );
