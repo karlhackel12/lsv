@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,15 @@ import { Hypothesis } from '@/types/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, Lightbulb } from 'lucide-react';
+import { TEMPLATE_VALUE_HYPOTHESES, TEMPLATE_GROWTH_HYPOTHESES } from '@/types/pivot';
 
 type FormData = Omit<Hypothesis, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
 
@@ -37,6 +46,7 @@ interface HypothesisFormProps {
 const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: HypothesisFormProps) => {
   const { toast } = useToast();
   const isEditing = !!hypothesis;
+  const [category, setCategory] = useState(hypothesis?.category || 'value');
 
   const form = useForm<FormData>({
     defaultValues: hypothesis ? {
@@ -57,6 +67,11 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
       evidence: null,
     }
   });
+
+  // Update templates when category changes
+  useEffect(() => {
+    setCategory(form.watch('category'));
+  }, [form.watch('category')]);
 
   const handleSubmit = async (data: FormData) => {
     try {
@@ -103,6 +118,10 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
     }
   };
 
+  const applyTemplate = (template: string) => {
+    form.setValue('statement', template);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
@@ -142,9 +161,49 @@ const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: Hypo
               name="statement"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Hypothesis Statement</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Hypothesis Statement</FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <Lightbulb className="h-4 w-4 mr-2" />
+                          Templates
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[400px]">
+                        <DropdownMenuGroup>
+                          {category === 'value' ? (
+                            TEMPLATE_VALUE_HYPOTHESES.map((template, index) => (
+                              <DropdownMenuItem 
+                                key={index}
+                                onClick={() => applyTemplate(template)}
+                                className="cursor-pointer py-2"
+                              >
+                                {template}
+                              </DropdownMenuItem>
+                            ))
+                          ) : (
+                            TEMPLATE_GROWTH_HYPOTHESES.map((template, index) => (
+                              <DropdownMenuItem 
+                                key={index}
+                                onClick={() => applyTemplate(template)}
+                                className="cursor-pointer py-2"
+                              >
+                                {template}
+                              </DropdownMenuItem>
+                            ))
+                          )}
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <FormControl>
-                    <Textarea placeholder="Enter hypothesis statement" {...field} />
+                    <Textarea 
+                      placeholder="Enter hypothesis statement or select a template"
+                      {...field} 
+                      className="h-24"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
