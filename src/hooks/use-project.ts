@@ -53,6 +53,40 @@ export function useProject() {
     localStorage.setItem('selectedProjectId', project.id);
   };
 
+  // Used to update project stage when moving to next stage
+  const updateProjectStage = async (projectId: string, newStage: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ stage: newStage, updated_at: new Date() })
+        .eq('id', projectId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        // Update the current project in state
+        setCurrentProject(prev => prev?.id === projectId ? data as Project : prev);
+        
+        toast({
+          title: 'Project Updated',
+          description: `Project stage updated to ${newStage.replace('-', ' ')}`,
+        });
+        
+        return data as Project;
+      }
+    } catch (err) {
+      console.error('Error updating project stage:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to update project stage',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
   // Load selected project from localStorage on init
   useEffect(() => {
     const savedProjectId = localStorage.getItem('selectedProjectId');
@@ -69,6 +103,7 @@ export function useProject() {
     projects,
     currentProject,
     selectProject,
+    updateProjectStage,
     isLoading,
     error,
   };

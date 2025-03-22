@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight } from 'lucide-react';
+import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight, Share2, FileUp, ArrowRight, Edit } from 'lucide-react';
 import Card from './Card';
 import ProgressBar from './ProgressBar';
 import StatusBadge from './StatusBadge';
@@ -15,6 +15,8 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
+import OverviewSection from '@/components/OverviewSection';
+import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -181,26 +183,103 @@ const Dashboard = () => {
       </div>
     );
   }
+  
+  const stageDefinitions = [
+    {
+      id: '1',
+      name: 'Problem Validation',
+      description: 'Identify and validate the problem your solution addresses',
+      complete: stageIndex > 0 || currentProject.stage === 'problem-validation',
+      inProgress: currentProject.stage === 'problem-validation'
+    },
+    {
+      id: '2',
+      name: 'Solution Validation',
+      description: 'Test your proposed solution with potential users',
+      complete: stageIndex > 1,
+      inProgress: currentProject.stage === 'solution-validation'
+    },
+    {
+      id: '3',
+      name: 'MVP Development',
+      description: 'Build a minimum viable product to test with users',
+      complete: stageIndex > 2,
+      inProgress: currentProject.stage === 'mvp'
+    },
+    {
+      id: '4',
+      name: 'Product-Market Fit',
+      description: 'Achieve measurable traction that proves market demand',
+      complete: stageIndex > 3,
+      inProgress: currentProject.stage === 'product-market-fit'
+    },
+    {
+      id: '5',
+      name: 'Scale',
+      description: 'Scale your solution to reach more users',
+      complete: stageIndex > 4,
+      inProgress: currentProject.stage === 'scale'
+    },
+    {
+      id: '6',
+      name: 'Mature',
+      description: 'Optimize and expand your validated business',
+      complete: stageIndex > 5,
+      inProgress: currentProject.stage === 'mature'
+    }
+  ];
+  
+  const handleMoveNextStage = () => {
+    const stages = ['problem-validation', 'solution-validation', 'mvp', 'product-market-fit', 'scale', 'mature'];
+    const currentIndex = stages.indexOf(currentProject.stage);
+    if (currentIndex < stages.length - 1) {
+      const nextStage = stages[currentIndex + 1];
+      // In a real implementation, you would update the project stage in the database here
+      toast({
+        title: "Stage advancement",
+        description: `Project moved to ${nextStage.replace('-', ' ')} stage`,
+      });
+    }
+  };
 
   return (
     <div className="grid gap-6">
-      <Card className="col-span-2 p-6 bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-validation-gray-900">Project Overview</h2>
-        </div>
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-validation-gray-900">{currentProject.name}</h3>
-          <p className="text-validation-gray-600">{currentProject.description}</p>
-        </div>
-        <div className="mt-4">
-          <h4 className="text-sm font-medium text-validation-gray-500">Current Stage</h4>
-          <div className="flex items-center justify-between">
-            <p className="text-validation-gray-700">{currentProject.stage.replace('-', ' ')}</p>
-            <StatusBadge status={currentProject.stage as any} />
+      <div className="col-span-2">
+        <OverviewSection 
+          project={currentProject} 
+          stages={stageDefinitions}
+        />
+        
+        {/* Quick Actions Panel */}
+        <Card className="p-4 bg-white mt-4 border-t-4 border-t-validation-blue-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between">
+            <h3 className="text-lg font-semibold text-validation-gray-900 mb-3 sm:mb-0">Quick Actions</h3>
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Edit className="h-4 w-4" />
+                <span>Edit Project</span>
+              </Button>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </Button>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <FileUp className="h-4 w-4" />
+                <span>Export</span>
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="bg-validation-blue-600 hover:bg-validation-blue-700 flex items-center gap-1"
+                onClick={handleMoveNextStage}
+              >
+                <ArrowRight className="h-4 w-4" />
+                <span>Move to Next Stage</span>
+              </Button>
+            </div>
           </div>
-          <ProgressBar value={progress} max={100} variant="default" size="md" />
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       <Accordion type="multiple" className="w-full space-y-4" defaultValue={["hypotheses", "experiments"]}>
         <AccordionItem value="hypotheses" className="border rounded-lg overflow-hidden shadow-md bg-white">
