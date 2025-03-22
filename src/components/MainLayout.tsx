@@ -7,7 +7,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 
 const MainLayout = () => {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen bg-validation-gray-50 overflow-hidden w-full">
         <SideNavigation />
         <div className="flex-1 flex flex-col w-full">

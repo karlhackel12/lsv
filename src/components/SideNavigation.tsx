@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
+  SidebarRail,
 } from '@/components/ui/sidebar';
 
 const mainNavItems = [
@@ -55,7 +56,8 @@ const mainNavItems = [
 
 const SideNavigation = () => {
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar" collapsible="icon">
+      <SidebarRail />
       <SidebarHeader className="flex items-center p-4">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center">
