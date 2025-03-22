@@ -17,18 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TEMPLATE_VALUE_HYPOTHESES, TEMPLATE_GROWTH_HYPOTHESES } from '@/types/pivot';
-
-interface Hypothesis {
-  id: number;
-  originalId?: string;
-  category: string;
-  statement: string;
-  experiment: string;
-  criteria: string;
-  status: 'validated' | 'validating' | 'not-started' | 'invalid';
-  result: string | null;
-  evidence: string | null;
-}
+import { Hypothesis } from '@/types/database';
 
 interface HypothesesSectionProps {
   hypotheses: Hypothesis[];
@@ -39,9 +28,9 @@ interface HypothesesSectionProps {
 const HypothesesSection = ({ hypotheses, refreshData, projectId }: HypothesesSectionProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedHypothesis, setSelectedHypothesis] = useState<any>(null);
+  const [selectedHypothesis, setSelectedHypothesis] = useState<Hypothesis | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [hypothesisToDelete, setHypothesisToDelete] = useState<any>(null);
+  const [hypothesisToDelete, setHypothesisToDelete] = useState<Hypothesis | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
 
   const handleCreateNew = () => {
