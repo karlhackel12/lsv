@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Card from './Card';
 import StatusBadge from './StatusBadge';
@@ -7,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import MVPFeatureForm from './forms/MVPFeatureForm';
+import MVPTable from './MVPTable';
+import CurrentlyWorkingOn from './CurrentlyWorkingOn';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,20 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface MvpFeature {
-  id: number;
-  originalId?: string;
-  name: string;
-  description: string;
-  status: 'completed' | 'in-progress' | 'planned';
-  priority: 'high' | 'medium' | 'low';
-  effort: 'high' | 'medium' | 'low';
-  impact: 'high' | 'medium' | 'low';
-}
+import ProgressBar from './ProgressBar';
 
 interface MVPSectionProps {
-  mvpFeatures: MvpFeature[];
+  mvpFeatures: any[];
   refreshData: () => void;
   projectId: string;
 }
@@ -41,13 +34,14 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [featureToDelete, setFeatureToDelete] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const handleCreateNew = () => {
     setSelectedFeature(null);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (feature: MvpFeature) => {
+  const handleEdit = (feature: any) => {
     // Find original feature with string ID for database operations
     const originalFeature = {
       ...feature,
@@ -57,7 +51,7 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
     setIsFormOpen(true);
   };
 
-  const handleDelete = (feature: MvpFeature) => {
+  const handleDelete = (feature: any) => {
     setFeatureToDelete({
       ...feature,
       id: feature.originalId
@@ -94,7 +88,7 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
     }
   };
 
-  const updateFeatureStatus = async (feature: MvpFeature, newStatus: 'completed' | 'in-progress' | 'planned') => {
+  const updateFeatureStatus = async (feature: any, newStatus: 'completed' | 'in-progress' | 'planned') => {
     try {
       const { error } = await supabase
         .from('mvp_features')
@@ -130,24 +124,33 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
 
   const progress = calculateProgress();
 
-  // Get progress bar type based on progress value
-  const getProgressBarType = (progress: number): "default" | "success" | "warning" => {
-    if (progress >= 70) return "success";
-    if (progress >= 30) return "warning";
-    return "default";
-  };
-
   return (
     <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-validation-gray-900">Minimum Viable Product</h2>
-        <Button 
-          className="bg-validation-blue-600 hover:bg-validation-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors duration-300 shadow-subtle"
-          onClick={handleCreateNew}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add MVP Feature
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline"
+            className={`${viewMode === 'cards' ? 'bg-gray-100' : ''}`}
+            onClick={() => setViewMode('cards')}
+          >
+            Card View
+          </Button>
+          <Button 
+            variant="outline"
+            className={`${viewMode === 'table' ? 'bg-gray-100' : ''}`}
+            onClick={() => setViewMode('table')}
+          >
+            Table View
+          </Button>
+          <Button 
+            className="bg-validation-blue-600 hover:bg-validation-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors duration-300 shadow-subtle"
+            onClick={handleCreateNew}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add MVP Feature
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-8 p-6 animate-slideUpFade animate-delay-100">
@@ -162,11 +165,21 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
             <h3 className="text-lg font-semibold text-validation-gray-900">MVP Progress</h3>
             <span className="text-validation-gray-700 font-medium">{progress}% Complete</span>
           </div>
-          <Progress value={progress} className={`h-2 ${
-            progress >= 70 ? 'bg-validation-green-100' : 
-            progress >= 30 ? 'bg-validation-yellow-100' : 
-            'bg-validation-red-100'
-          }`} />
+          <ProgressBar 
+            value={progress} 
+            variant={progress >= 70 ? 'success' : progress >= 30 ? 'warning' : 'error'}
+            size="md"
+          />
+        </Card>
+      )}
+
+      {mvpFeatures.filter(f => f.status === 'in-progress').length > 0 && (
+        <Card className="mb-8 p-6 animate-slideUpFade animate-delay-200">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-validation-gray-900">Currently Working On</h3>
+            <p className="text-validation-gray-600 text-sm">Features currently in development</p>
+          </div>
+          <CurrentlyWorkingOn features={mvpFeatures} />
         </Card>
       )}
 
@@ -184,103 +197,113 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
           </Button>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {mvpFeatures.map((feature, index) => (
-            <Card 
-              key={feature.id} 
-              className="p-6 animate-slideUpFade" 
-              style={{ animationDelay: `${(index + 3) * 100}ms` }}
-              hover={true}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-validation-gray-900">{feature.name}</h3>
-                </div>
-                <div className="flex space-x-2">
-                  <StatusBadge status={feature.status} />
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => handleEdit(feature)}
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                    <span className="sr-only">Edit</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 w-7 p-0 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
-                    onClick={() => handleDelete(feature)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span className="sr-only">Delete</span>
-                  </Button>
-                </div>
-              </div>
-              
-              <p className="text-validation-gray-600 mb-4">{feature.description}</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-validation-gray-500 mr-2">Priority:</span>
-                  <span className={`text-sm font-medium px-2 py-1 rounded ${
-                    feature.priority === 'high' 
-                      ? 'bg-validation-red-100 text-validation-red-700' 
-                      : feature.priority === 'medium'
-                        ? 'bg-validation-yellow-100 text-validation-yellow-700'
-                        : 'bg-validation-green-100 text-validation-green-700'
-                  }`}>
-                    {feature.priority.charAt(0).toUpperCase() + feature.priority.slice(1)}
-                  </span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-validation-gray-500 mr-2">Effort:</span>
-                  <span className={`text-sm font-medium px-2 py-1 rounded ${
-                    feature.effort === 'high' 
-                      ? 'bg-validation-red-100 text-validation-red-700' 
-                      : feature.effort === 'medium'
-                        ? 'bg-validation-yellow-100 text-validation-yellow-700'
-                        : 'bg-validation-green-100 text-validation-green-700'
-                  }`}>
-                    {feature.effort.charAt(0).toUpperCase() + feature.effort.slice(1)}
-                  </span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-validation-gray-500 mr-2">Impact:</span>
-                  <span className={`text-sm font-medium px-2 py-1 rounded ${
-                    feature.impact === 'high' 
-                      ? 'bg-validation-green-100 text-validation-green-700' 
-                      : feature.impact === 'medium'
-                        ? 'bg-validation-yellow-100 text-validation-yellow-700'
-                        : 'bg-validation-red-100 text-validation-red-700'
-                  }`}>
-                    {feature.impact.charAt(0).toUpperCase() + feature.impact.slice(1)}
-                  </span>
-                </div>
-              </div>
-              
-              {feature.status === 'planned' && (
-                <Button 
-                  className="mt-2 bg-validation-blue-600 hover:bg-validation-blue-700 text-white"
-                  onClick={() => updateFeatureStatus(feature, 'in-progress')}
+        <div>
+          {viewMode === 'table' ? (
+            <MVPTable 
+              features={mvpFeatures} 
+              onEdit={handleEdit} 
+              onDelete={handleDelete} 
+            />
+          ) : (
+            <div className="space-y-6">
+              {mvpFeatures.map((feature, index) => (
+                <Card 
+                  key={feature.id} 
+                  className="p-6 animate-slideUpFade" 
+                  style={{ animationDelay: `${(index + 3) * 100}ms` }}
+                  hover={true}
                 >
-                  Start Development
-                </Button>
-              )}
-              
-              {feature.status === 'in-progress' && (
-                <Button 
-                  className="mt-2 bg-validation-green-600 hover:bg-validation-green-700 text-white"
-                  onClick={() => updateFeatureStatus(feature, 'completed')}
-                >
-                  Mark as Completed
-                </Button>
-              )}
-            </Card>
-          ))}
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-validation-gray-900">{feature.feature}</h3>
+                    </div>
+                    <div className="flex space-x-2">
+                      <StatusBadge status={feature.status} />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => handleEdit(feature)}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-7 w-7 p-0 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
+                        onClick={() => handleDelete(feature)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <p className="text-validation-gray-600 mb-4">{feature.notes}</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-validation-gray-500 mr-2">Priority:</span>
+                      <span className={`text-sm font-medium px-2 py-1 rounded ${
+                        feature.priority === 'high' 
+                          ? 'bg-validation-red-100 text-validation-red-700' 
+                          : feature.priority === 'medium'
+                            ? 'bg-validation-yellow-100 text-validation-yellow-700'
+                            : 'bg-validation-green-100 text-validation-green-700'
+                      }`}>
+                        {feature.priority.charAt(0).toUpperCase() + feature.priority.slice(1)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-validation-gray-500 mr-2">Effort:</span>
+                      <span className={`text-sm font-medium px-2 py-1 rounded ${
+                        feature.effort === 'high' 
+                          ? 'bg-validation-red-100 text-validation-red-700' 
+                          : feature.effort === 'medium'
+                            ? 'bg-validation-yellow-100 text-validation-yellow-700'
+                            : 'bg-validation-green-100 text-validation-green-700'
+                      }`}>
+                        {feature.effort.charAt(0).toUpperCase() + feature.effort.slice(1)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-validation-gray-500 mr-2">Impact:</span>
+                      <span className={`text-sm font-medium px-2 py-1 rounded ${
+                        feature.impact === 'high' 
+                          ? 'bg-validation-green-100 text-validation-green-700' 
+                          : feature.impact === 'medium'
+                            ? 'bg-validation-yellow-100 text-validation-yellow-700'
+                            : 'bg-validation-red-100 text-validation-red-700'
+                      }`}>
+                        {feature.impact.charAt(0).toUpperCase() + feature.impact.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {feature.status === 'planned' && (
+                    <Button 
+                      className="mt-2 bg-validation-blue-600 hover:bg-validation-blue-700 text-white"
+                      onClick={() => updateFeatureStatus(feature, 'in-progress')}
+                    >
+                      Start Development
+                    </Button>
+                  )}
+                  
+                  {feature.status === 'in-progress' && (
+                    <Button 
+                      className="mt-2 bg-validation-green-600 hover:bg-validation-green-700 text-white"
+                      onClick={() => updateFeatureStatus(feature, 'completed')}
+                    >
+                      Mark as Completed
+                    </Button>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
