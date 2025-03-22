@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
@@ -91,8 +90,12 @@ export function useHypotheses(refreshData: () => void) {
   };
 
   const handleSaveHypothesis = async (formData: Hypothesis): Promise<void> => {
-    refreshData();
-    return Promise.resolve();
+    try {
+      refreshData();
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
   };
 
   return {
