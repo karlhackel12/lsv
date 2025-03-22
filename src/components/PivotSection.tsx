@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { RotateCcw, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
@@ -17,15 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface PivotOption {
-  id: number;
-  originalId?: string;
-  type: string;
-  description: string;
-  trigger: string;
-  likelihood: 'high' | 'medium' | 'low';
-}
+import { PivotOption } from '@/types/pivot';
 
 interface PivotSectionProps {
   pivotOptions: PivotOption[];
@@ -41,7 +32,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
   const [pivotOptionToDelete, setPivotOptionToDelete] = useState<any>(null);
   const [metrics, setMetrics] = useState<any[]>([]);
   
-  // Fetch metrics for integration with pivot triggers
   useEffect(() => {
     const fetchMetrics = async () => {
       if (!projectId) return;
@@ -68,7 +58,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
   };
 
   const handleEdit = (pivotOption: PivotOption) => {
-    // Find original pivot option with string ID for database operations
     const originalPivotOption = {
       ...pivotOption,
       id: pivotOption.originalId
@@ -114,7 +103,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     }
   };
 
-  // Function to check if any metrics are at risk
   const getMetricsAtRisk = () => {
     return metrics.filter(metric => 
       metric.status === 'error' || metric.status === 'warning'
@@ -144,7 +132,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
       
       <PivotDecisionSection />
       
-      {/* Metrics Integration Section */}
       {metricsAtRisk.length > 0 && (
         <Card className="mb-8 p-6 bg-yellow-50 border-yellow-200">
           <h3 className="text-xl font-bold mb-4 text-yellow-800 flex items-center">
@@ -202,11 +189,10 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {pivotOptions.map((option, index) => (
+          {pivotOptions.map((option) => (
             <Card 
               key={option.id} 
               className="p-6"
-              hover={true}
             >
               <div className="flex justify-between items-start mb-4">
                 <h4 className="font-semibold text-lg text-validation-gray-900">{option.type}</h4>
@@ -257,7 +243,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         </button>
       </div>
 
-      {/* Pivot Option Form Dialog */}
       <PivotOptionForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
@@ -266,7 +251,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         projectId={projectId}
       />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

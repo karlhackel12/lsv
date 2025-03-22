@@ -26,12 +26,18 @@ const PivotPage = () => {
         
       if (error) throw error;
       
-      // Transform the data to include originalId for easier handling in UI
       // Ensure all properties have correct types
       const transformedData: PivotOption[] = data.map((item) => ({
         ...item,
         id: item.id,
         originalId: item.id,
+        type: item.type || '',
+        description: item.description || '',
+        trigger: item.trigger || '',
+        likelihood: (item.likelihood as 'high' | 'medium' | 'low') || 'medium',
+        project_id: item.project_id || '',
+        created_at: item.created_at || '',
+        updated_at: item.updated_at || ''
       }));
       
       setPivotOptions(transformedData);

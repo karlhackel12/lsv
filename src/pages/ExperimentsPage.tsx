@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +31,6 @@ const ExperimentsPage = () => {
         
       if (error) throw error;
       
-      // Transform the data to include originalId (needed for database operations)
       const transformedData = data.map(item => ({
         ...item,
         originalId: item.id,
@@ -148,7 +146,7 @@ const ExperimentsPage = () => {
         <ExperimentDetailView
           experiment={selectedExperiment}
           onEdit={() => handleEditExperiment(selectedExperiment)}
-          refreshData={fetchExperiments}
+          onClose={handleDetailViewClose}
         />
       )}
       

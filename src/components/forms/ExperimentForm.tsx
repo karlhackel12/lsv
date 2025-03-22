@@ -1,4 +1,5 @@
 
+// This is a new file that integrates the success criteria templates
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Experiment } from '@/types/database';
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -27,64 +38,68 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, Lightbulb } from 'lucide-react';
-import { Experiment } from '@/types/database';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { 
-  TEMPLATE_PROBLEM_EXPERIMENTS,
-  TEMPLATE_SOLUTION_EXPERIMENTS,
-  TEMPLATE_BUSINESS_MODEL_EXPERIMENTS
+  TEMPLATE_PROBLEM_EXPERIMENTS, 
+  TEMPLATE_SOLUTION_EXPERIMENTS, 
+  TEMPLATE_BUSINESS_MODEL_EXPERIMENTS,
+  TEMPLATE_PROBLEM_CRITERIA,
+  TEMPLATE_SOLUTION_CRITERIA,
+  TEMPLATE_BUSINESS_MODEL_CRITERIA
 } from '@/types/pivot';
 
-type FormData = Omit<Experiment, 'id' | 'created_at' | 'updated_at' | 'project_id'>;
+type FormData = Omit<Experiment, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
 
 interface ExperimentFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  experiment?: Experiment | null;
+  experiment?: Experiment;
   projectId: string;
 }
 
 const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: ExperimentFormProps) => {
   const { toast } = useToast();
   const isEditing = !!experiment;
-  const [experimentType, setExperimentType] = useState<'problem' | 'solution' | 'business-model'>('problem');
+  const [category, setCategory] = useState(experiment?.category || 'problem');
 
   const form = useForm<FormData>({
     defaultValues: experiment ? {
-      title: experiment.title,
-      hypothesis: experiment.hypothesis,
-      status: experiment.status,
+      name: experiment.name,
+      description: experiment.description,
+      hypothesis_id: experiment.hypothesis_id,
+      category: experiment.category || 'problem',
       method: experiment.method,
-      metrics: experiment.metrics,
-      results: experiment.results,
-      insights: experiment.insights,
-      decisions: experiment.decisions,
+      success_criteria: experiment.success_criteria,
+      status: experiment.status,
+      results: experiment.results || null,
     } : {
-      title: '',
-      hypothesis: '',
-      status: 'planned',
+      name: '',
+      description: '',
+      hypothesis_id: null,
+      category: 'problem',
       method: '',
-      metrics: '',
+      success_criteria: '',
+      status: 'not-started',
       results: null,
-      insights: null,
-      decisions: null,
     }
   });
+
+  // Update templates when category changes
+  React.useEffect(() => {
+    setCategory(form.watch('category'));
+  }, [form.watch('category')]);
 
   const handleSubmit = async (data: FormData) => {
     try {
       if (isEditing && experiment) {
-        // Update existing experiment
+        const id = experiment.originalId || experiment.id;
         const { error } = await supabase
           .from('experiments')
           .update({
             ...data,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', experiment.id);
+          .eq('id', id);
 
         if (error) throw error;
         toast({
@@ -92,7 +107,6 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
           description: 'The experiment has been successfully updated.',
         });
       } else {
-        // Create new experiment
         const { error } = await supabase
           .from('experiments')
           .insert({
@@ -118,8 +132,40 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
     }
   };
 
-  const applyTemplate = (template: string) => {
+  const applyMethodTemplate = (template: string) => {
     form.setValue('method', template);
+  };
+
+  const applyCriteriaTemplate = (template: string) => {
+    form.setValue('success_criteria', template);
+  };
+
+  // Helper function to get experiment templates based on category
+  const getExperimentTemplates = () => {
+    switch (category) {
+      case 'problem':
+        return TEMPLATE_PROBLEM_EXPERIMENTS;
+      case 'solution':
+        return TEMPLATE_SOLUTION_EXPERIMENTS;
+      case 'business-model':
+        return TEMPLATE_BUSINESS_MODEL_EXPERIMENTS;
+      default:
+        return TEMPLATE_PROBLEM_EXPERIMENTS;
+    }
+  };
+
+  // Helper function to get criteria templates based on category
+  const getCriteriaTemplates = () => {
+    switch (category) {
+      case 'problem':
+        return TEMPLATE_PROBLEM_CRITERIA;
+      case 'solution':
+        return TEMPLATE_SOLUTION_CRITERIA;
+      case 'business-model':
+        return TEMPLATE_BUSINESS_MODEL_CRITERIA;
+      default:
+        return TEMPLATE_PROBLEM_CRITERIA;
+    }
   };
 
   return (
@@ -133,12 +179,12 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="title"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Experiment title" {...field} />
+                    <Input placeholder="Enter experiment name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,34 +193,47 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
             
             <FormField
               control={form.control}
-              name="hypothesis"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Hypothesis</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="What hypothesis is being tested?" {...field} />
+                    <Textarea 
+                      placeholder="Enter experiment description" 
+                      className="h-24"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium">Experiment Type</label>
-              <Select
-                onValueChange={(value: 'problem' | 'solution' | 'business-model') => setExperimentType(value)}
-                defaultValue={experimentType}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="problem">Problem Validation</SelectItem>
-                  <SelectItem value="solution">Solution Validation</SelectItem>
-                  <SelectItem value="business-model">Business Model Validation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select experiment category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="problem">Problem Validation</SelectItem>
+                      <SelectItem value="solution">Solution Validation</SelectItem>
+                      <SelectItem value="business-model">Business Model Validation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
@@ -182,7 +241,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel>Method</FormLabel>
+                    <FormLabel>Experiment Method</FormLabel>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="h-8">
@@ -193,46 +252,24 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-[400px]">
                         <DropdownMenuGroup>
-                          {experimentType === 'problem' ? (
-                            TEMPLATE_PROBLEM_EXPERIMENTS.map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))
-                          ) : experimentType === 'solution' ? (
-                            TEMPLATE_SOLUTION_EXPERIMENTS.map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))
-                          ) : (
-                            TEMPLATE_BUSINESS_MODEL_EXPERIMENTS.map((template, index) => (
-                              <DropdownMenuItem 
-                                key={index}
-                                onClick={() => applyTemplate(template)}
-                                className="cursor-pointer py-2"
-                              >
-                                {template}
-                              </DropdownMenuItem>
-                            ))
-                          )}
+                          {getExperimentTemplates().map((template, index) => (
+                            <DropdownMenuItem 
+                              key={index}
+                              onClick={() => applyMethodTemplate(template)}
+                              className="cursor-pointer py-2"
+                            >
+                              {template}
+                            </DropdownMenuItem>
+                          ))}
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                   <FormControl>
                     <Textarea 
-                      placeholder="How will you conduct this experiment? Select a template or write your own."
-                      {...field} 
+                      placeholder="How will you conduct this experiment?" 
                       className="h-24"
+                      {...field} 
                     />
                   </FormControl>
                   <FormMessage />
@@ -242,12 +279,40 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
             
             <FormField
               control={form.control}
-              name="metrics"
+              name="success_criteria"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Key Metrics</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Success Criteria</FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <Lightbulb className="h-4 w-4 mr-2" />
+                          Templates
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[400px]">
+                        <DropdownMenuGroup>
+                          {getCriteriaTemplates().map((template, index) => (
+                            <DropdownMenuItem 
+                              key={index}
+                              onClick={() => applyCriteriaTemplate(template)}
+                              className="cursor-pointer py-2"
+                            >
+                              {template}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <FormControl>
-                    <Textarea placeholder="Which metrics will you track?" {...field} />
+                    <Textarea 
+                      placeholder="What defines success for this experiment?" 
+                      className="h-24"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -270,9 +335,10 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="planned">Planned</SelectItem>
+                      <SelectItem value="not-started">Not Started</SelectItem>
                       <SelectItem value="in-progress">In Progress</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="abandoned">Abandoned</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -280,58 +346,19 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
               )}
             />
             
-            {(form.watch('status') === 'in-progress' || form.watch('status') === 'completed') && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="results"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Results</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="What were the experiment results?"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="insights"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Insights</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="What insights did you gain?"
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            
-            {form.watch('status') === 'completed' && (
+            {(form.watch('status') === 'completed' || form.watch('status') === 'abandoned') && (
               <FormField
                 control={form.control}
-                name="decisions"
+                name="results"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Decisions</FormLabel>
+                    <FormLabel>Results</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="What decisions were made based on this experiment?"
+                        placeholder="What were the results of this experiment?" 
+                        className="h-24"
                         value={field.value || ''} 
-                        onChange={e => field.onChange(e.target.value)}
+                        onChange={e => field.onChange(e.target.value)} 
                       />
                     </FormControl>
                     <FormMessage />
