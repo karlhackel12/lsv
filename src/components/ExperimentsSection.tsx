@@ -111,6 +111,7 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
                 experiment={selectedExperiment}
                 relatedHypothesis={relatedHypothesis}
                 onEdit={() => setIsFormOpen(true)}
+                onClose={handleBackToList}
               />
             </>
           )}

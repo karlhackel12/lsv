@@ -55,7 +55,7 @@ type FormData = {
   results: string | null;
   insights: string | null;
   decisions: string | null;
-  status: 'not-started' | 'in-progress' | 'completed' | 'abandoned';
+  status: 'planned' | 'in-progress' | 'completed';
   category?: 'problem' | 'solution' | 'business-model';
 };
 
@@ -81,7 +81,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
       results: experiment.results || null,
       insights: experiment.insights || null,
       decisions: experiment.decisions || null,
-      status: experiment.status || 'not-started',
+      status: experiment.status || 'planned',
       category: experiment.category || 'problem',
     } : {
       title: '',
@@ -91,7 +91,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
       results: null,
       insights: null,
       decisions: null,
-      status: 'not-started',
+      status: 'planned',
       category: 'problem',
     }
   });
@@ -347,10 +347,9 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="not-started">Not Started</SelectItem>
+                      <SelectItem value="planned">Planned</SelectItem>
                       <SelectItem value="in-progress">In Progress</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="abandoned">Abandoned</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -358,7 +357,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
               )}
             />
             
-            {(form.watch('status') === 'completed' || form.watch('status') === 'abandoned') && (
+            {(form.watch('status') === 'completed') && (
               <FormField
                 control={form.control}
                 name="results"

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
-import { Experiment } from '@/types/database';
+import { Experiment, Hypothesis } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExperimentList from '@/components/experiments/ExperimentList';
@@ -17,6 +17,7 @@ const ExperimentsPage = () => {
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
+  const [relatedHypothesis, setRelatedHypothesis] = useState<Hypothesis | null>(null);
   const { toast } = useToast();
 
   const fetchExperiments = async () => {
@@ -32,10 +33,12 @@ const ExperimentsPage = () => {
         
       if (error) throw error;
       
-      const transformedData = data.map(item => ({
+      // Ensure we cast the status to the correct type defined in the interface
+      const transformedData: Experiment[] = data.map(item => ({
         ...item,
         originalId: item.id,
-        id: item.id
+        id: item.id,
+        status: item.status as 'planned' | 'in-progress' | 'completed'
       }));
       
       setExperiments(transformedData);
@@ -148,6 +151,7 @@ const ExperimentsPage = () => {
           experiment={selectedExperiment}
           onEdit={() => handleEditExperiment(selectedExperiment)}
           onClose={handleDetailViewClose}
+          relatedHypothesis={relatedHypothesis}
         />
       )}
       

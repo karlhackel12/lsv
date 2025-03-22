@@ -47,7 +47,7 @@ export interface Experiment {
   insights: string | null;
   decisions: string | null;
   project_id: string;
-  status: 'not-started' | 'in-progress' | 'completed' | 'abandoned';
+  status: 'in-progress' | 'completed' | 'planned';
   created_at: string;
   updated_at: string;
   name?: string;

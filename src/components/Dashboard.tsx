@@ -82,19 +82,21 @@ const Dashboard = () => {
         if (pivotOptionsError) throw pivotOptionsError;
 
         // Transform the data to include originalId for all records
-        const transformedHypotheses = hypothesesData.map(item => ({
+        const transformedHypotheses: Hypothesis[] = hypothesesData.map(item => ({
           ...item,
           originalId: item.id,
           id: item.id // Keep id as string
         }));
 
-        const transformedExperiments = experimentsData.map(item => ({
+        // Ensure we cast the status to the correct type
+        const transformedExperiments: Experiment[] = experimentsData.map(item => ({
           ...item,
           originalId: item.id,
-          id: item.id
+          id: item.id,
+          status: item.status as 'planned' | 'in-progress' | 'completed'
         }));
 
-        const transformedMvpFeatures = mvpFeaturesData.map(item => ({
+        const transformedMvpFeatures: MvpFeature[] = mvpFeaturesData.map(item => ({
           ...item,
           originalId: item.id,
           id: item.id,
@@ -105,13 +107,13 @@ const Dashboard = () => {
           impact: item.priority
         }));
 
-        const transformedMetrics = metricsData.map(item => ({
+        const transformedMetrics: Metric[] = metricsData.map(item => ({
           ...item,
           originalId: item.id,
           id: item.id
         }));
 
-        const transformedPivotOptions = pivotOptionsData.map(item => ({
+        const transformedPivotOptions: PivotOption[] = pivotOptionsData.map(item => ({
           ...item,
           originalId: item.id,
           id: item.id,

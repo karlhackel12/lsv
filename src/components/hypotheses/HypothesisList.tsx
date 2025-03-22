@@ -10,6 +10,7 @@ export interface HypothesisListProps {
   onDelete: (hypothesis: Hypothesis) => Promise<void>;
   onCreateNew: () => void;
   isLoading?: boolean;
+  onStatusChange?: (hypothesis: Hypothesis, newStatus: 'validated' | 'validating' | 'not-started' | 'invalid') => void;
 }
 
 const HypothesisList = ({ 
@@ -17,7 +18,8 @@ const HypothesisList = ({
   onEdit, 
   onDelete, 
   onCreateNew,
-  isLoading = false
+  isLoading = false,
+  onStatusChange = () => {}
 }: HypothesisListProps) => {
   if (isLoading) {
     return (
@@ -54,6 +56,7 @@ const HypothesisList = ({
             hypothesis={hypothesis}
             onEdit={() => onEdit(hypothesis)}
             onDelete={() => onDelete(hypothesis)}
+            onStatusChange={onStatusChange}
           />
         ))}
       </div>
