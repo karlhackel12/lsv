@@ -1,12 +1,11 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
 import Dashboard from '@/components/Dashboard';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-validation-gray-50">
-      <Navbar />
+    <div className="container mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       <Dashboard />
     </div>
   );

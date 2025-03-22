@@ -238,12 +238,110 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      project_invitations: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          project_id: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: string
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invitations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           created_at: string
           description: string
           id: string
           name: string
+          owner_id: string | null
           stage: string
           updated_at: string
         }
@@ -252,6 +350,7 @@ export type Database = {
           description: string
           id?: string
           name: string
+          owner_id?: string | null
           stage: string
           updated_at?: string
         }
@@ -260,6 +359,7 @@ export type Database = {
           description?: string
           id?: string
           name?: string
+          owner_id?: string | null
           stage?: string
           updated_at?: string
         }
@@ -321,6 +421,7 @@ export type Database = {
       metric_status: "success" | "warning" | "error" | "not-started"
       pivot_likelihood: "high" | "medium" | "low"
       stage_status: "complete" | "in-progress" | "not-started"
+      user_role: "admin" | "team_member"
     }
     CompositeTypes: {
       [_ in never]: never
