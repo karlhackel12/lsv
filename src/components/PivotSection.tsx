@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
-import Card from './Card';
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 import { RotateCcw, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import PivotOptionForm from './forms/PivotOptionForm';
+import PivotDecisionSection from './PivotDecisionSection';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,28 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
   const [selectedPivotOption, setSelectedPivotOption] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [pivotOptionToDelete, setPivotOptionToDelete] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  
+  // Fetch metrics for integration with pivot triggers
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!projectId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('metrics')
+          .select('*')
+          .eq('project_id', projectId);
+          
+        if (error) throw error;
+        setMetrics(data);
+      } catch (err) {
+        console.error('Error fetching metrics:', err);
+      }
+    };
+    
+    fetchMetrics();
+  }, [projectId]);
 
   const handleCreateNew = () => {
     setSelectedPivotOption(null);
@@ -91,6 +114,15 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     }
   };
 
+  // Function to check if any metrics are at risk
+  const getMetricsAtRisk = () => {
+    return metrics.filter(metric => 
+      metric.status === 'error' || metric.status === 'warning'
+    );
+  };
+
+  const metricsAtRisk = getMetricsAtRisk();
+
   return (
     <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
@@ -104,42 +136,59 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         </Button>
       </div>
       
-      <Card className="mb-8 p-6 animate-slideUpFade animate-delay-100">
+      <Card className="mb-8 p-6">
         <p className="text-validation-gray-600 text-lg">
           A pivot is a structured course correction designed to test a new fundamental hypothesis about the product, business model, or engine of growth.
         </p>
       </Card>
       
-      <Card className="mb-8 p-6 animate-slideUpFade animate-delay-200">
-        <h3 className="text-xl font-bold mb-5 text-validation-gray-900">Pivot Decision Criteria</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold text-validation-gray-800 mb-3">When to Persist</h4>
-            <ul className="list-disc pl-5 space-y-2 text-validation-gray-600">
-              <li>Core value hypothesis is validated</li>
-              <li>Engagement metrics trending positively</li>
-              <li>Customer acquisition cost decreasing</li>
-              <li>Validated path to sustainable unit economics</li>
-            </ul>
+      <PivotDecisionSection />
+      
+      {/* Metrics Integration Section */}
+      {metricsAtRisk.length > 0 && (
+        <Card className="mb-8 p-6 bg-yellow-50 border-yellow-200">
+          <h3 className="text-xl font-bold mb-4 text-yellow-800 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            Metrics Approaching Pivot Triggers
+          </h3>
+          <div className="space-y-4">
+            {metricsAtRisk.map(metric => (
+              <div key={metric.id} className="bg-white p-4 rounded-md border border-yellow-200">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-semibold">{metric.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Current: {metric.current || 'N/A'} / Target: {metric.target}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                    metric.status === 'error' 
+                      ? 'bg-validation-red-50 text-validation-red-700 border border-validation-red-200' 
+                      : 'bg-validation-yellow-50 text-validation-yellow-700 border border-validation-yellow-200'
+                  }`}>
+                    {metric.status === 'error' ? 'Critical' : 'Warning'}
+                  </span>
+                </div>
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-gray-700">Recommended Action:</p>
+                  <p className="text-sm text-gray-600">
+                    {metric.status === 'error' 
+                      ? 'Schedule an immediate pivot planning session to evaluate options.' 
+                      : 'Monitor closely and prepare contingency plans.'}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div>
-            <h4 className="font-semibold text-validation-gray-800 mb-3">When to Pivot</h4>
-            <ul className="list-disc pl-5 space-y-2 text-validation-gray-600">
-              <li>Core value hypothesis invalidated</li>
-              <li>Engagement persistently below targets</li>
-              <li>High acquisition costs with no downward trend</li>
-              <li>Conversion rates below viability thresholds</li>
-            </ul>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
       
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-validation-gray-900">Potential Pivot Options</h3>
       </div>
       
       {pivotOptions.length === 0 ? (
-        <Card className="p-12 text-center animate-slideUpFade mb-8">
+        <Card className="p-12 text-center mb-8">
           <AlertCircle className="mx-auto h-12 w-12 text-validation-gray-400 mb-4" />
           <h3 className="text-xl font-medium text-validation-gray-900 mb-2">No Pivot Options Yet</h3>
           <p className="text-validation-gray-600 mb-6">Plan ahead by identifying potential pivot strategies.</p>
@@ -156,8 +205,7 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
           {pivotOptions.map((option, index) => (
             <Card 
               key={option.id} 
-              className="p-6 animate-slideUpFade" 
-              style={{ animationDelay: `${(index + 3) * 100}ms` }}
+              className="p-6"
               hover={true}
             >
               <div className="flex justify-between items-start mb-4">
