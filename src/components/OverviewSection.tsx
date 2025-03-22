@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { useProject } from '@/hooks/use-project';
-import { StageEditDialog } from '@/components/stage/StageEditDialog';
+import StageEditDialog from '@/components/stage/StageEditDialog';
 
 // Update the StatusType definition to match the enum from the database
 type StatusType = 'not-started' | 'in-progress' | 'complete';

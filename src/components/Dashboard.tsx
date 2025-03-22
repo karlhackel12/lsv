@@ -220,7 +220,7 @@ const Dashboard = () => {
   return (
     <div className="grid gap-6">
       <div className="col-span-2">
-        <OverviewSection project={currentProject} />
+        <OverviewSection />
         
         {/* Quick Actions Panel */}
         <Card className="p-4 bg-white mt-4 border-t-4 border-t-validation-blue-500">
