@@ -56,9 +56,10 @@ export function useProject() {
   // Used to update project stage when moving to next stage
   const updateProjectStage = async (projectId: string, newStage: string) => {
     try {
+      const now = new Date().toISOString(); // Convert Date to ISO string format
       const { data, error } = await supabase
         .from('projects')
-        .update({ stage: newStage, updated_at: new Date() })
+        .update({ stage: newStage, updated_at: now })
         .eq('id', projectId)
         .select()
         .single();
