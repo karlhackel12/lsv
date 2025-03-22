@@ -55,7 +55,7 @@ const StatusField = ({ form }: StatusFieldProps) => {
                   Not Started
                 </div>
               </SelectItem>
-              <SelectItem value="in-progress" className="cursor-pointer">
+              <SelectItem value="validating" className="cursor-pointer">
                 <div className="flex items-center">
                   <span className="h-2 w-2 rounded-full bg-validation-blue-500 mr-2"></span>
                   In Progress
@@ -67,7 +67,7 @@ const StatusField = ({ form }: StatusFieldProps) => {
                   Validated
                 </div>
               </SelectItem>
-              <SelectItem value="invalidated" className="cursor-pointer">
+              <SelectItem value="invalid" className="cursor-pointer">
                 <div className="flex items-center">
                   <span className="h-2 w-2 rounded-full bg-validation-red-500 mr-2"></span>
                   Invalidated
