@@ -411,7 +411,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_project_member: {
+        Args: {
+          project_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       experiment_status: "completed" | "in-progress" | "planned"

@@ -11,6 +11,7 @@ import PivotSection from './PivotSection';
 import { supabase } from '@/integrations/supabase/client';
 import { Project, Stage, Hypothesis, Experiment, MvpFeature, Metric, PivotOption } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Interface for the transformed Stage data that OverviewSection expects
 interface TransformedStage {
@@ -24,6 +25,7 @@ interface TransformedStage {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // State for storing data from Supabase
   const [project, setProject] = useState<Project | null>(null);
@@ -41,6 +43,8 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
+      console.log('Fetching data for user:', user?.id);
+
       // Fetch project data
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
@@ -48,9 +52,33 @@ const Dashboard = () => {
         .limit(1)
         .single();
 
-      if (projectError) throw new Error(`Error fetching project: ${projectError.message}`);
-      if (!projectData) throw new Error('No project found');
+      if (projectError) {
+        console.error('Project fetch error:', projectError);
+        if (projectError.code === 'PGRST116') {
+          // No rows returned is expected for new users
+          toast({
+            title: 'No projects found',
+            description: 'You need to create a project first.',
+            variant: 'default',
+          });
+          setLoading(false);
+          return;
+        }
+        throw new Error(`Error fetching project: ${projectError.message}`);
+      }
+      
+      if (!projectData) {
+        toast({
+          title: 'No projects found',
+          description: 'You need to create a project first.',
+          variant: 'default',
+        });
+        setLoading(false);
+        return;
+      }
 
+      console.log('Fetched project:', projectData);
+      
       // Fetch stages data
       const { data: stagesData, error: stagesError } = await supabase
         .from('stages')
@@ -59,6 +87,7 @@ const Dashboard = () => {
         .order('position', { ascending: true });
 
       if (stagesError) throw new Error(`Error fetching stages: ${stagesError.message}`);
+      console.log('Fetched stages:', stagesData);
 
       // Fetch hypotheses data
       const { data: hypothesesData, error: hypothesesError } = await supabase
@@ -67,6 +96,7 @@ const Dashboard = () => {
         .eq('project_id', projectData.id);
 
       if (hypothesesError) throw new Error(`Error fetching hypotheses: ${hypothesesError.message}`);
+      console.log('Fetched hypotheses:', hypothesesData);
 
       // Fetch experiments data
       const { data: experimentsData, error: experimentsError } = await supabase
@@ -75,6 +105,7 @@ const Dashboard = () => {
         .eq('project_id', projectData.id);
 
       if (experimentsError) throw new Error(`Error fetching experiments: ${experimentsError.message}`);
+      console.log('Fetched experiments:', experimentsData);
 
       // Fetch mvp features data
       const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
@@ -83,6 +114,7 @@ const Dashboard = () => {
         .eq('project_id', projectData.id);
 
       if (mvpFeaturesError) throw new Error(`Error fetching MVP features: ${mvpFeaturesError.message}`);
+      console.log('Fetched MVP features:', mvpFeaturesData);
 
       // Fetch metrics data
       const { data: metricsData, error: metricsError } = await supabase
@@ -91,6 +123,7 @@ const Dashboard = () => {
         .eq('project_id', projectData.id);
 
       if (metricsError) throw new Error(`Error fetching metrics: ${metricsError.message}`);
+      console.log('Fetched metrics:', metricsData);
 
       // Fetch pivot options data
       const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
@@ -99,6 +132,7 @@ const Dashboard = () => {
         .eq('project_id', projectData.id);
 
       if (pivotOptionsError) throw new Error(`Error fetching pivot options: ${pivotOptionsError.message}`);
+      console.log('Fetched pivot options:', pivotOptionsData);
 
       // Update state with fetched data
       setProject(projectData);
@@ -123,8 +157,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [toast]);
+    if (user) {
+      fetchData();
+    }
+  }, [user, toast]);
 
   // Transform Stage data to match the format expected by OverviewSection
   const transformStages = (stages: Stage[]): TransformedStage[] => {
@@ -183,7 +219,7 @@ const Dashboard = () => {
       return (
         <div className="bg-validation-yellow-50 border border-validation-yellow-200 rounded-lg p-4 text-validation-yellow-800">
           <h3 className="text-lg font-semibold mb-2">No Project Found</h3>
-          <p>No project data is available. Please check your database configuration.</p>
+          <p>No project data is available. Please check your database configuration or create a new project.</p>
         </div>
       );
     }
