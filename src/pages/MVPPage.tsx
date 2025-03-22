@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MVPSection from '@/components/MVPSection';
 import { Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import CurrentlyWorkingOn from '@/components/CurrentlyWorkingOn';
 
 const MVPPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -97,11 +99,10 @@ const MVPPage = () => {
         
         <TabsContent value="in-progress" className="mt-6">
           {currentProject && (
-            <MVPSection 
-              mvpFeatures={mvpFeatures.filter(f => f.status === 'in-progress')} 
-              refreshData={fetchMVPFeatures}
-              projectId={currentProject.id}
-            />
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold mb-4">Currently Working On</h2>
+              <CurrentlyWorkingOn mvpFeatures={mvpFeatures} />
+            </div>
           )}
         </TabsContent>
         
@@ -154,15 +155,7 @@ const MVPPhases = ({ mvpFeatures }: { mvpFeatures: MvpFeature[] }) => {
             <span className="text-sm font-medium">{calculatePhaseCompletion(phase.id)}%</span>
           </div>
           
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className={`h-2.5 rounded-full ${
-                calculatePhaseCompletion(phase.id) >= 70 ? 'bg-green-600' :
-                calculatePhaseCompletion(phase.id) >= 30 ? 'bg-yellow-500' : 'bg-red-600'
-              }`} 
-              style={{ width: `${calculatePhaseCompletion(phase.id)}%` }}
-            ></div>
-          </div>
+          <Progress value={calculatePhaseCompletion(phase.id)} className="h-2.5" />
         </div>
       ))}
     </div>

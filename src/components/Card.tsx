@@ -2,36 +2,23 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  className?: string;
-  elevation?: 'none' | 'subtle' | 'medium' | 'glass';
-  hover?: boolean;
+interface CardProps {
   children: React.ReactNode;
+  className?: string;
+  hover?: boolean;
+  onClick?: () => void;
 }
 
-const Card = ({
-  className,
-  elevation = 'subtle',
-  hover = false,
-  children,
-  ...props
-}: CardProps) => {
-  const shadowClasses = {
-    none: '',
-    subtle: 'shadow-subtle',
-    medium: 'shadow-elevation',
-    glass: 'shadow-glass backdrop-blur-sm bg-white/95 border border-white/40'
-  };
-
+const Card = ({ children, className, hover = false, onClick }: CardProps) => {
   return (
-    <div
+    <div 
       className={cn(
-        'bg-white rounded-xl overflow-hidden',
-        shadowClasses[elevation],
-        hover && 'hover-lift',
+        'bg-white border border-gray-200 rounded-lg shadow-sm',
+        hover && 'hover:shadow-md transition-shadow duration-300',
+        onClick && 'cursor-pointer',
         className
       )}
-      {...props}
+      onClick={onClick}
     >
       {children}
     </div>

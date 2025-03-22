@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import HypothesesPage from "./pages/HypothesesPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
 import MVPPage from "./pages/MVPPage";
+import MetricsPage from "./pages/MetricsPage";
 import React from "react"; // Make sure React is imported
 
 // Create a client
@@ -38,8 +39,8 @@ const App: React.FC = () => {
                   <Route path="/hypotheses" element={<HypothesesPage />} />
                   <Route path="/experiments" element={<ExperimentsPage />} />
                   <Route path="/mvp" element={<MVPPage />} />
+                  <Route path="/metrics" element={<MetricsPage />} />
                   {/* These routes will be implemented later */}
-                  <Route path="/metrics" element={<div>Metrics Page</div>} />
                   <Route path="/pivot" element={<div>Pivot Page</div>} />
                   <Route path="/profile" element={<div>Profile Page</div>} />
                   <Route path="/settings" element={<div>Settings Page</div>} />
