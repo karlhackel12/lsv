@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight, Share2, FileUp, ArrowRight, Edit } from 'lucide-react';
@@ -20,7 +19,7 @@ import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const { currentProject } = useProject();
+  const { currentProject, updateProjectStage } = useProject();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [mvpFeatures, setMvpFeatures] = useState<MvpFeature[]>([]);
@@ -184,60 +183,36 @@ const Dashboard = () => {
     );
   }
   
-  const stageDefinitions = [
-    {
-      id: '1',
-      name: 'Problem Validation',
-      description: 'Identify and validate the problem your solution addresses',
-      complete: stageIndex > 0 || currentProject.stage === 'problem-validation',
-      inProgress: currentProject.stage === 'problem-validation'
-    },
-    {
-      id: '2',
-      name: 'Solution Validation',
-      description: 'Test your proposed solution with potential users',
-      complete: stageIndex > 1,
-      inProgress: currentProject.stage === 'solution-validation'
-    },
-    {
-      id: '3',
-      name: 'MVP Development',
-      description: 'Build a minimum viable product to test with users',
-      complete: stageIndex > 2,
-      inProgress: currentProject.stage === 'mvp'
-    },
-    {
-      id: '4',
-      name: 'Product-Market Fit',
-      description: 'Achieve measurable traction that proves market demand',
-      complete: stageIndex > 3,
-      inProgress: currentProject.stage === 'product-market-fit'
-    },
-    {
-      id: '5',
-      name: 'Scale',
-      description: 'Scale your solution to reach more users',
-      complete: stageIndex > 4,
-      inProgress: currentProject.stage === 'scale'
-    },
-    {
-      id: '6',
-      name: 'Mature',
-      description: 'Optimize and expand your validated business',
-      complete: stageIndex > 5,
-      inProgress: currentProject.stage === 'mature'
-    }
-  ];
-  
-  const handleMoveNextStage = () => {
+  const handleMoveNextStage = async () => {
     const stages = ['problem-validation', 'solution-validation', 'mvp', 'product-market-fit', 'scale', 'mature'];
     const currentIndex = stages.indexOf(currentProject.stage);
     if (currentIndex < stages.length - 1) {
       const nextStage = stages[currentIndex + 1];
-      // In a real implementation, you would update the project stage in the database here
+      // Call updateProjectStage function to update the stage in the database
+      const updated = await updateProjectStage(currentProject.id, nextStage);
+      if (updated) {
+        // The toast is already handled in the updateProjectStage function
+        // Update the status in the stages table if we're tracking stages
+        try {
+          // Update the previous stage to complete
+          await supabase
+            .from('stages')
+            .update({ status: 'complete' })
+            .eq('id', currentProject.stage);
+          
+          // Update the next stage to in-progress
+          await supabase
+            .from('stages')
+            .update({ status: 'in-progress' })
+            .eq('id', nextStage);
+        } catch (error) {
+          console.error('Error updating stage statuses:', error);
+        }
+      }
+    } else {
       toast({
-        title: "Stage advancement",
-        description: `Project moved to ${nextStage.replace('-', ' ')} stage`,
+        title: "Already at final stage",
+        description: "Your project is already at the mature stage.",
       });
     }
   };
@@ -245,10 +220,7 @@ const Dashboard = () => {
   return (
     <div className="grid gap-6">
       <div className="col-span-2">
-        <OverviewSection 
-          project={currentProject} 
-          stages={stageDefinitions}
-        />
+        <OverviewSection project={currentProject} />
         
         {/* Quick Actions Panel */}
         <Card className="p-4 bg-white mt-4 border-t-4 border-t-validation-blue-500">

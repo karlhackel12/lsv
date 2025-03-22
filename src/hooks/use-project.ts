@@ -88,6 +88,94 @@ export function useProject() {
     }
   };
 
+  // Fetch project stages from the database
+  const fetchProjectStages = async (projectId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('stages')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('position');
+      
+      if (error) throw error;
+      
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching project stages:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to fetch project stages',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  };
+
+  // Update an existing stage
+  const updateStage = async (stageId: string, stageData: any) => {
+    try {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('stages')
+        .update({ ...stageData, updated_at: now })
+        .eq('id', stageId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Stage Updated',
+        description: 'The stage has been successfully updated.',
+      });
+      
+      return data;
+    } catch (err) {
+      console.error('Error updating stage:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to update stage',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  // Create a new default stage if none exist
+  const createDefaultStages = async (projectId: string) => {
+    try {
+      const defaultStages = [
+        { id: 'problem-validation', name: 'Problem Validation', description: 'Identify and validate the problem your solution addresses', position: 1, status: 'in-progress', project_id: projectId },
+        { id: 'solution-validation', name: 'Solution Validation', description: 'Test your proposed solution with potential users', position: 2, status: 'not-started', project_id: projectId },
+        { id: 'mvp', name: 'MVP Development', description: 'Build a minimum viable product to test with users', position: 3, status: 'not-started', project_id: projectId },
+        { id: 'product-market-fit', name: 'Product-Market Fit', description: 'Achieve measurable traction that proves market demand', position: 4, status: 'not-started', project_id: projectId },
+        { id: 'scale', name: 'Scale', description: 'Scale your solution to reach more users', position: 5, status: 'not-started', project_id: projectId },
+        { id: 'mature', name: 'Mature', description: 'Optimize and expand your validated business', position: 6, status: 'not-started', project_id: projectId },
+      ];
+      
+      const { error } = await supabase
+        .from('stages')
+        .insert(defaultStages);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Stages Created',
+        description: 'Default stages have been created for your project.',
+      });
+      
+      return defaultStages;
+    } catch (err) {
+      console.error('Error creating default stages:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to create default stages',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  };
+
   // Load selected project from localStorage on init
   useEffect(() => {
     const savedProjectId = localStorage.getItem('selectedProjectId');
@@ -105,6 +193,9 @@ export function useProject() {
     currentProject,
     selectProject,
     updateProjectStage,
+    fetchProjectStages,
+    updateStage,
+    createDefaultStages,
     isLoading,
     error,
   };

@@ -1,27 +1,64 @@
 
-import React from 'react';
-import { CheckCircle, Activity, Users, Lightbulb, Target, TrendingUp, Clock, Award, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, Activity, Users, Lightbulb, Target, TrendingUp, Clock, Award, AlertTriangle, Edit, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import ProgressBar from './ProgressBar';
 import StatusBadge from './StatusBadge';
 import { Project } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import { useProject } from '@/hooks/use-project';
+import { useToast } from '@/hooks/use-toast';
+import StageEditDialog from './stage/StageEditDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Stage {
   id: string;
   name: string;
-  complete: boolean;
-  inProgress?: boolean;
   description: string;
+  position: number;
+  status: 'complete' | 'in-progress' | 'not-started';
+  project_id: string;
 }
 
 interface OverviewSectionProps {
   project: Project;
-  stages: Stage[];
 }
 
-const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
-  // Calculate project health score (simplified version)
-  const healthScore = Math.min(100, Math.max(0, Math.floor(Math.random() * 100)));
+const OverviewSection = ({ project }: OverviewSectionProps) => {
+  const { fetchProjectStages, updateStage, createDefaultStages } = useProject();
+  const { toast } = useToast();
+  const [stages, setStages] = useState<Stage[]>([]);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [hypotheses, setHypotheses] = useState<any[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Helper function to calculate project health
+  const calculateHealthScore = () => {
+    // Basic calculation based on metrics and stages
+    let score = 50; // Start with neutral
+    
+    // Add points for completed stages
+    const completedStages = stages.filter(s => s.status === 'complete').length;
+    score += (completedStages / Math.max(1, stages.length)) * 20;
+    
+    // Add points for validated hypotheses
+    const validatedHypotheses = hypotheses.filter(h => h.status === 'validated').length;
+    if (hypotheses.length > 0) {
+      score += (validatedHypotheses / hypotheses.length) * 15;
+    }
+    
+    // Add points for metrics meeting targets
+    const successMetrics = metrics.filter(m => m.status === 'success').length;
+    if (metrics.length > 0) {
+      score += (successMetrics / metrics.length) * 15;
+    }
+    
+    return Math.min(100, Math.max(0, Math.floor(score)));
+  };
+  
+  const healthScore = calculateHealthScore();
   
   const getHealthColor = () => {
     if (healthScore >= 70) return 'text-validation-green-600 bg-validation-green-50 border-validation-green-200';
@@ -40,6 +77,168 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
     if (healthScore >= 40) return <Clock className="h-5 w-5" />;
     return <AlertTriangle className="h-5 w-5" />;
   };
+
+  // Load project stages and metrics
+  useEffect(() => {
+    const loadProjectData = async () => {
+      setLoading(true);
+      try {
+        if (project?.id) {
+          // Fetch project stages
+          const stagesData = await fetchProjectStages(project.id);
+          
+          // If no stages exist, create default ones
+          if (stagesData.length === 0) {
+            const defaultStages = await createDefaultStages(project.id);
+            setStages(defaultStages as Stage[]);
+          } else {
+            setStages(stagesData as Stage[]);
+          }
+          
+          // Fetch metrics
+          const { data: metricsData } = await supabase
+            .from('metrics')
+            .select('*')
+            .eq('project_id', project.id);
+          
+          setMetrics(metricsData || []);
+          
+          // Fetch hypotheses
+          const { data: hypothesesData } = await supabase
+            .from('hypotheses')
+            .select('*')
+            .eq('project_id', project.id);
+          
+          setHypotheses(hypothesesData || []);
+        }
+      } catch (error) {
+        console.error('Error loading project data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load project data',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProjectData();
+  }, [project, fetchProjectStages, createDefaultStages, toast]);
+
+  // Calculate the current stage based on the project.stage field
+  const getCurrentStage = () => {
+    if (!project?.stage) return null;
+    return stages.find(s => s.id === project.stage) || null;
+  };
+
+  // Determine the key focus area based on stage and progress
+  const getKeyFocus = () => {
+    const currentStage = getCurrentStage();
+    if (!currentStage) return { title: 'Define Stages', description: 'Set up your project stages' };
+    
+    switch (currentStage.id) {
+      case 'problem-validation':
+        return { 
+          title: 'Problem Interviews', 
+          description: 'Interview potential users to validate the problem' 
+        };
+      case 'solution-validation':
+        return { 
+          title: 'Solution Testing', 
+          description: 'Test proposed solutions with users' 
+        };
+      case 'mvp':
+        return { 
+          title: 'MVP Development', 
+          description: 'Build minimal features that solve core problem' 
+        };
+      case 'product-market-fit':
+        return { 
+          title: 'User Acquisition', 
+          description: 'Focus on growing active user base' 
+        };
+      case 'scale':
+        return { 
+          title: 'Growth Channels', 
+          description: 'Expand marketing and sales channels' 
+        };
+      case 'mature':
+        return { 
+          title: 'Optimization', 
+          description: 'Optimize processes and expand offerings' 
+        };
+      default:
+        return { 
+          title: 'User Testing', 
+          description: 'Run experiments to validate core value proposition' 
+        };
+    }
+  };
+
+  const handleEditStage = (stage: Stage) => {
+    setSelectedStage(stage);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveStage = async (updatedStageData: Partial<Stage>) => {
+    if (!selectedStage) return;
+    
+    try {
+      const updatedStage = await updateStage(selectedStage.id, updatedStageData);
+      
+      if (updatedStage) {
+        // Update the stages list
+        setStages(prev => 
+          prev.map(stage => 
+            stage.id === selectedStage.id ? {...stage, ...updatedStageData} : stage
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error saving stage:', error);
+    }
+  };
+
+  // Get metrics data
+  const getMetricByCategoryAndName = (category: string, defaultName: string) => {
+    const metric = metrics.find(m => m.category === category);
+    if (!metric) {
+      return {
+        value: '-',
+        description: defaultName,
+        targetDescription: 'Target: N/A',
+        progress: 0,
+        status: 'not-started'
+      };
+    }
+    
+    return {
+      value: metric.current || '-',
+      description: metric.name,
+      targetDescription: `Target: ${metric.target}`,
+      progress: metric.status === 'success' ? 100 : 
+               metric.status === 'warning' ? 70 : 
+               metric.status === 'error' ? 30 : 0,
+      status: metric.status
+    };
+  };
+
+  // Get metrics for each category
+  const problemInterviews = getMetricByCategoryAndName('acquisition', 'Problem Interviews');
+  const studentActivity = getMetricByCategoryAndName('activation', 'Daily Activity');
+  const userBase = getMetricByCategoryAndName('retention', 'User Base');
+  
+  // Calculate validated hypotheses percentage
+  const validatedHypotheses = hypotheses.filter(h => h.status === 'validated').length;
+  const totalHypotheses = hypotheses.length;
+  const hypothesesPercentage = totalHypotheses > 0 ? Math.round((validatedHypotheses / totalHypotheses) * 100) : 0;
+
+  // Calculate progress based on stages
+  const completedStages = stages.filter(s => s.status === 'complete').length;
+  const stageProgress = stages.length > 0 ? Math.round((completedStages / stages.length) * 100) : 0;
+
+  const keyFocus = getKeyFocus();
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -83,8 +282,10 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
                   </div>
                   <p className="font-semibold text-validation-gray-900">Validated Hypotheses</p>
                 </div>
-                <p className="font-semibold text-validation-gray-900">1 of 5 (20%)</p>
-                <ProgressBar value={20} variant="info" size="sm" className="mt-2" />
+                <p className="font-semibold text-validation-gray-900">
+                  {validatedHypotheses} of {totalHypotheses} ({hypothesesPercentage}%)
+                </p>
+                <ProgressBar value={hypothesesPercentage} variant="info" size="sm" className="mt-2" />
               </div>
               
               <div className="p-4 bg-white rounded-lg shadow-sm border border-validation-gray-100">
@@ -94,9 +295,9 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
                   </div>
                   <p className="font-semibold text-validation-gray-900">Key Focus</p>
                 </div>
-                <p className="font-semibold text-validation-gray-900">User Testing</p>
+                <p className="font-semibold text-validation-gray-900">{keyFocus.title}</p>
                 <p className="text-sm text-validation-gray-600 mt-1">
-                  Run experiments to validate core value proposition
+                  {keyFocus.description}
                 </p>
               </div>
             </div>
@@ -126,43 +327,60 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
         <Card className="animate-slideUpFade animate-delay-200">
           <CardContent className="pt-6">
             <div className="space-y-8">
-              {stages.map((stage, index) => (
-                <div key={stage.id} className="relative">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 mt-1">
-                      {stage.complete ? (
-                        <div className="w-8 h-8 bg-validation-blue-500 rounded-full flex items-center justify-center shadow-subtle">
-                          <CheckCircle className="w-5 h-5 text-white" />
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <p className="text-validation-gray-500">Loading stages...</p>
+                </div>
+              ) : (
+                stages.map((stage, index) => (
+                  <div key={stage.id} className="relative">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 mt-1">
+                        {stage.status === 'complete' ? (
+                          <div className="w-8 h-8 bg-validation-blue-500 rounded-full flex items-center justify-center shadow-subtle">
+                            <CheckCircle className="w-5 h-5 text-white" />
+                          </div>
+                        ) : stage.status === 'in-progress' ? (
+                          <div className="w-8 h-8 bg-validation-yellow-400 rounded-full flex items-center justify-center shadow-subtle">
+                            <Activity className="w-5 h-5 text-white" />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border border-validation-gray-200 shadow-subtle">
+                            <span className="text-validation-gray-600 font-medium">{index + 1}</span>
+                          </div>
+                        )}
+                        {index < stages.length - 1 && (
+                          <div className={`h-12 w-0.5 ml-4 mt-1 ${
+                            stage.status === 'complete' ? 'bg-validation-blue-500' : 'bg-validation-gray-200'
+                          }`}></div>
+                        )}
+                      </div>
+                      <div className="ml-4 flex-grow">
+                        <div className="flex justify-between items-center">
+                          <h4 className={`font-semibold text-lg ${
+                            stage.status === 'complete' ? 'text-validation-blue-600' : 
+                            stage.status === 'in-progress' ? 'text-validation-yellow-700' : 
+                            'text-validation-gray-400'
+                          }`}>
+                            {stage.name}
+                          </h4>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-2"
+                            onClick={() => handleEditStage(stage)}
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-1" />
+                            Edit
+                          </Button>
                         </div>
-                      ) : stage.inProgress ? (
-                        <div className="w-8 h-8 bg-validation-yellow-400 rounded-full flex items-center justify-center shadow-subtle">
-                          <Activity className="w-5 h-5 text-white" />
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border border-validation-gray-200 shadow-subtle">
-                          <span className="text-validation-gray-600 font-medium">{index + 1}</span>
-                        </div>
-                      )}
-                      {index < stages.length - 1 && (
-                        <div className={`h-12 w-0.5 ml-4 mt-1 ${
-                          stage.complete ? 'bg-validation-blue-500' : 'bg-validation-gray-200'
-                        }`}></div>
-                      )}
-                    </div>
-                    <div className="ml-4">
-                      <h4 className={`font-semibold text-lg ${
-                        stage.complete ? 'text-validation-blue-600' : 
-                        stage.inProgress ? 'text-validation-yellow-700' : 
-                        'text-validation-gray-400'
-                      }`}>
-                        {stage.name}
-                      </h4>
-                      <p className="text-sm text-validation-gray-500 mt-1 mb-2">{stage.description}</p>
-                      <StatusBadge status={stage.complete ? "completed" : stage.inProgress ? "in-progress" : "not-started"} />
+                        <p className="text-sm text-validation-gray-500 mt-1 mb-2">{stage.description}</p>
+                        <StatusBadge status={stage.status} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -180,14 +398,14 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
                   <div className="rounded-full bg-validation-blue-100 p-2 mr-3">
                     <Users className="h-5 w-5 text-validation-blue-600" />
                   </div>
-                  <h3 className="text-validation-gray-500 text-sm font-medium">Problem Interviews</h3>
+                  <h3 className="text-validation-gray-500 text-sm font-medium">{problemInterviews.description}</h3>
                 </div>
                 <div className="flex items-end justify-between mb-2 mt-2">
-                  <p className="text-3xl font-bold text-validation-blue-600">20</p>
-                  <p className="text-sm text-validation-gray-500">Target: 20</p>
+                  <p className="text-3xl font-bold text-validation-blue-600">{problemInterviews.value}</p>
+                  <p className="text-sm text-validation-gray-500">{problemInterviews.targetDescription}</p>
                 </div>
-                <p className="text-sm mb-3 text-validation-gray-600">Teachers interviewed</p>
-                <ProgressBar value={100} variant="success" size="sm" />
+                <p className="text-sm mb-3 text-validation-gray-600">User acquisition</p>
+                <ProgressBar value={problemInterviews.progress} variant={problemInterviews.status as any} size="sm" />
               </div>
             </CardContent>
           </Card>
@@ -200,14 +418,14 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
                   <div className="rounded-full bg-validation-green-100 p-2 mr-3">
                     <Activity className="h-5 w-5 text-validation-green-600" />
                   </div>
-                  <h3 className="text-validation-gray-500 text-sm font-medium">Daily Activity</h3>
+                  <h3 className="text-validation-gray-500 text-sm font-medium">{studentActivity.description}</h3>
                 </div>
                 <div className="flex items-end justify-between mb-2 mt-2">
-                  <p className="text-3xl font-bold text-validation-green-600">68%</p>
-                  <p className="text-sm text-validation-gray-500">Target: 65%</p>
+                  <p className="text-3xl font-bold text-validation-green-600">{studentActivity.value}</p>
+                  <p className="text-sm text-validation-gray-500">{studentActivity.targetDescription}</p>
                 </div>
-                <p className="text-sm mb-3 text-validation-gray-600">Student completion rate</p>
-                <ProgressBar value={68} variant="success" size="sm" />
+                <p className="text-sm mb-3 text-validation-gray-600">Activity level</p>
+                <ProgressBar value={studentActivity.progress} variant={studentActivity.status as any} size="sm" />
               </div>
             </CardContent>
           </Card>
@@ -220,14 +438,14 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
                   <div className="rounded-full bg-validation-purple-100 p-2 mr-3">
                     <Target className="h-5 w-5 text-validation-purple-600" />
                   </div>
-                  <h3 className="text-validation-gray-500 text-sm font-medium">User Base</h3>
+                  <h3 className="text-validation-gray-500 text-sm font-medium">{userBase.description}</h3>
                 </div>
                 <div className="flex items-end justify-between mb-2 mt-2">
-                  <p className="text-3xl font-bold text-validation-purple-600">5</p>
-                  <p className="text-sm text-validation-gray-500">Goal: 100</p>
+                  <p className="text-3xl font-bold text-validation-purple-600">{userBase.value}</p>
+                  <p className="text-sm text-validation-gray-500">{userBase.targetDescription}</p>
                 </div>
-                <p className="text-sm mb-3 text-validation-gray-600">Active teachers (Year 1)</p>
-                <ProgressBar value={5} max={100} variant="info" size="sm" />
+                <p className="text-sm mb-3 text-validation-gray-600">Active users</p>
+                <ProgressBar value={userBase.progress} variant={userBase.status as any} size="sm" />
               </div>
             </CardContent>
           </Card>
@@ -243,16 +461,24 @@ const OverviewSection = ({ project, stages }: OverviewSectionProps) => {
                   <h3 className="text-validation-gray-500 text-sm font-medium">Hypotheses</h3>
                 </div>
                 <div className="flex items-end justify-between mb-2 mt-2">
-                  <p className="text-3xl font-bold text-validation-yellow-600">1/5</p>
-                  <p className="text-sm text-validation-gray-500">20% validated</p>
+                  <p className="text-3xl font-bold text-validation-yellow-600">{validatedHypotheses}/{totalHypotheses}</p>
+                  <p className="text-sm text-validation-gray-500">{hypothesesPercentage}% validated</p>
                 </div>
                 <p className="text-sm mb-3 text-validation-gray-600">Critical assumptions</p>
-                <ProgressBar value={20} variant="warning" size="sm" />
+                <ProgressBar value={hypothesesPercentage} variant="warning" size="sm" />
               </div>
             </CardContent>
           </Card>
         </div>
       </section>
+
+      {/* Stage Edit Dialog */}
+      <StageEditDialog 
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        stage={selectedStage}
+        onSave={handleSaveStage}
+      />
     </div>
   );
 };
