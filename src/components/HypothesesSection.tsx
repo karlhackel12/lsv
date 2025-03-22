@@ -39,7 +39,6 @@ const HypothesesSection = ({ hypotheses, refreshData, projectId }: HypothesesSec
   };
 
   const handleEdit = (hypothesis: Hypothesis) => {
-    // Find original hypothesis with string ID for database operations
     const originalHypothesis = {
       ...hypothesis,
       id: hypothesis.originalId

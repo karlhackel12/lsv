@@ -45,9 +45,10 @@ export interface HypothesisFormProps {
   onClose: () => void;
   onSave: (formData: Hypothesis) => Promise<void>;
   hypothesis?: Hypothesis;
+  projectId?: string; // Added projectId as an optional prop
 }
 
-const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis }: HypothesisFormProps) => {
+const HypothesisForm = ({ isOpen, onClose, onSave, hypothesis, projectId }: HypothesisFormProps) => {
   const isEditing = !!hypothesis;
 
   const form = useForm<Hypothesis>({
