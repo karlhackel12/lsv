@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BarChart, Lightbulb, CheckSquare, Target, Gauge, RotateCcw } from 'lucide-react';
 import TabNavigation, { TabItem } from './TabNavigation';
@@ -21,11 +20,8 @@ interface TransformedStage {
   description: string;
 }
 
-// Interface for components with numeric IDs
-interface ComponentWithNumericId {
-  id: number;
-  [key: string]: any;
-}
+// Helper type to convert string IDs to number IDs
+type WithNumericId<T> = Omit<T, 'id'> & { id: number };
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -143,12 +139,15 @@ const Dashboard = () => {
     }));
   };
 
-  // Transform data with string IDs to have numeric IDs for components
-  const transformToNumericIds = <T extends { id: string }>(items: T[]): ComponentWithNumericId[] => {
-    return items.map((item, index) => ({
-      ...item,
-      id: index + 1
-    }));
+  // Transform data with string IDs to have numeric IDs while preserving all other properties
+  const transformToNumericIds = <T extends { id: string }>(items: T[]): WithNumericId<T>[] => {
+    return items.map((item, index) => {
+      const { id, ...rest } = item;
+      return {
+        ...rest,
+        id: index + 1
+      } as WithNumericId<T>;
+    });
   };
 
   const tabs: TabItem[] = [
