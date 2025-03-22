@@ -16,13 +16,16 @@ const ExperimentStatusActions = ({ experiment, refreshData, onEdit }: Experiment
 
   const updateExperimentStatus = async (newStatus: 'completed' | 'in-progress' | 'planned') => {
     try {
+      // Use originalId if available, otherwise fallback to id
+      const idToUse = experiment.originalId || experiment.id;
+      
       const { error } = await supabase
         .from('experiments')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', experiment.originalId);
+        .eq('id', idToUse);
       
       if (error) throw error;
       

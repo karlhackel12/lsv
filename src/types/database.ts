@@ -32,6 +32,7 @@ export interface Hypothesis {
   evidence: string | null;
   created_at: string;
   updated_at: string;
+  originalId?: string;
 }
 
 export interface Experiment {
@@ -47,6 +48,7 @@ export interface Experiment {
   decisions: string | null;
   created_at: string;
   updated_at: string;
+  originalId?: string;
 }
 
 export interface MvpFeature {
@@ -58,6 +60,7 @@ export interface MvpFeature {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  originalId?: string;
 }
 
 export interface Metric {
@@ -70,6 +73,7 @@ export interface Metric {
   status: 'success' | 'warning' | 'error' | 'not-started';
   created_at: string;
   updated_at: string;
+  originalId?: string;
 }
 
 export interface PivotOption {
@@ -81,4 +85,13 @@ export interface PivotOption {
   likelihood: 'high' | 'medium' | 'low';
   created_at: string;
   updated_at: string;
+  originalId?: string;
+  
+  // Adding fields needed by PivotOptionForm
+  name?: string;
+  pivot_type?: string;
+  potential_impact?: string;
+  implementation_effort?: string;
+  evidence?: string;
+  status?: string;
 }

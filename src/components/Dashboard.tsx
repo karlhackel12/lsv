@@ -21,9 +21,6 @@ interface TransformedStage {
   description: string;
 }
 
-// Helper type to convert string IDs to number IDs
-type WithNumericId<T> = Omit<T, 'id'> & { id: number };
-
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
@@ -140,15 +137,12 @@ const Dashboard = () => {
     }));
   };
 
-  // Transform data with string IDs to have numeric IDs while preserving all other properties
-  const transformToNumericIds = <T extends { id: string }>(items: T[]): (WithNumericId<T> & { originalId: string })[] => {
-    return items.map((item, index) => {
-      const { id, ...rest } = item;
-      return {
-        ...rest,
-        id: index + 1,
-        originalId: id
-      } as WithNumericId<T> & { originalId: string };
+  // Transform data with string IDs to have proper typing while preserving all other properties
+  const transformIds = <T extends { id: string }>(items: T[]): (T & { originalId: string })[] => {
+    return items.map((item) => {
+      const originalId = item.id;
+      // Return a new object with all properties from the original item and add originalId
+      return { ...item, originalId };
     });
   };
 
@@ -201,31 +195,31 @@ const Dashboard = () => {
         return <OverviewSection project={project} stages={transformStages(stages)} />;
       case 'hypotheses':
         return <HypothesesSection 
-          hypotheses={transformToNumericIds(hypotheses)} 
+          hypotheses={transformIds(hypotheses)} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'experiments':
         return <ExperimentsSection 
-          experiments={transformToNumericIds(experiments)} 
+          experiments={transformIds(experiments)} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'mvp':
         return <MVPSection 
-          mvpFeatures={transformToNumericIds(mvpFeatures)} 
+          mvpFeatures={transformIds(mvpFeatures)} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'metrics':
         return <MetricsSection 
-          metrics={transformToNumericIds(metrics)} 
+          metrics={transformIds(metrics)} 
           refreshData={fetchData}
           projectId={projectId}
         />;
       case 'pivot':
         return <PivotSection 
-          pivotOptions={transformToNumericIds(pivotOptions)} 
+          pivotOptions={transformIds(pivotOptions)} 
           refreshData={fetchData}
           projectId={projectId}
         />;

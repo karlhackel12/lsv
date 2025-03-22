@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { PivotOption } from '@/types/database';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -46,7 +47,7 @@ interface PivotOptionFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  pivotOption?: any;
+  pivotOption?: PivotOption;
   projectId: string;
 }
 
@@ -72,7 +73,7 @@ const PivotOptionForm = ({ isOpen, onClose, onSave, pivotOption, projectId }: Pi
       form.reset({
         name: pivotOption.name || '',
         description: pivotOption.description || '',
-        pivot_type: pivotOption.pivot_type || '',
+        pivot_type: pivotOption.pivot_type || pivotOption.type || '',
         potential_impact: pivotOption.potential_impact || '',
         implementation_effort: pivotOption.implementation_effort || '',
         evidence: pivotOption.evidence || '',
@@ -96,19 +97,19 @@ const PivotOptionForm = ({ isOpen, onClose, onSave, pivotOption, projectId }: Pi
     try {
       if (pivotOption) {
         // Update existing pivot option
+        const idToUse = pivotOption.originalId || pivotOption.id;
+        
         const { error } = await supabase
           .from('pivot_options')
           .update({
-            name: values.name,
+            // Map form values to database column names
+            type: values.pivot_type,
             description: values.description,
-            pivot_type: values.pivot_type,
-            potential_impact: values.potential_impact,
-            implementation_effort: values.implementation_effort,
-            evidence: values.evidence,
-            status: values.status,
+            trigger: values.evidence, // Using evidence as trigger
+            likelihood: values.potential_impact as 'high' | 'medium' | 'low',
             updated_at: new Date().toISOString(),
           })
-          .eq('id', pivotOption.id);
+          .eq('id', idToUse);
 
         if (error) throw error;
 
@@ -121,13 +122,11 @@ const PivotOptionForm = ({ isOpen, onClose, onSave, pivotOption, projectId }: Pi
         const { error } = await supabase
           .from('pivot_options')
           .insert({
-            name: values.name,
+            // Map form values to database column names
+            type: values.pivot_type,
             description: values.description,
-            pivot_type: values.pivot_type,
-            potential_impact: values.potential_impact,
-            implementation_effort: values.implementation_effort,
-            evidence: values.evidence,
-            status: values.status,
+            trigger: values.evidence, // Using evidence as trigger
+            likelihood: values.potential_impact as 'high' | 'medium' | 'low',
             project_id: projectId,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

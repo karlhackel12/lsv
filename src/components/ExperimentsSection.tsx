@@ -14,9 +14,9 @@ interface ExperimentsSectionProps {
 
 const ExperimentsSection = ({ experiments, refreshData, projectId }: ExperimentsSectionProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedExperiment, setSelectedExperiment] = useState<any>(null);
+  const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [experimentToDelete, setExperimentToDelete] = useState<any>(null);
+  const [experimentToDelete, setExperimentToDelete] = useState<Experiment | null>(null);
 
   const handleCreateNew = () => {
     setSelectedExperiment(null);
@@ -25,19 +25,14 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
 
   const handleEdit = (experiment: Experiment) => {
     // Find original experiment with string ID for database operations
-    const originalExperiment = {
-      ...experiment,
-      id: experiment.originalId
-    };
-    setSelectedExperiment(originalExperiment);
+    // Use the experiment as is since it already has originalId if needed
+    setSelectedExperiment(experiment);
     setIsFormOpen(true);
   };
 
   const handleDelete = (experiment: Experiment) => {
-    setExperimentToDelete({
-      ...experiment,
-      id: experiment.originalId
-    });
+    // Use the experiment as is since it already has originalId if needed
+    setExperimentToDelete(experiment);
     setIsDeleteDialogOpen(true);
   };
 

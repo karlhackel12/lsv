@@ -2,6 +2,7 @@
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Experiment } from '@/types/database';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,7 @@ import {
 interface DeleteExperimentDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  experimentToDelete: any | null;
+  experimentToDelete: Experiment | null;
   refreshData: () => void;
 }
 
@@ -32,10 +33,13 @@ const DeleteExperimentDialog = ({
     if (!experimentToDelete) return;
     
     try {
+      // Use originalId if available, otherwise fallback to id
+      const idToUse = experimentToDelete.originalId || experimentToDelete.id;
+      
       const { error } = await supabase
         .from('experiments')
         .delete()
-        .eq('id', experimentToDelete.id);
+        .eq('id', idToUse);
       
       if (error) throw error;
       
