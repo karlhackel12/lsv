@@ -35,13 +35,16 @@ const MetricsPage = () => {
       if (error) throw error;
       
       // Transform the data to include numeric ID for easier handling in UI
-      const transformedData = data.map((item, index) => ({
+      // And ensure category is correctly typed
+      const transformedData = data.map((item) => ({
         ...item,
         id: item.id,
         originalId: item.id,
+        // Make sure category is one of the allowed values
+        category: (item.category as 'acquisition' | 'activation' | 'retention' | 'revenue' | 'referral' | 'custom') || 'custom',
       }));
       
-      setMetrics(transformedData);
+      setMetrics(transformedData as MetricData[]);
       
       // For demo purposes, simulate pivot triggers that are close to being triggered
       const atRiskMetrics = transformedData.filter(m => 
