@@ -1,37 +1,31 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import React, { useEffect } from 'react';
 import { Hypothesis } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Lightbulb, Beaker } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { useHypothesisForm } from '@/hooks/use-hypothesis-form';
-import CategoryField from './hypothesis/CategoryField';
-import HypothesisStatementField from './hypothesis/HypothesisStatementField';
-import TextField from './hypothesis/TextField';
-import StatusField from './hypothesis/StatusField';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info } from 'lucide-react';
-import Card from '@/components/Card';
+import HypothesisTemplates from '../hypotheses/HypothesisTemplates';
 
-export interface HypothesisFormProps {
+interface HypothesisFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (formData: Hypothesis) => Promise<void>;
-  hypothesis?: Hypothesis;
-  projectId?: string; 
+  onSave: (data: Hypothesis) => Promise<void>;
+  hypothesis?: Hypothesis | null;
+  projectId: string;
+  phaseType?: 'problem' | 'solution';
 }
 
 const HypothesisForm = ({ 
@@ -39,117 +33,242 @@ const HypothesisForm = ({
   onClose, 
   onSave, 
   hypothesis, 
-  projectId 
+  projectId,
+  phaseType = 'problem'
 }: HypothesisFormProps) => {
-  const { 
-    form, 
-    isEditing, 
-    handleSubmit, 
-    applyHypothesisTemplate, 
-    getHypothesisTemplates 
-  } = useHypothesisForm(hypothesis, onSave, onClose);
+  const { form, isEditing, handleSubmit, applyHypothesisTemplate } = useHypothesisForm(
+    hypothesis, 
+    onSave, 
+    onClose,
+    phaseType
+  );
+  const [showTemplates, setShowTemplates] = React.useState(false);
+
+  // Set project_id field whenever the projectId changes
+  useEffect(() => {
+    if (projectId) {
+      form.setValue('project_id', projectId);
+    }
+  }, [projectId, form]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
-        <DialogHeader className="px-6 pt-6 pb-2 bg-gradient-to-r from-validation-blue-600 to-validation-blue-500 text-white">
-          <DialogTitle className="text-xl font-bold">
-            {isEditing ? 'Edit Hypothesis' : 'Create New Hypothesis'}
+    <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {phaseType === 'problem' ? (
+              <>
+                <Lightbulb className="h-5 w-5 text-blue-500" />
+                {isEditing ? 'Edit Problem Hypothesis' : 'Create Problem Hypothesis'}
+              </>
+            ) : (
+              <>
+                <Beaker className="h-5 w-5 text-green-500" />
+                {isEditing ? 'Edit Solution Hypothesis' : 'Create Solution Hypothesis'}
+              </>
+            )}
           </DialogTitle>
-          <p className="text-sm opacity-90 mt-1">
-            {isEditing 
-              ? 'Update your hypothesis and review the evidence collected'
-              : 'Define a clear, testable hypothesis to validate your assumptions'}
-          </p>
         </DialogHeader>
 
+        <div className="flex justify-end mb-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowTemplates(!showTemplates)}
+          >
+            {showTemplates ? 'Hide Templates' : 'Show Templates'}
+          </Button>
+        </div>
+
+        {showTemplates && (
+          <div className="mb-6">
+            <HypothesisTemplates 
+              showTemplates={showTemplates} 
+              setShowTemplates={setShowTemplates} 
+              onSelectTemplate={applyHypothesisTemplate}
+              phaseType={phaseType}
+            />
+          </div>
+        )}
+        
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <Tabs defaultValue="details" className="w-full">
-              <div className="px-6">
-                <TabsList className="w-full mt-4 bg-gray-100 dark:bg-gray-700">
-                  <TabsTrigger value="details" className="flex-1">Hypothesis Details</TabsTrigger>
-                  {isEditing && (
-                    <TabsTrigger value="results" className="flex-1">Results & Evidence</TabsTrigger>
-                  )}
-                </TabsList>
-              </div>
-              
-              <div className="px-6 py-4 space-y-6 max-h-[70vh] overflow-y-auto">
-                <TabsContent value="details" className="space-y-6 mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="col-span-1">
-                      <CategoryField form={form} />
-                    </div>
-                    
-                    {isEditing && (
-                      <div className="col-span-1">
-                        <StatusField form={form} />
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="statement"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hypothesis Statement</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder={phaseType === 'problem' 
+                        ? "We believe that [customer segment] has a problem with [pain point]..."
+                        : "We believe that [solution approach] will solve [validated problem]..."
+                      } 
+                      className="h-24"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="customer" id="customer" />
+                        <Label htmlFor="customer">Customer</Label>
                       </div>
-                    )}
-                  </div>
-
-                  <Card className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                    <HypothesisStatementField 
-                      form={form} 
-                      templates={getHypothesisTemplates()} 
-                      onApplyTemplate={applyHypothesisTemplate} 
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="problem" id="problem" />
+                        <Label htmlFor="problem">Problem</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="solution" id="solution" />
+                        <Label htmlFor="solution">Solution</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="business-model" id="business-model" />
+                        <Label htmlFor="business-model">Business Model</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="criteria"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Success Criteria</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder={phaseType === 'problem'
+                        ? "How will you know the problem is real? E.g., 80% of interviewees mention this problem..."
+                        : "How will you know the solution works? E.g., 50% of users complete the desired action..."
+                      } 
+                      className="h-24"
+                      {...field} 
                     />
-                  </Card>
-
-                  <TextField 
-                    form={form} 
-                    name="criteria" 
-                    label="Success Criteria" 
-                    placeholder="What would make this hypothesis true? Define measurable outcomes."
-                    infoTooltip="Specify clear, measurable criteria that will help you determine if your hypothesis is validated or invalidated."
-                    height="min-h-[100px]"
-                  />
-
-                  <TextField 
-                    form={form} 
-                    name="experiment" 
-                    label="Experiment Plan" 
-                    placeholder="How will you test this hypothesis? Describe your approach and methodology."
-                    infoTooltip="Outline the specific experiment, test, or research method you'll use to validate this hypothesis."
-                    height="min-h-[100px]"
-                  />
-                </TabsContent>
-
-                {isEditing && (
-                  <TabsContent value="results" className="space-y-6 mt-0">
-                    <TextField 
-                      form={form} 
-                      name="evidence" 
-                      label="Evidence Collected" 
-                      placeholder="What evidence did you collect during your experiment?"
-                      infoTooltip="Document all relevant data, observations, and measurements from your experiment."
-                      height="min-h-[120px]"
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="experiment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Experiment Approach</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder={phaseType === 'problem'
+                        ? "How will you test this hypothesis? E.g., conduct 10 customer interviews with [specific segment]..."
+                        : "How will you test this solution? E.g., create a prototype and show it to 5 potential customers..."
+                      } 
+                      className="h-24"
+                      {...field} 
                     />
-
-                    <TextField 
-                      form={form} 
-                      name="result" 
-                      label="Result & Conclusions" 
-                      placeholder="What was the outcome of testing this hypothesis? What did you learn?"
-                      infoTooltip="Analyze the evidence and explain what it means for your hypothesis and product direction."
-                      height="min-h-[120px]"
-                    />
-                  </TabsContent>
-                )}
-              </div>
-            </Tabs>
-
-            <DialogFooter className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-              <Button type="button" variant="outline" onClick={onClose} className="mr-2">
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                className="bg-validation-blue-600 hover:bg-validation-blue-700 text-white"
-              >
-                {isEditing ? 'Update Hypothesis' : 'Create Hypothesis'}
-              </Button>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {isEditing && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="evidence"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Evidence</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="What evidence have you collected?" 
+                          className="h-24"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="not-started" id="not-started" />
+                            <Label htmlFor="not-started">Not Started</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="validating" id="validating" />
+                            <Label htmlFor="validating">Validating</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="validated" id="validated" />
+                            <Label htmlFor="validated">Validated</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="invalid" id="invalid" />
+                            <Label htmlFor="invalid">Invalid</Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="result"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Result</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="What was the outcome of your experiment?"
+                          className="h-24" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+            
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
             </DialogFooter>
           </form>
         </Form>

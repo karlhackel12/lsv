@@ -1,322 +1,118 @@
+
 import React, { useState, useEffect } from 'react';
-import { useProject } from '@/hooks/use-project';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import HypothesisList from '@/components/hypotheses/HypothesisList';
-import HypothesisForm from '@/components/forms/HypothesisForm';
-import { Loader2, Lightbulb, ArrowLeft } from 'lucide-react';
+import HypothesesSection from '@/components/HypothesesSection';
 import PageIntroduction from '@/components/PageIntroduction';
-import HypothesisDetailView from '@/components/hypotheses/HypothesisDetailView';
-import { Button } from '@/components/ui/button';
-import { useSearchParams } from 'react-router-dom';
+import { Lightbulb } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useProject } from '@/hooks/use-project';
+import PhaseNavigation from '@/components/PhaseNavigation';
+import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
 const HypothesesPage = () => {
-  const { currentProject, isLoading, error } = useProject();
+  const { currentProject } = useProject();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
-  const [isLoadingHypotheses, setIsLoadingHypotheses] = useState(true);
-  const [selectedHypothesis, setSelectedHypothesis] = useState<Hypothesis | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { toast } = useToast();
-
+  const currentPhase = searchParams.get('phase') || 'problem';
+  
   const fetchHypotheses = async () => {
-    if (!currentProject) return;
-    
     try {
-      setIsLoadingHypotheses(true);
+      setIsLoading(true);
+      
+      if (!currentProject) return;
+      
+      // Fetch hypotheses with phase filter
       const { data, error } = await supabase
         .from('hypotheses')
         .select('*')
         .eq('project_id', currentProject.id)
-        .order('updated_at', { ascending: false });
+        .eq('phase', currentPhase)
+        .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching hypotheses:', error);
+        return;
+      }
       
-      setHypotheses(data);
+      // Add originalId field to each hypothesis for tracking original database ID
+      const processedData = data?.map(item => ({
+        ...item,
+        originalId: item.id
+      })) as Hypothesis[];
+      
+      setHypotheses(processedData || []);
     } catch (err) {
-      console.error('Error fetching hypotheses:', err);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to load hypotheses',
-        variant: 'destructive',
-      });
+      console.error('Error:', err);
     } finally {
-      setIsLoadingHypotheses(false);
+      setIsLoading(false);
     }
   };
-
+  
+  // Refetch when project or phase changes
   useEffect(() => {
     if (currentProject) {
       fetchHypotheses();
     }
-  }, [currentProject]);
-
-  useEffect(() => {
-    const hypothesisId = searchParams.get('id');
-    if (hypothesisId && hypotheses.length > 0) {
-      const hypothesis = hypotheses.find(h => h.id === hypothesisId);
-      if (hypothesis) {
-        setSelectedHypothesis(hypothesis);
-        setViewMode('detail');
-      }
-    }
-  }, [searchParams, hypotheses]);
-
-  const handleEditHypothesis = (hypothesis: Hypothesis) => {
-    setSelectedHypothesis(hypothesis);
-    setIsFormOpen(true);
+  }, [currentProject, currentPhase]);
+  
+  // Change tab handler
+  const handleTabChange = (value: string) => {
+    setSearchParams({ phase: value });
   };
-
-  const handleCreateHypothesis = () => {
-    setSelectedHypothesis(null);
-    setIsFormOpen(true);
-  };
-
-  const handleViewDetail = (hypothesis: Hypothesis) => {
-    setSelectedHypothesis(hypothesis);
-    setViewMode('detail');
-    setSearchParams({ id: hypothesis.id });
-  };
-
-  const handleBackToList = () => {
-    setViewMode('list');
-    setSelectedHypothesis(null);
-    setSearchParams({});
-  };
-
-  const handleSaveHypothesis = async (formData: Hypothesis) => {
-    try {
-      if (selectedHypothesis) {
-        const { error } = await supabase
-          .from('hypotheses')
-          .update({
-            statement: formData.statement,
-            category: formData.category,
-            status: formData.status,
-            criteria: formData.criteria,
-            experiment: formData.experiment,
-            evidence: formData.evidence,
-            result: formData.result,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedHypothesis.id);
-          
-        if (error) throw error;
-        
-        toast({
-          title: 'Success',
-          description: 'Hypothesis updated successfully',
-        });
-      } else {
-        const { error } = await supabase
-          .from('hypotheses')
-          .insert({
-            statement: formData.statement,
-            category: formData.category,
-            status: 'not-started',
-            criteria: formData.criteria,
-            experiment: formData.experiment,
-            project_id: currentProject?.id,
-          });
-          
-        if (error) throw error;
-        
-        toast({
-          title: 'Success',
-          description: 'New hypothesis created successfully',
-        });
-      }
-      
-      await fetchHypotheses();
-    } catch (err) {
-      console.error('Error saving hypothesis:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to save hypothesis',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDeleteHypothesis = async (hypothesis: Hypothesis) => {
-    try {
-      const { error } = await supabase
-        .from('hypotheses')
-        .delete()
-        .eq('id', hypothesis.id);
-        
-      if (error) throw error;
-      
-      setHypotheses(prevHypotheses => 
-        prevHypotheses.filter(h => h.id !== hypothesis.id)
-      );
-      
-      toast({
-        title: 'Success',
-        description: 'Hypothesis deleted successfully',
-      });
-    } catch (err) {
-      console.error('Error deleting hypothesis:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete hypothesis',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    setSelectedHypothesis(null);
-  };
-
-  const updateHypothesisStatus = async (hypothesis: Hypothesis, newStatus: 'validated' | 'validating' | 'not-started' | 'invalid') => {
-    try {
-      const { error } = await supabase
-        .from('hypotheses')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', hypothesis.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Status updated',
-        description: `Hypothesis status changed to ${newStatus}.`,
-      });
-      
-      await fetchHypotheses();
-    } catch (err) {
-      console.error('Error updating hypothesis status:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to update hypothesis status',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading project...</span>
-      </div>
-    );
+  
+  if (!currentProject) {
+    return <div>Select a project to view hypotheses</div>;
   }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          <p>Error: {error instanceof Error ? error.message : 'Failed to load project'}</p>
-        </div>
-      </div>
-    );
-  }
-
+  
   return (
-    <div className="p-6">
-      {viewMode === 'list' && (
-        <PageIntroduction
-          title="Hypothesis-Driven Development"
-          icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
-          description={
-            <>
-              <p>
-                Hypothesis-driven development is a scientific approach to building products that test specific assumptions.
-                Each hypothesis follows this structure:
-              </p>
-              <ul className="list-disc pl-5 mt-2">
-                <li><strong>Statement:</strong> "We believe that [doing this / building this / creating this] for [these people/personas] will achieve [this outcome]."</li>
-                <li><strong>Evidence criteria:</strong> "We'll know we're right when we see [this measurable outcome]."</li>
-              </ul>
-              <p className="mt-2">
-                <strong>Types of hypotheses:</strong>
-              </p>
-              <ul className="list-disc pl-5">
-                <li><strong>Problem hypothesis:</strong> Tests if the problem exists and is significant enough to solve</li>
-                <li><strong>Solution hypothesis:</strong> Tests if your proposed solution actually addresses the problem</li>
-                <li><strong>Implementation hypothesis:</strong> Tests specific features or approaches to implementing the solution</li>
-                <li><strong>Business model hypothesis:</strong> Tests if people will pay for your solution and if the business model is viable</li>
-              </ul>
-              <p className="mt-2">
-                Create and test your most critical hypotheses first, especially those that could invalidate your entire product idea.
-                This "fail fast" approach saves time and resources by quickly eliminating ideas that won't work.
-              </p>
-            </>
-          }
-        />
-      )}
+    <div className="space-y-6">
+      <PageIntroduction 
+        title="Hypothesis Testing" 
+        icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
+        description="Create and test hypotheses to validate your business model. The scientific method helps you make evidence-based decisions."
+      />
       
-      {/* Hypothesis form dialog */}
-      {isFormOpen && (
-        <HypothesisForm
-          isOpen={isFormOpen}
-          onClose={handleFormClose}
-          onSave={handleSaveHypothesis}
-          hypothesis={selectedHypothesis || undefined}
-        />
-      )}
+      <PhaseNavigation />
       
-      {/* Main content */}
-      {viewMode === 'list' ? (
-        <Tabs defaultValue="list" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="list">Hypothesis List</TabsTrigger>
-            <TabsTrigger value="create">Create Hypothesis</TabsTrigger>
-          </TabsList>
-          <TabsContent value="list" className="mt-6">
-            <HypothesisList 
-              hypotheses={hypotheses}
-              onEdit={handleEditHypothesis}
-              onDelete={handleDeleteHypothesis}
-              onCreateNew={handleCreateHypothesis}
-              onViewDetail={handleViewDetail}
-              isLoading={isLoadingHypotheses}
-              onStatusChange={updateHypothesisStatus}
-            />
-          </TabsContent>
-          <TabsContent value="create" className="mt-6">
-            <div className="flex items-center justify-center p-12">
-              <button
-                onClick={handleCreateHypothesis}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                Create New Hypothesis
-              </button>
-            </div>
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <>
-          <div className="mb-4">
-            <Button 
-              variant="outline" 
-              onClick={handleBackToList}
-              className="flex items-center"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Hypotheses
-            </Button>
-          </div>
-          
-          {selectedHypothesis && (
-            <HypothesisDetailView 
-              hypothesis={selectedHypothesis}
-              onEdit={() => setIsFormOpen(true)}
-              onClose={handleBackToList}
-              onRefresh={fetchHypotheses}
-              projectId={currentProject?.id}
-            />
-          )}
-        </>
-      )}
+      <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="problem">Problem Validation</TabsTrigger>
+          <TabsTrigger value="solution">Solution Validation</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="problem">
+          <ValidationPhaseIntro 
+            phase="problem" 
+            onCreateNew={() => document.getElementById('create-hypothesis-button')?.click()}
+            createButtonText="Create Problem Hypothesis"
+          />
+          <HypothesesSection 
+            hypotheses={hypotheses}
+            refreshData={fetchHypotheses}
+            projectId={currentProject.id}
+            isLoading={isLoading}
+            phaseType="problem"
+          />
+        </TabsContent>
+        
+        <TabsContent value="solution">
+          <ValidationPhaseIntro 
+            phase="solution" 
+            onCreateNew={() => document.getElementById('create-hypothesis-button')?.click()}
+            createButtonText="Create Solution Hypothesis"
+          />
+          <HypothesesSection 
+            hypotheses={hypotheses}
+            refreshData={fetchHypotheses}
+            projectId={currentProject.id}
+            isLoading={isLoading}
+            phaseType="solution"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

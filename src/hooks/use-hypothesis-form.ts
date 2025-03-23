@@ -2,11 +2,18 @@
 import { useForm } from 'react-hook-form';
 import { Hypothesis } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import {
+  TEMPLATE_PROBLEM_HYPOTHESES,
+  TEMPLATE_SOLUTION_HYPOTHESES,
+  TEMPLATE_PROBLEM_CRITERIA,
+  TEMPLATE_SOLUTION_CRITERIA
+} from '@/types/pivot';
 
 export const useHypothesisForm = (
   hypothesis: Hypothesis | undefined, 
   onSave: (data: Hypothesis) => Promise<void>, 
-  onClose: () => void
+  onClose: () => void,
+  phaseType: 'problem' | 'solution' = 'problem'
 ) => {
   const { toast } = useToast();
   const isEditing = !!hypothesis;
@@ -14,12 +21,13 @@ export const useHypothesisForm = (
   const form = useForm<Hypothesis>({
     defaultValues: hypothesis || {
       statement: '',
-      category: 'problem',
+      category: phaseType === 'problem' ? 'problem' : 'solution',
       criteria: '',
       experiment: '',
       status: 'not-started',
       evidence: '',
       result: '',
+      phase: phaseType,
     },
     mode: 'onChange',
   });
@@ -43,6 +51,9 @@ export const useHypothesisForm = (
         return;
       }
 
+      // Ensure phase is set
+      data.phase = phaseType;
+
       await onSave(data);
       toast({
         title: isEditing ? 'Hypothesis updated' : 'Hypothesis created',
@@ -62,16 +73,26 @@ export const useHypothesisForm = (
   };
 
   const applyHypothesisTemplate = (template: string) => {
-    form.setValue('statement', template);
-    // Trigger validation after setting the value
-    form.trigger('statement');
+    // Check if this is likely a criteria template
+    if (template.includes('%') || template.includes('>')) {
+      form.setValue('criteria', template);
+      form.trigger('criteria');
+    } else {
+      form.setValue('statement', template);
+      form.trigger('statement');
+    }
   };
 
   const getHypothesisTemplates = () => {
-    const category = form.watch('category');
-    return category === 'growth' 
-      ? TEMPLATE_GROWTH_HYPOTHESES 
-      : TEMPLATE_VALUE_HYPOTHESES;
+    return phaseType === 'problem'
+      ? TEMPLATE_PROBLEM_HYPOTHESES
+      : TEMPLATE_SOLUTION_HYPOTHESES;
+  };
+
+  const getCriteriaTemplates = () => {
+    return phaseType === 'problem'
+      ? TEMPLATE_PROBLEM_CRITERIA 
+      : TEMPLATE_SOLUTION_CRITERIA;
   };
 
   return {
@@ -79,12 +100,7 @@ export const useHypothesisForm = (
     isEditing,
     handleSubmit,
     applyHypothesisTemplate,
-    getHypothesisTemplates
+    getHypothesisTemplates,
+    getCriteriaTemplates
   };
 };
-
-// Import the templates here to avoid circular dependencies
-import { 
-  TEMPLATE_VALUE_HYPOTHESES, 
-  TEMPLATE_GROWTH_HYPOTHESES 
-} from '@/types/database';

@@ -1,313 +1,289 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight } from 'lucide-react';
-import Card from './Card';
-import StatusBadge from './StatusBadge';
-import { supabase } from '@/integrations/supabase/client';
-import { Project, Hypothesis, Experiment, MVPFeature, Metric, PivotOption } from '@/types/database';
-import { useToast } from '@/hooks/use-toast';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
+import { supabase } from '@/integrations/supabase/client';
+import { Metric, Experiment, Hypothesis } from '@/types/database';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
+import PhaseNavigation from '@/components/PhaseNavigation';
 
 const Dashboard = () => {
-  const { toast } = useToast();
-  const { currentProject, updateProjectStage } = useProject();
-  const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [mvpFeatures, setMvpFeatures] = useState<MVPFeature[]>([]);
-  const [metrics, setMetrics] = useState<Metric[]>([]);
-  const [pivotOptions, setPivotOptions] = useState<PivotOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { currentProject } = useProject();
+  const navigate = useNavigate();
+  const [hypotheses, setHypotheses] = useState<any[]>([]);
+  const [experiments, setExperiments] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [mvpFeatures, setMvpFeatures] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProjectData = async () => {
-      if (!currentProject?.id) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const projectId = currentProject.id;
-
-        const { data: hypothesesData, error: hypothesesError } = await supabase
-          .from('hypotheses')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (hypothesesError) throw hypothesesError;
-
-        const { data: experimentsData, error: experimentsError } = await supabase
-          .from('experiments')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (experimentsError) throw experimentsError;
-
-        const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
-          .from('mvp_features')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (mvpFeaturesError) throw mvpFeaturesError;
-
-        const { data: metricsData, error: metricsError } = await supabase
-          .from('metrics')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (metricsError) throw metricsError;
-
-        const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
-          .from('pivot_options')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (pivotOptionsError) throw pivotOptionsError;
-
-        const transformedHypotheses: Hypothesis[] = hypothesesData.map(item => ({
-          ...item,
-          originalId: item.id,
-          id: item.id
-        }));
-
-        const transformedExperiments: Experiment[] = experimentsData.map(item => ({
-          ...item,
-          originalId: item.id,
-          id: item.id,
-          status: item.status as 'planned' | 'in-progress' | 'completed',
-          category: item.category as 'problem' | 'solution' | 'business-model' | string | null
-        }));
-
-        const transformedMvpFeatures: MVPFeature[] = mvpFeaturesData.map(item => ({
-          ...item,
-          originalId: item.id,
-          id: item.id,
-          name: item.feature,
-          description: item.notes || '',
-          effort: 'medium',
-          impact: item.priority
-        }));
-
-        const transformedMetrics: Metric[] = metricsData.map(item => ({
-          ...item,
-          originalId: item.id,
-          id: item.id
-        }));
-
-        const transformedPivotOptions: PivotOption[] = pivotOptionsData.map(item => ({
-          ...item,
-          originalId: item.id,
-          id: item.id,
-          name: item.type,
-          pivot_type: item.type,
-          potential_impact: item.likelihood,
-          implementation_effort: 'medium',
-          evidence: ''
-        }));
-
-        setHypotheses(transformedHypotheses);
-        setExperiments(transformedExperiments);
-        setMvpFeatures(transformedMvpFeatures);
-        setMetrics(transformedMetrics);
-        setPivotOptions(transformedPivotOptions);
-
-      } catch (error: any) {
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to load project data',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (currentProject && currentProject.id) {
-      fetchProjectData();
+    if (currentProject) {
+      fetchDashboardData();
     }
-  }, [currentProject, toast]);
+  }, [currentProject]);
 
-  const getStageIndex = (stage: string): number => {
-    const stages = ['problem-validation', 'solution-validation', 'mvp', 'product-market-fit', 'scale', 'mature'];
-    return stages.indexOf(stage);
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch hypotheses
+      const { data: hypothesesData, error: hypothesesError } = await supabase
+        .from('hypotheses')
+        .select('*')
+        .eq('project_id', currentProject?.id)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+        
+      if (hypothesesError) throw hypothesesError;
+      
+      // Fetch experiments
+      const { data: experimentsData, error: experimentsError } = await supabase
+        .from('experiments')
+        .select('*')
+        .eq('project_id', currentProject?.id)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+        
+      if (experimentsError) throw experimentsError;
+      
+      // Fetch metrics
+      const { data: metricsData, error: metricsError } = await supabase
+        .from('metrics')
+        .select('*')
+        .eq('project_id', currentProject?.id)
+        .limit(5);
+        
+      if (metricsError) throw metricsError;
+      
+      // Fetch MVP features
+      const { data: mvpData, error: mvpError } = await supabase
+        .from('mvp_features')
+        .select('*')
+        .eq('project_id', currentProject?.id)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+        
+      if (mvpError) throw mvpError;
+      
+      setHypotheses(hypothesesData || []);
+      setExperiments(experimentsData || []);
+      setMetrics(metricsData || []);
+      setMvpFeatures(mvpData || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const stageIndex = currentProject && currentProject.stage ? getStageIndex(currentProject.stage) : 0;
-  const progress = ((stageIndex + 1) / 6) * 100;
-
-  if (loading) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-validation-gray-500">Loading project data...</p>
-      </div>
-    );
-  }
-
   if (!currentProject) {
-    return (
-      <div className="p-8 text-center">
-        <Card className="bg-validation-yellow-50 border border-validation-yellow-200 p-4 shadow-md">
-          <h3 className="font-semibold mb-2 text-validation-yellow-700">No Project Selected</h3>
-          <p className="text-validation-yellow-600">Please select or create a project to view the dashboard.</p>
-        </Card>
-      </div>
-    );
+    return <div>Please select a project to view the dashboard.</div>;
   }
 
   return (
-    <div className="grid gap-6">
-      <Accordion type="multiple" className="w-full space-y-4" defaultValue={["hypotheses", "experiments"]}>
-        <AccordionItem value="hypotheses" className="border rounded-lg overflow-hidden shadow-md bg-white">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
-            <div className="flex items-center text-lg font-semibold text-validation-gray-900">
-              <Lightbulb className="h-5 w-5 mr-3 text-validation-blue-600" />
-              Hypotheses
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6 pt-2">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-md font-medium text-validation-gray-700">Top Hypotheses</h3>
-              <Link to="/hypotheses" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
-                View All
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
-            {hypotheses.length === 0 ? (
-              <p className="text-validation-gray-500">No hypotheses created yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {hypotheses.map((hypothesis) => (
-                  <div key={hypothesis.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div>
-                      <h3 className="text-md font-semibold text-validation-gray-900">{hypothesis.statement}</h3>
-                      <p className="text-validation-gray-600 text-sm">{hypothesis.experiment}</p>
-                    </div>
-                    <StatusBadge status={hypothesis.status as any} />
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{currentProject.name}</h1>
+          <p className="text-muted-foreground">{currentProject.description}</p>
+        </div>
+        <Button variant="outline" onClick={() => navigate('/settings')} className="flex items-center">
+          <Settings className="mr-2 h-4 w-4" />
+          Project Settings
+        </Button>
+      </div>
+      
+      <PhaseNavigation />
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Lightbulb className="mr-2 h-5 w-5 text-blue-500" />
+              Hypothesis Testing
+            </CardTitle>
+            <CardDescription>Validate your business assumptions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hypotheses.length}</div>
+            <p className="text-sm text-muted-foreground">Active hypotheses</p>
+            
+            {hypotheses.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {hypotheses.slice(0, 3).map((hypothesis) => (
+                  <div key={hypothesis.id} className="flex items-start">
+                    <div className="w-2 h-2 mt-1.5 rounded-full bg-blue-500 mr-2"></div>
+                    <div className="text-sm line-clamp-2">{hypothesis.statement}</div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+                No hypotheses created yet
+              </div>
             )}
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="experiments" className="border rounded-lg overflow-hidden shadow-md bg-white">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
-            <div className="flex items-center text-lg font-semibold text-validation-gray-900">
-              <FlaskConical className="h-5 w-5 mr-3 text-validation-blue-600" />
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="w-full text-blue-600" 
+              onClick={() => navigate('/hypotheses')}
+            >
+              View All Hypotheses
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Beaker className="mr-2 h-5 w-5 text-green-500" />
               Experiments
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6 pt-2">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-md font-medium text-validation-gray-700">Latest Experiments</h3>
-              <Link to="/experiments" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
-                View All
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
-            {experiments.length === 0 ? (
-              <p className="text-validation-gray-500">No experiments created yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {experiments.map((experiment) => (
-                  <div key={experiment.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div>
-                      <h3 className="text-md font-semibold text-validation-gray-900">{experiment.title}</h3>
-                      <p className="text-validation-gray-600 text-sm">{experiment.hypothesis}</p>
-                    </div>
-                    <StatusBadge status={experiment.status as any} />
+            </CardTitle>
+            <CardDescription>Test and learn systematically</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{experiments.length}</div>
+            <p className="text-sm text-muted-foreground">Total experiments</p>
+            
+            {experiments.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {experiments.slice(0, 3).map((experiment) => (
+                  <div key={experiment.id} className="flex items-start">
+                    <div className={`w-2 h-2 mt-1.5 rounded-full mr-2 ${
+                      experiment.status === 'completed' ? 'bg-green-500' : 
+                      experiment.status === 'in-progress' ? 'bg-yellow-500' : 'bg-gray-400'
+                    }`}></div>
+                    <div className="text-sm line-clamp-2">{experiment.title}</div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+                No experiments created yet
+              </div>
             )}
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="mvp" className="border rounded-lg overflow-hidden shadow-md bg-white">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
-            <div className="flex items-center text-lg font-semibold text-validation-gray-900">
-              <Layers className="h-5 w-5 mr-3 text-validation-blue-600" />
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="w-full text-green-600" 
+              onClick={() => navigate('/experiments')}
+            >
+              View All Experiments
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Layers className="mr-2 h-5 w-5 text-yellow-500" />
               MVP Features
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6 pt-2">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-md font-medium text-validation-gray-700">Top Features</h3>
-              <Link to="/mvp" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
-                View All
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
-            {mvpFeatures.length === 0 ? (
-              <p className="text-validation-gray-500">No MVP features defined yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {mvpFeatures.map((feature) => (
-                  <div key={feature.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div>
-                      <h3 className="text-md font-semibold text-validation-gray-900">{feature.feature}</h3>
-                      <p className="text-validation-gray-600 text-sm">{feature.notes}</p>
-                    </div>
-                    <StatusBadge status={feature.status as any} />
+            </CardTitle>
+            <CardDescription>Track your core feature development</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mvpFeatures.length}</div>
+            <p className="text-sm text-muted-foreground">Defined features</p>
+            
+            {mvpFeatures.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {mvpFeatures.slice(0, 3).map((feature) => (
+                  <div key={feature.id} className="flex items-start">
+                    <div className={`w-2 h-2 mt-1.5 rounded-full mr-2 ${
+                      feature.status === 'completed' ? 'bg-green-500' : 
+                      feature.status === 'in-progress' ? 'bg-yellow-500' : 'bg-gray-400'
+                    }`}></div>
+                    <div className="text-sm line-clamp-2">{feature.feature}</div>
                   </div>
                 ))}
               </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="metrics" className="border rounded-lg overflow-hidden shadow-md bg-white">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
-            <div className="flex items-center text-lg font-semibold text-validation-gray-900">
-              <LineChart className="h-5 w-5 mr-3 text-validation-blue-600" />
-              Key Metrics
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6 pt-2">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-md font-medium text-validation-gray-700">Performance Metrics</h3>
-              <Link to="/metrics" className="text-validation-blue-600 hover:text-validation-blue-700 font-medium text-sm flex items-center">
-                View All
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
-            {metrics.length === 0 ? (
-              <p className="text-validation-gray-500">No metrics defined yet.</p>
             ) : (
-              <div className="space-y-3">
-                {metrics.map((metric) => (
-                  <div key={metric.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div>
-                      <h3 className="text-md font-semibold text-validation-gray-900">{metric.name}</h3>
-                      <p className="text-validation-gray-600 text-sm">Target: {metric.target}</p>
-                    </div>
-                    <StatusBadge status={metric.status as any} />
-                  </div>
-                ))}
+              <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+                No MVP features defined yet
               </div>
             )}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="w-full text-yellow-600" 
+              onClick={() => navigate('/mvp')}
+            >
+              View MVP Features
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
+            Validation Journey
+          </CardTitle>
+          <CardDescription>
+            Track your progress through the lean startup validation process
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col space-y-8">
+            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+              <Button 
+                variant="outline" 
+                className="flex-1 h-auto py-6 flex flex-col items-center justify-center border-blue-100 hover:border-blue-200 text-blue-800"
+                onClick={() => navigate('/hypotheses?phase=problem')}
+              >
+                <Lightbulb className="h-8 w-8 mb-2 text-blue-500" />
+                <span className="text-lg font-medium">Problem Validation</span>
+                <span className="text-sm mt-1 text-blue-600">Verify that you're solving a real problem</span>
+                <ArrowRight className="h-5 w-5 mt-4 text-blue-400" />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex-1 h-auto py-6 flex flex-col items-center justify-center border-green-100 hover:border-green-200 text-green-800"
+                onClick={() => navigate('/hypotheses?phase=solution')}
+              >
+                <Beaker className="h-8 w-8 mb-2 text-green-500" />
+                <span className="text-lg font-medium">Solution Validation</span>
+                <span className="text-sm mt-1 text-green-600">Test that your solution addresses the problem</span>
+                <ArrowRight className="h-5 w-5 mt-4 text-green-400" />
+              </Button>
+            </div>
+            
+            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+              <Button 
+                variant="outline" 
+                className="flex-1 h-auto py-6 flex flex-col items-center justify-center border-yellow-100 hover:border-yellow-200 text-yellow-800"
+                onClick={() => navigate('/mvp')}
+              >
+                <Layers className="h-8 w-8 mb-2 text-yellow-500" />
+                <span className="text-lg font-medium">MVP Testing</span>
+                <span className="text-sm mt-1 text-yellow-600">Build and validate your minimum viable product</span>
+                <ArrowRight className="h-5 w-5 mt-4 text-yellow-400" />
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex-1 h-auto py-6 flex flex-col items-center justify-center border-purple-100 hover:border-purple-200 text-purple-800"
+                onClick={() => navigate('/growth')}
+              >
+                <TrendingUp className="h-8 w-8 mb-2 text-purple-500" />
+                <span className="text-lg font-medium">Growth Model Validation</span>
+                <span className="text-sm mt-1 text-purple-600">Optimize your acquisition, retention and revenue</span>
+                <ArrowRight className="h-5 w-5 mt-4 text-purple-400" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
 export default Dashboard;
-

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Experiment, Hypothesis } from '@/types/database';
 import ExperimentForm from './forms/ExperimentForm';
@@ -10,20 +11,28 @@ import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface ExperimentsSectionProps {
   experiments: Experiment[];
   refreshData: () => void;
   projectId: string;
+  isLoading?: boolean;
+  experimentType?: 'problem' | 'solution' | 'business-model';
 }
 
-const ExperimentsSection = ({ experiments, refreshData, projectId }: ExperimentsSectionProps) => {
+const ExperimentsSection = ({ 
+  experiments, 
+  refreshData, 
+  projectId,
+  isLoading = false,
+  experimentType = 'problem'
+}: ExperimentsSectionProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [experimentToDelete, setExperimentToDelete] = useState<Experiment | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [detailView, setDetailView] = useState(false);
   const [relatedHypothesis, setRelatedHypothesis] = useState<Hypothesis | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
 
@@ -56,24 +65,36 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
   const handleViewDetail = (experiment: Experiment) => {
     setSelectedExperiment(experiment);
     setViewMode('detail');
-    setSearchParams({ id: experiment.id });
+    setSearchParams({ id: experiment.id, phase: experimentType });
   };
 
   const handleBackToList = () => {
     setViewMode('list');
     setSelectedExperiment(null);
-    setSearchParams({});
+    setSearchParams({ phase: experimentType });
   };
 
   const handleHypothesisFound = (hypothesis: Hypothesis | null) => {
     setRelatedHypothesis(hypothesis);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64 animate-pulse">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <span className="text-lg font-medium text-validation-gray-600">Loading experiments...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fadeIn">
       {viewMode === 'list' ? (
         <>
-          <ExperimentsHeader onCreateNew={handleCreateNew} />
+          <ExperimentsHeader 
+            onCreateNew={handleCreateNew} 
+            experimentType={experimentType}
+          />
           
           <ExperimentList 
             experiments={experiments}
@@ -124,6 +145,7 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
         onSave={refreshData}
         experiment={selectedExperiment}
         projectId={projectId}
+        experimentType={experimentType}
       />
 
       <DeleteExperimentDialog

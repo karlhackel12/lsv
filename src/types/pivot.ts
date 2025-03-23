@@ -44,6 +44,22 @@ export interface PivotMetricTrigger {
   updated_at: string;
 }
 
+// Problem phase hypothesis templates
+export const TEMPLATE_PROBLEM_HYPOTHESES = [
+  "We believe [customer segment] has a significant problem with [pain point]",
+  "We believe that [customer segment] are currently using [workaround] to solve [problem]",
+  "We believe [customer segment] will pay to solve [specific problem] because [reason]",
+  "We believe [customer segment] experiences [problem] at a frequency of [estimate]"
+];
+
+// Solution phase hypothesis templates
+export const TEMPLATE_SOLUTION_HYPOTHESES = [
+  "We believe that [proposed solution] will solve [validated problem] for [customer segment]",
+  "We believe that [customer segment] will prefer our solution over [existing alternatives]",
+  "We believe that [feature] is essential for solving [specific aspect of problem]",
+  "We believe that [customer segment] will be willing to pay [price point] for our solution"
+];
+
 export const TEMPLATE_VALUE_HYPOTHESES = [
   "Teachers need {feature} to solve {specific_problem}",
   "Students will consistently use {feature} for {time_period} if it {provides_value}",
@@ -58,13 +74,15 @@ export const TEMPLATE_GROWTH_HYPOTHESES = [
   "User retention will exceed {percentage} at {time_period} due to {feature}"
 ];
 
+// Problem phase experiment templates
 export const TEMPLATE_PROBLEM_EXPERIMENTS = [
   "Conduct {number} structured interviews with {target_users} focusing on {problem_area}",
-  "Create landing page describing {solution} and measure email signup rate",
+  "Create landing page describing {problem} and measure email signup rate",
   "Run {number} observation sessions watching {users} attempt to solve {problem}",
   "Distribute survey to {user_segment} with questions about {problem_frequency/severity}"
 ];
 
+// Solution phase experiment templates
 export const TEMPLATE_SOLUTION_EXPERIMENTS = [
   "Provide {number} users access to {MVP_feature} and track {usage_metric}",
   "A/B test {current_solution} against {new_solution} measuring {key_metric}",
@@ -72,6 +90,7 @@ export const TEMPLATE_SOLUTION_EXPERIMENTS = [
   "Run usability tests on {prototype} measuring {completion_metric}"
 ];
 
+// Business model phase experiment templates
 export const TEMPLATE_BUSINESS_MODEL_EXPERIMENTS = [
   "Offer {product} at {price_point} to {number} users measuring conversion rate",
   "Test {monetization_approach} with {user_segment} tracking {revenue_metric}",
@@ -79,6 +98,7 @@ export const TEMPLATE_BUSINESS_MODEL_EXPERIMENTS = [
   "Implement {acquisition_channel} with {budget} measuring CAC and conversion"
 ];
 
+// Success criteria templates
 export const TEMPLATE_PROBLEM_CRITERIA = [
   ">75% of interviewed users report this as a top 3 problem",
   ">30% email signup rate on landing page",
