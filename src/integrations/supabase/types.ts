@@ -494,8 +494,10 @@ export type Database = {
       mvp_features: {
         Row: {
           created_at: string
+          effort: Database["public"]["Enums"]["feature_effort"] | null
           feature: string
           id: string
+          impact: Database["public"]["Enums"]["feature_impact"] | null
           notes: string | null
           priority: Database["public"]["Enums"]["feature_priority"]
           project_id: string | null
@@ -504,8 +506,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          effort?: Database["public"]["Enums"]["feature_effort"] | null
           feature: string
           id?: string
+          impact?: Database["public"]["Enums"]["feature_impact"] | null
           notes?: string | null
           priority?: Database["public"]["Enums"]["feature_priority"]
           project_id?: string | null
@@ -514,8 +518,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          effort?: Database["public"]["Enums"]["feature_effort"] | null
           feature?: string
           id?: string
+          impact?: Database["public"]["Enums"]["feature_impact"] | null
           notes?: string | null
           priority?: Database["public"]["Enums"]["feature_priority"]
           project_id?: string | null
@@ -797,6 +803,8 @@ export type Database = {
     }
     Enums: {
       experiment_status: "completed" | "in-progress" | "planned"
+      feature_effort: "high" | "medium" | "low"
+      feature_impact: "high" | "medium" | "low"
       feature_priority: "high" | "medium" | "low"
       feature_status: "in-progress" | "planned" | "completed" | "post-mvp"
       hypothesis_status: "validated" | "validating" | "not-started" | "invalid"

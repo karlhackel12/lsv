@@ -68,14 +68,49 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
   });
 
   const handleSubmit = async (data: HypothesisFormValues) => {
-    // In a full implementation, this would save to the database
-    toast({
-      title: isEditing ? 'Hypothesis updated' : 'Hypothesis created',
-      description: 'Your growth hypothesis has been saved.',
-    });
-    
-    await onSave();
-    onClose();
+    try {
+      // In a full implementation, this would save to the database
+      if (isEditing && hypothesis?.id) {
+        await supabase
+          .from('growth_hypotheses')
+          .update({
+            action: data.action,
+            outcome: data.outcome,
+            success_criteria: data.success_criteria,
+            metric_id: data.metric_id,
+            stage: data.stage,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', hypothesis.id);
+      } else {
+        await supabase
+          .from('growth_hypotheses')
+          .insert({
+            action: data.action,
+            outcome: data.outcome,
+            success_criteria: data.success_criteria,
+            metric_id: data.metric_id,
+            stage: data.stage,
+            growth_model_id: growthModel.id,
+            project_id: projectId
+          });
+      }
+      
+      toast({
+        title: isEditing ? 'Hypothesis updated' : 'Hypothesis created',
+        description: 'Your growth hypothesis has been saved.',
+      });
+      
+      await onSave();
+      onClose();
+    } catch (error) {
+      console.error("Error saving hypothesis:", error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save hypothesis. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   // Generate the formatted hypothesis statement

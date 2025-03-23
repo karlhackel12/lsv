@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, HelpCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, HelpCircle, AlertTriangle, Circle } from 'lucide-react';
 import { GrowthModel } from '@/types/database';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
@@ -160,21 +160,5 @@ const ValidationStageCard: React.FC<ValidationStageCardProps> = ({ stage, model,
     </Card>
   );
 };
-
-// Needed for the Circle icon used in the component
-const Circle = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <circle cx="12" cy="12" r="10" />
-  </svg>
-);
 
 export default ValidationStageCard;
