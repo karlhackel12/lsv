@@ -40,6 +40,12 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
   const [priority, setPriority] = useState<"high" | "medium" | "low">(
     (feature?.priority as "high" | "medium" | "low") || "medium"
   );
+  const [effort, setEffort] = useState<"high" | "medium" | "low">(
+    (feature?.effort as "high" | "medium" | "low") || "medium"
+  );
+  const [impact, setImpact] = useState<"high" | "medium" | "low">(
+    (feature?.impact as "high" | "medium" | "low") || "high"
+  );
   const [status, setStatus] = useState<"planned" | "in-progress" | "completed" | "post-mvp">(
     (feature?.status as "planned" | "in-progress" | "completed" | "post-mvp") || "planned"
   );
@@ -66,6 +72,8 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
           .update({
             feature: featureText,
             priority,
+            effort,
+            impact,
             status,
             notes,
             updated_at: new Date().toISOString(),
@@ -85,6 +93,8 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
           .insert({
             feature: featureText,
             priority,
+            effort,
+            impact,
             status,
             notes,
             project_id: projectId,
@@ -135,6 +145,38 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
               >
                 <SelectTrigger id="priority">
                   <SelectValue placeholder="Select a priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="effort">Effort</Label>
+              <Select 
+                value={effort} 
+                onValueChange={(value: "high" | "medium" | "low") => setEffort(value)}
+              >
+                <SelectTrigger id="effort">
+                  <SelectValue placeholder="Select effort level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="impact">Impact</Label>
+              <Select 
+                value={impact} 
+                onValueChange={(value: "high" | "medium" | "low") => setImpact(value)}
+              >
+                <SelectTrigger id="impact">
+                  <SelectValue placeholder="Select impact level" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="high">High</SelectItem>
