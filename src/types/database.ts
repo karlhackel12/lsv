@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -730,6 +729,7 @@ export interface GrowthExperiment {
 
 export interface MVPFeature {
   id: string;
+  originalId?: string;
   feature: string;
   priority: 'high' | 'medium' | 'low';
   status: 'in-progress' | 'planned' | 'completed' | 'post-mvp';
@@ -767,7 +767,7 @@ export const GROWTH_FRAMEWORKS = {
   }
 };
 
-// Import and re-export templates from pivot.ts
+// Export the templates from pivot.ts
 export const TEMPLATE_VALUE_HYPOTHESES = [
   "Teachers need {feature} to solve {specific_problem}",
   "Students will consistently use {feature} for {time_period} if it {provides_value}",
@@ -853,31 +853,34 @@ export const GROWTH_CHANNEL_CATEGORIES = [
 ];
 
 export const GROWTH_METRIC_TEMPLATES = {
-  'Acquisition': [
-    { name: 'New Users', unit: 'users' },
-    { name: 'Visitor to Sign-up Rate', unit: '%' },
-    { name: 'Cost per Acquisition', unit: '$' }
+  'acquisition': [
+    { name: 'New Users', unit: '%', description: 'Number of new users acquired in a given period' },
+    { name: 'Visitor to Sign-up Rate', unit: '%', description: 'Percentage of visitors who sign up' },
+    { name: 'Cost per Acquisition', unit: '$', description: 'Cost to acquire a new user' }
   ],
-  'Activation': [
-    { name: 'Onboarding Completion Rate', unit: '%' },
-    { name: 'First Value Moment', unit: '%' },
-    { name: 'Time to First Value', unit: 'minutes' }
+  'activation': [
+    { name: 'Onboarding Completion Rate', unit: '%', description: 'Percentage of users who complete onboarding' },
+    { name: 'First Value Moment', unit: '%', description: 'Percentage of users who reach first value moment' },
+    { name: 'Time to First Value', unit: 'minutes', description: 'Average time to reach first value moment' }
   ],
-  'Retention': [
-    { name: 'Day 1 Retention', unit: '%' },
-    { name: 'Day 7 Retention', unit: '%' },
-    { name: 'Day 30 Retention', unit: '%' },
-    { name: 'Monthly Active Users', unit: 'users' }
+  'retention': [
+    { name: 'Day 1 Retention', unit: '%', description: 'Percentage of users who return after 1 day' },
+    { name: 'Day 7 Retention', unit: '%', description: 'Percentage of users who return after 7 days' },
+    { name: 'Day 30 Retention', unit: '%', description: 'Percentage of users who return after 30 days' },
+    { name: 'Monthly Active Users', unit: 'users', description: 'Number of users active in the past month' }
   ],
-  'Revenue': [
-    { name: 'Average Revenue Per User', unit: '$' },
-    { name: 'Conversion Rate to Paid', unit: '%' },
-    { name: 'Monthly Recurring Revenue', unit: '$' }
+  'revenue': [
+    { name: 'Average Revenue Per User', unit: '$', description: 'Average revenue generated per user' },
+    { name: 'Conversion Rate to Paid', unit: '%', description: 'Percentage of users who convert to paid' },
+    { name: 'Monthly Recurring Revenue', unit: '$', description: 'Predictable revenue generated every month' }
   ],
-  'Referral': [
-    { name: 'Virality Coefficient', unit: 'k-factor' },
-    { name: 'Referral Rate', unit: '%' },
-    { name: 'Shared Content Rate', unit: '%' }
+  'referral': [
+    { name: 'Virality Coefficient', unit: 'k-factor', description: 'Number of new users each user brings' },
+    { name: 'Referral Rate', unit: '%', description: 'Percentage of users who refer others' },
+    { name: 'Shared Content Rate', unit: '%', description: 'Percentage of users who share content' }
+  ],
+  'custom': [
+    { name: 'Custom Metric', unit: 'count', description: 'A custom metric for your specific needs' }
   ]
 };
 
@@ -933,6 +936,7 @@ export interface Metric {
   id: string;
   originalId?: string;
   name: string;
+  description?: string;
   category: string;
   target: string;
   current?: string;

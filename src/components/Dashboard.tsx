@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight, Share2, FileUp, ArrowRight, Edit } from 'lucide-react';
@@ -5,7 +6,7 @@ import Card from './Card';
 import ProgressBar from './ProgressBar';
 import StatusBadge from './StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
-import { Project, Hypothesis, Experiment, MvpFeature, Metric, PivotOption } from '@/types/database';
+import { Project, Hypothesis, Experiment, MVPFeature, Metric, PivotOption } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { useProject } from '@/hooks/use-project';
 import { 

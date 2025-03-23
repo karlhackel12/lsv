@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,7 +64,6 @@ const GrowthChannelForm = ({
   const handleSubmit = async (data: GrowthChannel) => {
     try {
       if (isEditing && channel) {
-        // Update existing channel
         const { error } = await supabase
           .from('growth_channels')
           .update({
@@ -86,7 +84,6 @@ const GrowthChannelForm = ({
           description: 'Your channel has been successfully updated',
         });
       } else {
-        // Create new channel
         const { error } = await supabase
           .from('growth_channels')
           .insert({
@@ -173,15 +170,17 @@ const GrowthChannelForm = ({
                       </p>
                     </div>
                     <div className="max-h-60 overflow-y-auto p-2">
-                      {GROWTH_CHANNEL_CATEGORIES[form.watch('category') as keyof typeof GROWTH_CHANNEL_CATEGORIES]?.map((channel, index) => (
-                        <div 
-                          key={index} 
-                          className="px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
-                          onClick={() => handleChannelTemplateSelect(channel)}
-                        >
-                          <span className="text-sm">{channel}</span>
-                        </div>
-                      ))}
+                      {Array.isArray(GROWTH_CHANNEL_CATEGORIES) && 
+                        GROWTH_CHANNEL_CATEGORIES.map((channel, index) => (
+                          <div 
+                            key={index} 
+                            className="px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer"
+                            onClick={() => handleChannelTemplateSelect(channel)}
+                          >
+                            <span className="text-sm">{channel}</span>
+                          </div>
+                        ))
+                      }
                     </div>
                   </PopoverContent>
                 </Popover>

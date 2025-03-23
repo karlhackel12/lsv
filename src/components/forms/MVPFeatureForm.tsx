@@ -1,214 +1,173 @@
-
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from '@/components/ui/form';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { MVPFeature } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { MVPFeature, TEMPLATE_FEATURE_PRIORITY, TEMPLATE_FEATURE_STATUS } from '@/types/database';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+} from "@/components/ui/select";
 
-type FormData = Omit<MVPFeature, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
+// Update the MVPFeature interface to include originalId if it's being used
+interface ExtendedMVPFeature extends MVPFeature {
+  originalId?: string;
+}
 
 interface MVPFeatureFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  feature?: MVPFeature | null;
+  feature?: ExtendedMVPFeature | null;
   projectId: string;
 }
 
 const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeatureFormProps) => {
+  const [featureText, setFeatureText] = useState(feature?.feature || "");
+  const [priority, setPriority] = useState(feature?.priority || "medium");
+  const [status, setStatus] = useState(feature?.status || "planned");
+  const [notes, setNotes] = useState(feature?.notes || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const isEditing = !!feature;
-
-  const form = useForm<FormData>({
-    defaultValues: feature ? {
-      feature: feature.feature,
-      priority: feature.priority,
-      status: feature.status,
-      notes: feature.notes,
-    } : {
-      feature: '',
-      priority: 'medium',
-      status: 'planned',
-      notes: '',
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!featureText.trim()) {
+      setError("Feature name is required");
+      return;
     }
-  });
-
-  const handleSubmit = async (data: FormData) => {
+    
+    setIsSaving(true);
+    
     try {
-      if (isEditing && feature) {
+      if (feature) {
         // Update existing feature
         const { error } = await supabase
           .from('mvp_features')
           .update({
-            feature: data.feature,
-            priority: data.priority,
-            status: data.status,
-            notes: data.notes,
+            feature: featureText,
+            priority,
+            status,
+            notes,
             updated_at: new Date().toISOString(),
           })
           .eq('id', feature.originalId || feature.id);
-
+          
         if (error) throw error;
+        
         toast({
-          title: 'Feature updated',
-          description: 'The MVP feature has been successfully updated.',
+          title: "Success",
+          description: "Feature updated successfully",
         });
       } else {
         // Create new feature
         const { error } = await supabase
           .from('mvp_features')
           .insert({
-            feature: data.feature,
-            priority: data.priority,
-            status: data.status,
-            notes: data.notes,
+            feature: featureText,
+            priority,
+            status,
+            notes,
             project_id: projectId,
           });
-
+          
         if (error) throw error;
+        
         toast({
-          title: 'Feature created',
-          description: 'A new MVP feature has been created successfully.',
+          title: "Success",
+          description: "Feature created successfully",
         });
       }
       
       onSave();
       onClose();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'An error occurred. Please try again.',
-        variant: 'destructive',
-      });
+      console.error("Error saving feature:", error);
+      setError(error.message || "An error occurred while saving the feature");
+    } finally {
+      setIsSaving(false);
     }
   };
-
+  
   return (
-    <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit MVP Feature' : 'Create New MVP Feature'}</DialogTitle>
+          <DialogTitle>{feature ? "Edit Feature" : "Create New Feature"}</DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="feature"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Feature Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Feature name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {TEMPLATE_FEATURE_PRIORITY[field.value as keyof typeof TEMPLATE_FEATURE_PRIORITY]}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="planned">Planned</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="post-mvp">Post-MVP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {TEMPLATE_FEATURE_STATUS[field.value as keyof typeof TEMPLATE_FEATURE_STATUS]}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Additional notes about this feature"
-                      value={field.value || ''} 
-                      onChange={e => field.onChange(e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form onSubmit={handleSubmit}>
+          {error && <p className="text-red-500">{error}</p>}
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="feature">Feature</Label>
+              <Input
+                id="feature"
+                value={featureText}
+                onChange={(e) => setFeatureText(e.target.value)}
+                placeholder="Feature Name"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Select value={priority} onValueChange={setPriority}>
+                <SelectTrigger id="priority">
+                  <SelectValue placeholder="Select a priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="planned">Planned</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="post-mvp">Post MVP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Additional Notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

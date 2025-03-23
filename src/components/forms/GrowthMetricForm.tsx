@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,7 +66,6 @@ const GrowthMetricForm = ({
   const handleSubmit = async (data: GrowthMetric) => {
     try {
       if (isEditing && metric) {
-        // Update existing metric
         const { error } = await supabase
           .from('growth_metrics')
           .update({
@@ -89,7 +87,6 @@ const GrowthMetricForm = ({
           description: 'Your metric has been successfully updated',
         });
       } else {
-        // Create new metric
         const { error } = await supabase
           .from('growth_metrics')
           .insert({
@@ -124,7 +121,6 @@ const GrowthMetricForm = ({
     }
   };
 
-  // Determine status based on current and target values
   const determineStatus = (current: number, target: number): 'on-track' | 'at-risk' | 'off-track' => {
     const progress = (current / target) * 100;
     
@@ -137,10 +133,12 @@ const GrowthMetricForm = ({
     }
   };
 
-  const handleTemplateSelect = (template: { name: string; unit: string; description: string }) => {
+  const handleTemplateSelect = (template: { name: string; unit: string; description?: string }) => {
     form.setValue('name', template.name);
     form.setValue('unit', template.unit as any);
-    form.setValue('description', template.description);
+    if (template.description) {
+      form.setValue('description', template.description);
+    }
   };
 
   return (
@@ -195,14 +193,15 @@ const GrowthMetricForm = ({
                       </p>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
-                      {GROWTH_METRIC_TEMPLATES[form.watch('category') as keyof typeof GROWTH_METRIC_TEMPLATES]?.map((template, index) => (
+                      {GROWTH_METRIC_TEMPLATES && 
+                       GROWTH_METRIC_TEMPLATES[form.watch('category') as keyof typeof GROWTH_METRIC_TEMPLATES]?.map((template, index) => (
                         <div 
                           key={index} 
                           className="p-2.5 hover:bg-gray-50 cursor-pointer border-b"
                           onClick={() => handleTemplateSelect(template)}
                         >
                           <h5 className="text-sm font-medium">{template.name}</h5>
-                          <p className="text-xs text-gray-500 mt-1">{template.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{template.description || ''}</p>
                         </div>
                       ))}
                     </div>

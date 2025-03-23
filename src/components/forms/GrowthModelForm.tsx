@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -31,9 +30,16 @@ interface GrowthModelFormProps {
   onClose: () => void;
 }
 
-const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormProps) => {
+// Update the component to fix the property issues
+const GrowthModelForm = ({ 
+  projectId, 
+  model, 
+  onSave, 
+  onClose 
+}: GrowthModelFormProps) => {
   const { toast } = useToast();
   const isEditing = !!model;
+  const [frameworkStages, setFrameworkStages] = useState<string[]>([]);
 
   const form = useForm<GrowthModel>({
     defaultValues: model || {
@@ -60,12 +66,12 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
             status: data.status,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', model.originalId || model.id);
+          .eq('id', model.id);
           
         if (error) throw error;
         
         toast({
-          title: 'Growth model updated',
+          title: 'Model updated',
           description: 'Your growth model has been successfully updated',
         });
       } else {
@@ -77,13 +83,13 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
             description: data.description,
             framework: data.framework,
             project_id: projectId,
-            status: 'draft',
+            status: data.status,
           });
           
         if (error) throw error;
         
         toast({
-          title: 'Growth model created',
+          title: 'Model created',
           description: 'Your new growth model has been created',
         });
       }
@@ -114,7 +120,7 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
                     <FormLabel>Model Name</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g. Q2 Growth Strategy"
+                        placeholder="e.g. AARRR Model"
                         {...field}
                       />
                     </FormControl>
@@ -131,7 +137,7 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe the purpose and goals of this growth model..."
+                        placeholder="e.g. A growth model based on the AARRR framework"
                         className="resize-none min-h-[80px]"
                         {...field}
                       />
@@ -146,9 +152,16 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
                 name="framework"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Growth Framework</FormLabel>
+                    <FormLabel>Framework</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Add optional description field if it's needed
+                        const frameworkInfo = GROWTH_FRAMEWORKS[value as keyof typeof GROWTH_FRAMEWORKS];
+                        if (frameworkInfo) {
+                          setFrameworkStages(frameworkInfo.stages);
+                        }
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -157,10 +170,8 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.entries(GROWTH_FRAMEWORKS).map(([key, value]) => (
-                          <SelectItem key={key} value={key}>
-                            {value.name}
-                          </SelectItem>
+                        {Object.entries(GROWTH_FRAMEWORKS).map(([key, framework]) => (
+                          <SelectItem key={key} value={key}>{framework.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -169,19 +180,31 @@ const GrowthModelForm = ({ projectId, model, onSave, onClose }: GrowthModelFormP
                 )}
               />
 
-              {form.watch('framework') && (
-                <div className="rounded bg-gray-50 p-3 text-sm">
-                  <h4 className="font-medium mb-1">Framework Stages:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    {GROWTH_FRAMEWORKS[form.watch('framework') as keyof typeof GROWTH_FRAMEWORKS]?.stages.map((stage, index) => (
-                      <li key={index}>{stage}</li>
-                    ))}
-                  </ul>
-                  <p className="mt-2 text-xs text-gray-500">
-                    {GROWTH_FRAMEWORKS[form.watch('framework') as keyof typeof GROWTH_FRAMEWORKS]?.description}
-                  </p>
-                </div>
-              )}
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className="flex justify-end space-x-2">
