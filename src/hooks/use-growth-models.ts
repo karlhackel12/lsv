@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { GrowthModel, GrowthMetric, GrowthChannel, GrowthExperiment } from '@/types/database';
+import { useMockDb } from './use-mock-db';
 
-// Create a mock implementation that works while tables are being created
 export const useGrowthModels = (projectId: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [growthModels, setGrowthModels] = useState<GrowthModel[]>([]);
@@ -13,6 +13,12 @@ export const useGrowthModels = (projectId: string) => {
   const [growthExperiments, setGrowthExperiments] = useState<GrowthExperiment[]>([]);
   const [activeModelId, setActiveModelId] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Create mock DBs as fallbacks
+  const mockModelsDb = useMockDb<GrowthModel>([]);
+  const mockMetricsDb = useMockDb<GrowthMetric>([]);
+  const mockChannelsDb = useMockDb<GrowthChannel>([]);
+  const mockExperimentsDb = useMockDb<GrowthExperiment>([]);
 
   const fetchGrowthModels = async () => {
     if (!projectId) return;
@@ -30,28 +36,39 @@ export const useGrowthModels = (projectId: string) => {
           
         if (error) {
           console.error('Supabase error:', error);
-          // Instead of throwing, we'll handle this gracefully
-          setGrowthModels([]);
-        } else {
-          // Cast data to the correct type
-          const typedData = data as unknown as GrowthModel[];
-          const transformedData: GrowthModel[] = typedData.map((item) => ({
-            ...item,
-            id: item.id,
-            originalId: item.id,
-          }));
-          
-          setGrowthModels(transformedData);
-          
-          // Set active model to first model if available and none is currently selected
-          if (transformedData.length > 0 && !activeModelId) {
-            setActiveModelId(transformedData[0].id);
-            await fetchGrowthModelData(transformedData[0].id);
-          }
+          throw error;
+        }
+        
+        // Transform data to include originalId for tracking
+        const transformedData: GrowthModel[] = data.map((item: any) => ({
+          ...item,
+          id: item.id,
+          originalId: item.id,
+        }));
+        
+        setGrowthModels(transformedData);
+        
+        // Set active model to first model if available and none is currently selected
+        if (transformedData.length > 0 && !activeModelId) {
+          setActiveModelId(transformedData[0].id);
+          await fetchGrowthModelData(transformedData[0].id);
         }
       } catch (dbError) {
-        console.warn('Tables might not exist yet:', dbError);
-        setGrowthModels([]);
+        console.warn('Tables might not exist yet - using mock data:', dbError);
+        const mockData = mockModelsDb.getAll();
+        setGrowthModels(mockData);
+        
+        if (mockData.length > 0 && !activeModelId) {
+          setActiveModelId(mockData[0].id);
+          // Load mock data for the active model
+          const mockMetrics = mockMetricsDb.filterBy(m => m.growth_model_id === mockData[0].id);
+          const mockChannels = mockChannelsDb.filterBy(c => c.growth_model_id === mockData[0].id);
+          const mockExperiments = mockExperimentsDb.filterBy(e => e.growth_model_id === mockData[0].id);
+          
+          setGrowthMetrics(mockMetrics);
+          setGrowthChannels(mockChannels);
+          setGrowthExperiments(mockExperiments);
+        }
       }
     } catch (err) {
       console.error('Error fetching growth models:', err);
@@ -78,12 +95,12 @@ export const useGrowthModels = (projectId: string) => {
           .order('category', { ascending: true });
           
         if (metricsError) {
-          console.warn('Metrics table might not exist yet:', metricsError);
-          setGrowthMetrics([]);
+          console.warn('Metrics error - falling back to mock data:', metricsError);
+          const mockData = mockMetricsDb.filterBy(m => m.growth_model_id === modelId);
+          setGrowthMetrics(mockData);
         } else {
-          // Cast data to the correct type
-          const typedMetricsData = metricsData as unknown as GrowthMetric[];
-          const transformedMetrics: GrowthMetric[] = typedMetricsData.map((item) => ({
+          // Transform data to include originalId for tracking
+          const transformedMetrics: GrowthMetric[] = metricsData.map((item: any) => ({
             ...item,
             id: item.id,
             originalId: item.id,
@@ -92,8 +109,9 @@ export const useGrowthModels = (projectId: string) => {
           setGrowthMetrics(transformedMetrics);
         }
       } catch (metricsError) {
-        console.warn('Metrics error:', metricsError);
-        setGrowthMetrics([]);
+        console.warn('Metrics error - falling back to mock data:', metricsError);
+        const mockData = mockMetricsDb.filterBy(m => m.growth_model_id === modelId);
+        setGrowthMetrics(mockData);
       }
       
       // Fetch channels
@@ -105,12 +123,12 @@ export const useGrowthModels = (projectId: string) => {
           .order('name', { ascending: true });
           
         if (channelsError) {
-          console.warn('Channels table might not exist yet:', channelsError);
-          setGrowthChannels([]);
+          console.warn('Channels error - falling back to mock data:', channelsError);
+          const mockData = mockChannelsDb.filterBy(c => c.growth_model_id === modelId);
+          setGrowthChannels(mockData);
         } else {
-          // Cast data to the correct type
-          const typedChannelsData = channelsData as unknown as GrowthChannel[];
-          const transformedChannels: GrowthChannel[] = typedChannelsData.map((item) => ({
+          // Transform data to include originalId for tracking
+          const transformedChannels: GrowthChannel[] = channelsData.map((item: any) => ({
             ...item,
             id: item.id,
             originalId: item.id,
@@ -119,8 +137,9 @@ export const useGrowthModels = (projectId: string) => {
           setGrowthChannels(transformedChannels);
         }
       } catch (channelsError) {
-        console.warn('Channels error:', channelsError);
-        setGrowthChannels([]);
+        console.warn('Channels error - falling back to mock data:', channelsError);
+        const mockData = mockChannelsDb.filterBy(c => c.growth_model_id === modelId);
+        setGrowthChannels(mockData);
       }
       
       // Fetch experiments
@@ -132,12 +151,12 @@ export const useGrowthModels = (projectId: string) => {
           .order('created_at', { ascending: false });
           
         if (experimentsError) {
-          console.warn('Experiments table might not exist yet:', experimentsError);
-          setGrowthExperiments([]);
+          console.warn('Experiments error - falling back to mock data:', experimentsError);
+          const mockData = mockExperimentsDb.filterBy(e => e.growth_model_id === modelId);
+          setGrowthExperiments(mockData);
         } else {
-          // Cast data to the correct type
-          const typedExperimentsData = experimentsData as unknown as GrowthExperiment[];
-          const transformedExperiments: GrowthExperiment[] = typedExperimentsData.map((item) => ({
+          // Transform data to include originalId for tracking
+          const transformedExperiments: GrowthExperiment[] = experimentsData.map((item: any) => ({
             ...item,
             id: item.id,
             originalId: item.id,
@@ -146,8 +165,9 @@ export const useGrowthModels = (projectId: string) => {
           setGrowthExperiments(transformedExperiments);
         }
       } catch (experimentsError) {
-        console.warn('Experiments error:', experimentsError);
-        setGrowthExperiments([]);
+        console.warn('Experiments error - falling back to mock data:', experimentsError);
+        const mockData = mockExperimentsDb.filterBy(e => e.growth_model_id === modelId);
+        setGrowthExperiments(mockData);
       }
     } catch (err) {
       console.error('Error fetching growth model data:', err);
@@ -170,7 +190,7 @@ export const useGrowthModels = (projectId: string) => {
 
   const createGrowthModel = async (model: Omit<GrowthModel, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Use try-catch to handle cases where tables don't exist yet
+      // Try to use Supabase first
       try {
         const { data, error } = await supabase
           .from('growth_models')
@@ -188,9 +208,9 @@ export const useGrowthModels = (projectId: string) => {
         });
         
         await fetchGrowthModels();
-        return data[0] as unknown as GrowthModel;
+        return data[0] as GrowthModel;
       } catch (dbError) {
-        console.error('Database error (table might not exist yet):', dbError);
+        console.error('Database error (fallback to mock):', dbError);
         
         // Create a mock model for demo purposes
         const mockModel: GrowthModel = {
@@ -205,14 +225,15 @@ export const useGrowthModels = (projectId: string) => {
           updated_at: new Date().toISOString(),
         };
         
-        setGrowthModels([mockModel, ...growthModels]);
+        const result = await mockModelsDb.create(mockModel);
+        setGrowthModels([...mockModelsDb.getAll()]);
         
         toast({
           title: 'Demo mode',
           description: 'Created a mock growth model (database tables might not be ready)',
         });
         
-        return mockModel;
+        return result.data as GrowthModel;
       }
     } catch (err) {
       console.error('Error creating growth model:', err);
@@ -227,7 +248,7 @@ export const useGrowthModels = (projectId: string) => {
 
   const updateGrowthModel = async (model: GrowthModel) => {
     try {
-      // Use try-catch to handle cases where tables don't exist yet
+      // Try to use Supabase first
       try {
         const { error } = await supabase
           .from('growth_models')
@@ -250,23 +271,26 @@ export const useGrowthModels = (projectId: string) => {
         await fetchGrowthModels();
         return true;
       } catch (dbError) {
-        console.warn('Database error (table might not exist yet):', dbError);
+        console.warn('Database error (fallback to mock):', dbError);
         
-        // Update in local state for demo purposes
-        const updatedModels = growthModels.map(m => 
-          m.id === model.id 
-            ? { ...model, updated_at: new Date().toISOString() } 
-            : m
-        );
-        
-        setGrowthModels(updatedModels);
-        
-        toast({
-          title: 'Demo mode',
-          description: 'Updated mock growth model (database tables might not be ready)',
-        });
-        
-        return true;
+        // Update in mock database
+        if (model.id.startsWith('mock-')) {
+          await mockModelsDb.update(model.id, {
+            ...model,
+            updated_at: new Date().toISOString()
+          });
+          
+          setGrowthModels([...mockModelsDb.getAll()]);
+          
+          toast({
+            title: 'Demo mode',
+            description: 'Updated mock growth model (database tables might not be ready)',
+          });
+          
+          return true;
+        } else {
+          throw new Error('Cannot update model - not found in mock database');
+        }
       }
     } catch (err) {
       console.error('Error updating growth model:', err);

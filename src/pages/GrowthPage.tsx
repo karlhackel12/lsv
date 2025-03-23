@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, TrendingUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,124 +9,25 @@ import GrowthModelSection from '@/components/growth/GrowthModelSection';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
-import { GrowthModel, GrowthMetric, GrowthChannel, GrowthExperiment } from '@/types/database';
+import { useGrowthModels } from '@/hooks/use-growth-models';
 
 const GrowthPage = () => {
   const { currentProject, isLoading, error } = useProject();
-  const [growthModels, setGrowthModels] = useState<GrowthModel[]>([]);
-  const [activeModel, setActiveModel] = useState<GrowthModel | null>(null);
-  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetric[]>([]);
-  const [growthChannels, setGrowthChannels] = useState<GrowthChannel[]>([]);
-  const [growthExperiments, setGrowthExperiments] = useState<GrowthExperiment[]>([]);
-  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [activeTab, setActiveTab] = useState('metrics');
   const { toast } = useToast();
+  const {
+    growthModels,
+    growthMetrics,
+    growthChannels,
+    growthExperiments,
+    isLoading: isLoadingModels,
+    getActiveModel,
+    setActiveModel,
+    fetchGrowthModels,
+    fetchGrowthModelData
+  } = useGrowthModels(currentProject?.id || '');
 
-  const fetchGrowthModels = async () => {
-    if (!currentProject) return;
-    
-    try {
-      setIsLoadingModels(true);
-      const { data, error } = await supabase
-        .from('growth_models')
-        .select('*')
-        .eq('project_id', currentProject.id)
-        .order('updated_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      const transformedData: GrowthModel[] = data.map((item) => ({
-        ...item,
-        id: item.id,
-        originalId: item.id,
-      }));
-      
-      setGrowthModels(transformedData);
-      
-      // Set active model to first model if available
-      if (transformedData.length > 0 && !activeModel) {
-        setActiveModel(transformedData[0]);
-        await fetchGrowthModelData(transformedData[0].id);
-      }
-    } catch (err) {
-      console.error('Error fetching growth models:', err);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to load growth models',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoadingModels(false);
-    }
-  };
-
-  const fetchGrowthModelData = async (modelId: string) => {
-    if (!currentProject || !modelId) return;
-    
-    try {
-      // Fetch metrics
-      const { data: metricsData, error: metricsError } = await supabase
-        .from('growth_metrics')
-        .select('*')
-        .eq('growth_model_id', modelId)
-        .order('category', { ascending: true });
-        
-      if (metricsError) throw metricsError;
-      
-      const transformedMetrics: GrowthMetric[] = metricsData.map((item) => ({
-        ...item,
-        id: item.id,
-        originalId: item.id,
-      }));
-      
-      setGrowthMetrics(transformedMetrics);
-      
-      // Fetch channels
-      const { data: channelsData, error: channelsError } = await supabase
-        .from('growth_channels')
-        .select('*')
-        .eq('growth_model_id', modelId)
-        .order('name', { ascending: true });
-        
-      if (channelsError) throw channelsError;
-      
-      const transformedChannels: GrowthChannel[] = channelsData.map((item) => ({
-        ...item,
-        id: item.id,
-        originalId: item.id,
-      }));
-      
-      setGrowthChannels(transformedChannels);
-      
-      // Fetch experiments
-      const { data: experimentsData, error: experimentsError } = await supabase
-        .from('growth_experiments')
-        .select('*')
-        .eq('growth_model_id', modelId)
-        .order('created_at', { ascending: false });
-        
-      if (experimentsError) throw experimentsError;
-      
-      const transformedExperiments: GrowthExperiment[] = experimentsData.map((item) => ({
-        ...item,
-        id: item.id,
-        originalId: item.id,
-      }));
-      
-      setGrowthExperiments(transformedExperiments);
-    } catch (err) {
-      console.error('Error fetching growth model data:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load growth model data',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleModelChange = async (model: GrowthModel) => {
-    setActiveModel(model);
-    await fetchGrowthModelData(model.id);
-  };
+  const activeModel = getActiveModel();
 
   useEffect(() => {
     if (currentProject) {
@@ -184,11 +84,11 @@ const GrowthPage = () => {
             activeModel={activeModel}
             projectId={currentProject.id}
             refreshData={fetchGrowthModels}
-            onModelChange={handleModelChange}
+            onModelChange={setActiveModel}
           />
           
           {activeModel && (
-            <Tabs defaultValue="metrics" className="w-full mt-8">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="metrics">Metrics</TabsTrigger>
                 <TabsTrigger value="channels">Channels</TabsTrigger>

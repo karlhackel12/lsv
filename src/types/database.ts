@@ -1,169 +1,717 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  owner_id: string;
-  stage: string;
-  created_at: string;
-  updated_at: string;
+export type Database = {
+  public: {
+    Tables: {
+      experiments: {
+        Row: {
+          category: string | null
+          created_at: string
+          decisions: string | null
+          hypothesis: string
+          hypothesis_id: string | null
+          id: string
+          insights: string | null
+          method: string
+          metrics: string
+          project_id: string | null
+          results: string | null
+          status: Database["public"]["Enums"]["experiment_status"]
+          title: string
+          typeform_id: string | null
+          typeform_responses_count: number | null
+          typeform_url: string | null
+          typeform_workspace_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          decisions?: string | null
+          hypothesis: string
+          hypothesis_id?: string | null
+          id?: string
+          insights?: string | null
+          method: string
+          metrics: string
+          project_id?: string | null
+          results?: string | null
+          status?: Database["public"]["Enums"]["experiment_status"]
+          title: string
+          typeform_id?: string | null
+          typeform_responses_count?: number | null
+          typeform_url?: string | null
+          typeform_workspace_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          decisions?: string | null
+          hypothesis?: string
+          hypothesis_id?: string | null
+          id?: string
+          insights?: string | null
+          method?: string
+          metrics?: string
+          project_id?: string | null
+          results?: string | null
+          status?: Database["public"]["Enums"]["experiment_status"]
+          title?: string
+          typeform_id?: string | null
+          typeform_responses_count?: number | null
+          typeform_url?: string | null
+          typeform_workspace_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_hypothesis_id_fkey"
+            columns: ["hypothesis_id"]
+            isOneToOne: false
+            referencedRelation: "hypotheses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hypotheses: {
+        Row: {
+          category: string
+          created_at: string
+          criteria: string
+          evidence: string | null
+          experiment: string
+          id: string
+          project_id: string | null
+          result: string | null
+          statement: string
+          status: Database["public"]["Enums"]["hypothesis_status"]
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          criteria: string
+          evidence?: string | null
+          experiment: string
+          id?: string
+          project_id?: string | null
+          result?: string | null
+          statement: string
+          status?: Database["public"]["Enums"]["hypothesis_status"]
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          criteria?: string
+          evidence?: string | null
+          experiment?: string
+          id?: string
+          project_id?: string | null
+          result?: string | null
+          statement?: string
+          status?: Database["public"]["Enums"]["hypothesis_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypotheses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_history: {
+        Row: {
+          id: string
+          metric_id: string
+          recorded_at: string
+          status: string
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          metric_id: string
+          recorded_at?: string
+          status: string
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          metric_id?: string
+          recorded_at?: string
+          status?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_history_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_thresholds: {
+        Row: {
+          created_at: string
+          error_threshold: string
+          id: string
+          metric_id: string
+          updated_at: string
+          warning_threshold: string
+        }
+        Insert: {
+          created_at?: string
+          error_threshold: string
+          id?: string
+          metric_id: string
+          updated_at?: string
+          warning_threshold: string
+        }
+        Update: {
+          created_at?: string
+          error_threshold?: string
+          id?: string
+          metric_id?: string
+          updated_at?: string
+          warning_threshold?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_thresholds_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics: {
+        Row: {
+          category: string
+          created_at: string
+          current: string | null
+          id: string
+          name: string
+          project_id: string | null
+          status: Database["public"]["Enums"]["metric_status"]
+          target: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current?: string | null
+          id?: string
+          name: string
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["metric_status"]
+          target: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current?: string | null
+          id?: string
+          name?: string
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["metric_status"]
+          target?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mvp_features: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          notes: string | null
+          priority: Database["public"]["Enums"]["feature_priority"]
+          project_id: string | null
+          status: Database["public"]["Enums"]["feature_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["feature_priority"]
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["feature_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["feature_priority"]
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["feature_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mvp_features_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pivot_metric_triggers: {
+        Row: {
+          created_at: string
+          id: string
+          metric_id: string
+          pivot_option_id: string
+          threshold_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_id: string
+          pivot_option_id: string
+          threshold_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_id?: string
+          pivot_option_id?: string
+          threshold_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pivot_metric_triggers_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pivot_metric_triggers_pivot_option_id_fkey"
+            columns: ["pivot_option_id"]
+            isOneToOne: false
+            referencedRelation: "pivot_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pivot_options: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          likelihood: Database["public"]["Enums"]["pivot_likelihood"]
+          project_id: string | null
+          trigger: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          likelihood?: Database["public"]["Enums"]["pivot_likelihood"]
+          project_id?: string | null
+          trigger: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          likelihood?: Database["public"]["Enums"]["pivot_likelihood"]
+          project_id?: string | null
+          trigger?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pivot_options_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      project_invitations: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          project_id: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: string
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invitations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          owner_id: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          owner_id?: string | null
+          stage: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          owner_id?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stages: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          position: number
+          project_id: string | null
+          status: Database["public"]["Enums"]["stage_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id: string
+          name: string
+          position: number
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["stage_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          position?: number
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["stage_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      is_project_member: {
+        Args: {
+          project_id: string
+        }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      experiment_status: "completed" | "in-progress" | "planned"
+      feature_priority: "high" | "medium" | "low"
+      feature_status: "in-progress" | "planned" | "completed" | "post-mvp"
+      hypothesis_status: "validated" | "validating" | "not-started" | "invalid"
+      metric_status: "success" | "warning" | "error" | "not-started"
+      pivot_likelihood: "high" | "medium" | "low"
+      stage_status: "complete" | "in-progress" | "not-started"
+      user_role: "admin" | "team_member"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
-export interface Hypothesis {
-  id: string;
-  statement: string;
-  criteria: string;
-  experiment: string;
-  status: 'not-started' | 'validated' | 'validating' | 'invalid';
-  created_at: string;
-  updated_at: string;
-  project_id: string;
-  category: string;
-  evidence?: string;
-  result?: string;
-  originalId?: string; // Added for data mapping from Supabase
-}
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
-export interface Experiment {
-  id: string;
-  title: string;
-  hypothesis: string;
-  method: string;
-  metrics: string;
-  status: 'planned' | 'in-progress' | 'completed';
-  category: 'problem' | 'solution' | 'business-model' | string | null;
-  created_at: string;
-  updated_at: string;
-  hypothesis_id?: string;
-  project_id: string;
-  results?: string;
-  decisions?: string;
-  insights?: string;
-  typeform_id?: string;
-  typeform_url?: string;
-  typeform_workspace_id?: string;
-  typeform_responses_count?: number;
-  originalId?: string; // Added for data mapping from Supabase
-}
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
-export interface Profile {
-  id: string;
-  full_name: string;
-  avatar_url: string;
-}
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
-export interface Stage {
-  id: string;
-  name: string;
-  description: string;
-  status: 'not-started' | 'in-progress' | 'completed';
-  project_id: string;
-  position: number;
-  created_at: string;
-  updated_at: string;
-}
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
-export interface MVPFeature {
-  id: string;
-  feature: string;
-  notes?: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'planned' | 'in-progress' | 'completed' | 'post-mvp';
-  project_id: string;
-  created_at: string;
-  updated_at: string;
-  originalId?: string; // Added for data mapping from Supabase
-}
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
 
-export interface Metric {
-  id: string;
-  name: string;
-  category: string;
-  target: string;
-  current: string | null;
-  status: 'not-started' | 'success' | 'warning' | 'error';
-  project_id: string;
-  created_at: string;
-  updated_at: string;
-  description?: string;
-  originalId?: string; // Added for data mapping from Supabase
-}
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
-export interface MetricThreshold {
-  id: string;
-  metric_id: string;
-  warning_threshold: string;
-  error_threshold: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MetricHistory {
-  id: string;
-  metric_id: string;
-  value: string | null;
-  status: string;
-  recorded_at: string;
-}
-
-export interface PivotOption {
-  id: string;
-  type: string;
-  description: string;
-  trigger: string;
-  likelihood: 'high' | 'medium' | 'low';
-  project_id: string;
-  created_at: string;
-  updated_at: string;
-  originalId?: string;
-  name?: string;
-  status?: string;
-  potential_impact?: string;
-  implementation_effort?: string;
-  evidence?: string;
-  pivot_type?: string;
-}
-
-export interface PivotMetricTrigger {
-  id: string;
-  pivot_option_id: string;
-  metric_id: string;
-  threshold_type: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// New Growth Model interfaces
+// Growth models types
 export interface GrowthModel {
   id: string;
+  originalId?: string;
   name: string;
   description: string;
-  framework: 'aarrr' | 'aida' | 'hook' | 'jobs-to-be-done' | 'custom';
+  framework: string;
   project_id: string;
   status: 'draft' | 'active' | 'archived';
   created_at: string;
   updated_at: string;
-  originalId?: string;
 }
 
 export interface GrowthMetric {
   id: string;
+  originalId?: string;
   name: string;
   description?: string;
-  category: 'acquisition' | 'activation' | 'retention' | 'referral' | 'revenue' | 'custom';
+  category: string;
   current_value: number;
   target_value: number;
-  unit: 'percentage' | 'count' | 'currency' | 'ratio' | 'time';
+  unit: string;
   growth_model_id: string;
   project_id: string;
   status: 'on-track' | 'at-risk' | 'off-track';
   created_at: string;
   updated_at: string;
+}
+
+export interface GrowthChannel {
+  id: string;
   originalId?: string;
+  name: string;
+  category: string;
+  cac?: number;
+  conversion_rate?: number;
+  volume?: number;
+  status: 'active' | 'testing' | 'inactive';
+  growth_model_id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface GrowthExperiment {
   id: string;
+  originalId?: string;
   title: string;
   hypothesis: string;
   metric_id: string;
@@ -177,115 +725,43 @@ export interface GrowthExperiment {
   project_id: string;
   created_at: string;
   updated_at: string;
-  originalId?: string;
 }
 
-export interface GrowthChannel {
+export interface MVPFeature {
   id: string;
-  name: string;
-  category: 'organic' | 'paid' | 'partnership' | 'content' | 'other';
-  cac?: number;
-  conversion_rate?: number;
-  volume?: number;
-  status: 'active' | 'testing' | 'inactive';
-  growth_model_id: string;
+  feature: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'in-progress' | 'planned' | 'completed' | 'post-mvp';
+  notes?: string;
   project_id: string;
   created_at: string;
   updated_at: string;
-  originalId?: string;
 }
 
-// Constants for feature status and priority descriptions
-export const TEMPLATE_FEATURE_STATUS = {
-  'planned': 'Feature is planned for development but work has not started yet.',
-  'in-progress': 'Development of this feature is currently underway.',
-  'completed': 'This feature has been fully implemented and is ready for use.',
-  'post-mvp': 'This feature will be implemented after the initial MVP release.'
-};
-
-export const TEMPLATE_FEATURE_PRIORITY = {
-  'high': 'Critical for product viability and must be included in the MVP.',
-  'medium': 'Important for product functionality but not a deal-breaker.',
-  'low': 'Desirable but can be deprioritized if time constraints arise.'
-};
-
-// Constants for hypothesis templates
-export const TEMPLATE_VALUE_HYPOTHESES = [
-  'We believe [customer segment] will [action] in order to [achieve benefit].',
-  'We believe [customer segment] has a problem [achieving goal] because [obstacle].',
-  'We believe [solution] will solve [customer segment]\'s problem of [problem description].',
-  'We believe [customer segment] will pay [price] for [solution] because [value proposition].'
-];
-
-export const TEMPLATE_GROWTH_HYPOTHESES = [
-  'We believe [marketing channel] will result in [acquisition metric] for [customer segment].',
-  'We believe [onboarding change] will improve [activation metric] by [X%].',
-  'We believe [feature change] will improve [retention metric] by [X%].',
-  'We believe [pricing model] will increase [revenue metric] by [X%].',
-  'We believe [referral program] will generate [X] new customers per existing customer.'
-];
-
-// Growth templates constants
+// Constants for growth framework options
 export const GROWTH_FRAMEWORKS = {
   'aarrr': {
     name: 'AARRR (Pirate Metrics)',
-    description: 'Acquisition, Activation, Retention, Referral, Revenue - a framework for tracking user behavior.',
     stages: ['Acquisition', 'Activation', 'Retention', 'Referral', 'Revenue']
-  },
-  'aida': {
-    name: 'AIDA',
-    description: 'Awareness, Interest, Desire, Action - a framework for tracking the customer journey.',
-    stages: ['Awareness', 'Interest', 'Desire', 'Action']
   },
   'hook': {
     name: 'Hook Model',
-    description: 'Trigger, Action, Variable Reward, Investment - a framework for building habit-forming products.',
     stages: ['Trigger', 'Action', 'Variable Reward', 'Investment']
   },
   'jobs-to-be-done': {
-    name: 'Jobs to be Done',
-    description: 'Focus on the job customers are hiring your product to do, not the product itself.',
-    stages: ['Job Identification', 'Problem Solution Fit', 'Product Market Fit', 'Scale']
+    name: 'Jobs To Be Done',
+    stages: ['Functional', 'Emotional', 'Social']
+  },
+  'growth-loops': {
+    name: 'Growth Loops',
+    stages: ['Acquisition', 'Conversion', 'Compounding Action', 'Retention']
+  },
+  'flywheel': {
+    name: 'Flywheel Model',
+    stages: ['Attract', 'Engage', 'Delight', 'Refer']
   },
   'custom': {
     name: 'Custom Framework',
-    description: 'Create your own growth framework with custom stages.',
-    stages: []
+    stages: ['Custom Stages']
   }
-};
-
-export const GROWTH_METRIC_TEMPLATES = {
-  'acquisition': [
-    { name: 'CAC (Customer Acquisition Cost)', unit: 'currency', description: 'Total marketing cost divided by new customers acquired' },
-    { name: 'Visit-to-signup rate', unit: 'percentage', description: 'Percentage of visitors who create an account' },
-    { name: 'Traffic sources', unit: 'count', description: 'Number of visitors from each channel' }
-  ],
-  'activation': [
-    { name: 'Activation rate', unit: 'percentage', description: 'Percentage of users who reach the "aha moment"' },
-    { name: 'Time to value', unit: 'time', description: 'How long it takes for users to reach the "aha moment"' },
-    { name: 'Onboarding completion rate', unit: 'percentage', description: 'Percentage of users who complete onboarding' }
-  ],
-  'retention': [
-    { name: 'N-day retention rate', unit: 'percentage', description: 'Percentage of users who return after N days' },
-    { name: 'Churn rate', unit: 'percentage', description: 'Percentage of users who stop using your product' },
-    { name: 'DAU/MAU ratio', unit: 'ratio', description: 'Daily active users divided by monthly active users' }
-  ],
-  'referral': [
-    { name: 'Viral coefficient', unit: 'ratio', description: 'Average number of new users each user brings' },
-    { name: 'Referral rate', unit: 'percentage', description: 'Percentage of users who refer others' },
-    { name: 'NPS (Net Promoter Score)', unit: 'count', description: 'Likelihood of users recommending your product' }
-  ],
-  'revenue': [
-    { name: 'ARPU (Average Revenue Per User)', unit: 'currency', description: 'Average revenue generated per user' },
-    { name: 'LTV (Lifetime Value)', unit: 'currency', description: 'Total revenue expected from a user' },
-    { name: 'Conversion rate', unit: 'percentage', description: 'Percentage of users who become paying customers' }
-  ]
-};
-
-export const GROWTH_CHANNEL_CATEGORIES = {
-  'organic': ['SEO', 'Content Marketing', 'Social Media', 'Community Building'],
-  'paid': ['Search Ads', 'Social Ads', 'Display Ads', 'Affiliate Marketing'],
-  'partnership': ['Co-marketing', 'Integrations', 'Channel Partners', 'Influencers'],
-  'content': ['Blog', 'Podcast', 'Video', 'Newsletter'],
-  'other': ['PR', 'Events', 'Word of Mouth', 'Customer Success']
 };

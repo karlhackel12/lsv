@@ -87,6 +87,237 @@ export type Database = {
           },
         ]
       }
+      growth_channels: {
+        Row: {
+          cac: number | null
+          category: string
+          conversion_rate: number | null
+          created_at: string
+          growth_model_id: string | null
+          id: string
+          name: string
+          project_id: string | null
+          status: string
+          updated_at: string
+          volume: number | null
+        }
+        Insert: {
+          cac?: number | null
+          category: string
+          conversion_rate?: number | null
+          created_at?: string
+          growth_model_id?: string | null
+          id?: string
+          name: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+          volume?: number | null
+        }
+        Update: {
+          cac?: number | null
+          category?: string
+          conversion_rate?: number | null
+          created_at?: string
+          growth_model_id?: string | null
+          id?: string
+          name?: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_channels_growth_model_id_fkey"
+            columns: ["growth_model_id"]
+            isOneToOne: false
+            referencedRelation: "growth_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_channels_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_experiments: {
+        Row: {
+          actual_lift: number | null
+          created_at: string
+          end_date: string
+          expected_lift: number
+          growth_model_id: string | null
+          hypothesis: string
+          id: string
+          metric_id: string | null
+          notes: string | null
+          project_id: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_lift?: number | null
+          created_at?: string
+          end_date: string
+          expected_lift: number
+          growth_model_id?: string | null
+          hypothesis: string
+          id?: string
+          metric_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_lift?: number | null
+          created_at?: string
+          end_date?: string
+          expected_lift?: number
+          growth_model_id?: string | null
+          hypothesis?: string
+          id?: string
+          metric_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_experiments_growth_model_id_fkey"
+            columns: ["growth_model_id"]
+            isOneToOne: false
+            referencedRelation: "growth_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_experiments_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "growth_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_experiments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_metrics: {
+        Row: {
+          category: string
+          created_at: string
+          current_value: number
+          description: string | null
+          growth_model_id: string | null
+          id: string
+          name: string
+          project_id: string | null
+          status: string
+          target_value: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          growth_model_id?: string | null
+          id?: string
+          name: string
+          project_id?: string | null
+          status?: string
+          target_value?: number
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          growth_model_id?: string | null
+          id?: string
+          name?: string
+          project_id?: string | null
+          status?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_metrics_growth_model_id_fkey"
+            columns: ["growth_model_id"]
+            isOneToOne: false
+            referencedRelation: "growth_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_models: {
+        Row: {
+          created_at: string
+          description: string
+          framework: string
+          id: string
+          name: string
+          project_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          framework: string
+          id?: string
+          name: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          framework?: string
+          id?: string
+          name?: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_models_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hypotheses: {
         Row: {
           category: string
