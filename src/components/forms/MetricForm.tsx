@@ -53,6 +53,32 @@ const MetricForm = ({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Fetch thresholds if editing an existing metric
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      if (metric?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('metric_thresholds')
+            .select('*')
+            .eq('metric_id', metric.id)
+            .maybeSingle();
+            
+          if (error) throw error;
+          
+          if (data) {
+            setWarningThreshold(data.warning_threshold || '0');
+            setErrorThreshold(data.error_threshold || '0');
+          }
+        } catch (err) {
+          console.error('Error fetching metric thresholds:', err);
+        }
+      }
+    };
+    
+    fetchThresholds();
+  }, [metric]);
+
   useEffect(() => {
     if (metric) {
       setName(metric.name || '');
@@ -69,8 +95,28 @@ const MetricForm = ({
       setCurrent('');
       setTarget('');
       setStatus('not-started');
+      setWarningThreshold('0');
+      setErrorThreshold('0');
     }
   }, [metric, isOpen]);
+
+  // Calculate metric status based on current value and thresholds
+  const calculateStatus = (current: string, target: string, warningThreshold: string, errorThreshold: string): "success" | "warning" | "error" | "not-started" => {
+    if (!current || current === '0') return 'not-started';
+    
+    const currentValue = parseFloat(current);
+    const targetValue = parseFloat(target);
+    const warningValue = parseFloat(warningThreshold);
+    const errorValue = parseFloat(errorThreshold);
+    
+    // Simple comparison assuming higher is better
+    // This could be enhanced with more complex logic
+    if (currentValue >= targetValue) return 'success';
+    if (currentValue <= errorValue) return 'error';
+    if (currentValue <= warningValue) return 'warning';
+    
+    return 'success';
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +129,11 @@ const MetricForm = ({
     setIsSaving(true);
     
     try {
+      // Calculate the status based on current values and thresholds
+      const calculatedStatus = status === 'not-started' && current && current !== '0' 
+        ? calculateStatus(current, target, warningThreshold, errorThreshold)
+        : status;
+        
       if (metric) {
         // Update existing metric
         const updates = {
@@ -91,16 +142,41 @@ const MetricForm = ({
           name: name,
           target: target,
           description: description,
-          status: status as "success" | "warning" | "error" | "not-started",
+          status: calculatedStatus,
           category: category
         };
         
-        const { error } = await supabase
+        const { error: metricError } = await supabase
           .from('metrics')
           .update(updates)
           .eq('id', metric.id);
           
-        if (error) throw error;
+        if (metricError) throw metricError;
+        
+        // Update thresholds
+        const { error: thresholdError } = await supabase
+          .from('metric_thresholds')
+          .upsert({
+            metric_id: metric.id,
+            warning_threshold: warningThreshold,
+            error_threshold: errorThreshold,
+            updated_at: new Date().toISOString()
+          });
+          
+        if (thresholdError) throw thresholdError;
+        
+        // Add to metric history
+        await supabase
+          .from('metric_history')
+          .insert({
+            metric_id: metric.id,
+            value: current,
+            status: calculatedStatus,
+            recorded_at: new Date().toISOString()
+          });
+          
+        // Check for active pivot triggers
+        checkPivotTriggers(metric.id, current, calculatedStatus);
         
         toast({
           title: 'Success',
@@ -113,7 +189,7 @@ const MetricForm = ({
           category,
           target,
           current: current || "0",
-          status: status as "success" | "warning" | "error" | "not-started",
+          status: calculatedStatus,
           project_id: projectId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -126,11 +202,6 @@ const MetricForm = ({
           
         if (error) throw error;
         
-        toast({
-          title: 'Success',
-          description: `Metric "${name}" has been created`,
-        });
-        
         // If the insertion worked, create a threshold for this metric
         if (data && data.length > 0) {
           const metricId = data[0].id;
@@ -140,9 +211,26 @@ const MetricForm = ({
             .insert({
               metric_id: metricId,
               warning_threshold: warningThreshold || "0",
-              error_threshold: errorThreshold || "0"
+              error_threshold: errorThreshold || "0",
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+            
+          // Also add to metric history
+          await supabase
+            .from('metric_history')
+            .insert({
+              metric_id: metricId,
+              value: current || "0",
+              status: calculatedStatus,
+              recorded_at: new Date().toISOString()
             });
         }
+        
+        toast({
+          title: 'Success',
+          description: `Metric "${name}" has been created`,
+        });
       }
       
       onSave();
@@ -155,13 +243,45 @@ const MetricForm = ({
     }
   };
 
+  // Check if any pivot triggers should be activated based on metric changes
+  const checkPivotTriggers = async (metricId: string, currentValue: string, status: string) => {
+    if (status !== 'warning' && status !== 'error') return;
+    
+    try {
+      // Find pivot triggers linked to this metric
+      const { data: triggers, error } = await supabase
+        .from('pivot_metric_triggers')
+        .select(`
+          *,
+          pivot_options (*)
+        `)
+        .eq('metric_id', metricId);
+        
+      if (error) throw error;
+      
+      if (triggers && triggers.length > 0) {
+        // Notify user if any pivot options should be considered
+        const triggerNames = triggers.map((t: any) => t.pivot_options?.type || 'Unnamed pivot option').join(', ');
+        
+        toast({
+          title: status === 'error' ? 'Critical Pivot Alert' : 'Pivot Warning',
+          description: `Metric "${name}" has triggered pivot consideration for: ${triggerNames}`,
+          variant: status === 'error' ? 'destructive' : 'default',
+          duration: 10000, // Show for 10 seconds
+        });
+      }
+    } catch (err) {
+      console.error('Error checking pivot triggers:', err);
+    }
+  };
+
   const handleStatusChange = (value: string) => {
     setStatus(value as "success" | "warning" | "error" | "not-started");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{metric ? 'Edit Metric' : 'Create New Metric'}</DialogTitle>
           <DialogDescription>
@@ -228,6 +348,30 @@ const MetricForm = ({
               />
             </div>
           </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="warningThreshold">Warning Threshold</Label>
+              <Input
+                type="number"
+                id="warningThreshold"
+                value={warningThreshold}
+                onChange={(e) => setWarningThreshold(e.target.value)}
+                placeholder="Warning Threshold"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="errorThreshold">Error Threshold</Label>
+              <Input
+                type="number"
+                id="errorThreshold"
+                value={errorThreshold}
+                onChange={(e) => setErrorThreshold(e.target.value)}
+                placeholder="Error Threshold"
+              />
+            </div>
+          </div>
+          
           <div className="grid gap-2">
             <Label htmlFor="status">Status</Label>
             <Select value={status} onValueChange={handleStatusChange}>

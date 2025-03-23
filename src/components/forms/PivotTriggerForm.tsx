@@ -90,12 +90,44 @@ const PivotTriggerForm = ({ isOpen, onClose, onSave, pivotTrigger, projectId, me
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // This is a placeholder for actual implementation
-      // In a real implementation, we would save to a pivot_triggers table
-      toast({
-        title: pivotTrigger ? 'Trigger updated' : 'Trigger created',
-        description: 'The pivot trigger has been saved successfully.',
-      });
+      const now = new Date().toISOString();
+      
+      if (pivotTrigger) {
+        // Update existing trigger
+        const { error } = await supabase
+          .from('pivot_metric_triggers')
+          .update({
+            metric_id: values.metric_id === 'none' ? null : values.metric_id,
+            threshold_type: values.threshold,
+            updated_at: now
+          })
+          .eq('id', pivotTrigger.id);
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Trigger updated',
+          description: 'The pivot trigger has been updated successfully.',
+        });
+      } else {
+        // Create new trigger
+        const { error } = await supabase
+          .from('pivot_metric_triggers')
+          .insert({
+            metric_id: values.metric_id === 'none' ? null : values.metric_id,
+            pivot_option_id: pivotTrigger?.pivot_option_id,
+            threshold_type: values.threshold,
+            created_at: now,
+            updated_at: now
+          });
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Trigger created',
+          description: 'The pivot trigger has been created successfully.',
+        });
+      }
       
       onSave();
       onClose();

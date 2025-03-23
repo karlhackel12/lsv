@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { RotateCcw, Plus, Edit, Trash2, AlertCircle, ArrowRight, TrendingUp } from 'lucide-react';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import PivotOptionForm from './forms/PivotOptionForm';
+import PivotTriggerForm from './forms/PivotTriggerForm';
 import PivotDecisionSection from './PivotDecisionSection';
 import {
   AlertDialog,
@@ -28,12 +30,15 @@ interface PivotSectionProps {
 interface ActiveTrigger {
   pivotOption: PivotOption;
   metric: Metric;
+  trigger?: PivotMetricTrigger;
 }
 
 const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isTriggerFormOpen, setIsTriggerFormOpen] = useState(false);
   const [selectedPivotOption, setSelectedPivotOption] = useState<PivotOption | null>(null);
+  const [selectedTrigger, setSelectedTrigger] = useState<PivotMetricTrigger | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [pivotOptionToDelete, setPivotOptionToDelete] = useState<PivotOption | null>(null);
   const [metrics, setMetrics] = useState<Metric[]>([]);
@@ -85,6 +90,37 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     fetchMetricTriggers();
   }, [projectId, pivotOptions]);
 
+  // Set up real-time subscription to metrics updates
+  useEffect(() => {
+    if (!projectId) return;
+    
+    const channel = supabase
+      .channel('metric_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'metrics',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log('Metric updated:', payload);
+          // Update metrics array with the updated metric
+          setMetrics(prevMetrics => 
+            prevMetrics.map(m => 
+              m.id === payload.new.id ? { ...m, ...payload.new } : m
+            )
+          );
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId]);
+
   useEffect(() => {
     const findActiveTriggers = () => {
       const active: ActiveTrigger[] = [];
@@ -96,7 +132,8 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         if (metric && pivotOption && (metric.status === 'error' || metric.status === 'warning')) {
           active.push({
             pivotOption,
-            metric
+            metric,
+            trigger
           });
         }
       });
@@ -121,6 +158,22 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     setIsFormOpen(true);
   };
 
+  const handleAddTrigger = (pivotOption: PivotOption) => {
+    const originalPivotOption = {
+      ...pivotOption,
+      id: pivotOption.originalId || pivotOption.id
+    };
+    setSelectedPivotOption(originalPivotOption);
+    setSelectedTrigger(null);
+    setIsTriggerFormOpen(true);
+  };
+
+  const handleEditTrigger = (trigger: PivotMetricTrigger, pivotOption: PivotOption) => {
+    setSelectedPivotOption(pivotOption);
+    setSelectedTrigger(trigger);
+    setIsTriggerFormOpen(true);
+  };
+
   const handleDelete = (pivotOption: PivotOption) => {
     setPivotOptionToDelete({
       ...pivotOption,
@@ -133,11 +186,13 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     if (!pivotOptionToDelete) return;
     
     try {
+      // First delete all related metric triggers
       await supabase
         .from('pivot_metric_triggers')
         .delete()
         .eq('pivot_option_id', pivotOptionToDelete.id);
       
+      // Then delete the pivot option
       const { error } = await supabase
         .from('pivot_options')
         .delete()
@@ -224,13 +279,22 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
                     </div>
                   </div>
                   
-                  <Button 
-                    size="sm" 
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => handleEdit(trigger.pivotOption)}
-                  >
-                    Review
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => trigger.trigger && handleEditTrigger(trigger.trigger, trigger.pivotOption)}
+                    >
+                      Edit Trigger
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => handleEdit(trigger.pivotOption)}
+                    >
+                      Review
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -304,6 +368,10 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
               linkedMetricIds.includes(m.id) || (m.originalId && linkedMetricIds.includes(m.originalId))
             );
             
+            const optionTriggers = metricTriggers.filter(t => 
+              t.pivot_option_id === option.id || t.pivot_option_id === option.originalId
+            );
+            
             return (
               <Card 
                 key={option.id} 
@@ -345,8 +413,19 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
                 
                 {linkedMetrics.length > 0 && (
                   <div className="mb-5">
-                    <p className="text-sm font-semibold text-validation-gray-700 mb-2">Triggered by metrics:</p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-semibold text-validation-gray-700">Triggered by metrics:</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-xs"
+                        onClick={() => handleAddTrigger(option)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Trigger
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-3">
                       {linkedMetrics.map(metric => (
                         <Badge 
                           key={metric.id} 
@@ -363,6 +442,50 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
                         </Badge>
                       ))}
                     </div>
+                    
+                    {optionTriggers.length > 0 && (
+                      <div className="bg-gray-50 p-3 rounded-md border border-gray-200 space-y-2">
+                        {optionTriggers.map((trigger, idx) => {
+                          const relatedMetric = metrics.find(m => m.id === trigger.metric_id);
+                          return (
+                            <div key={idx} className="flex justify-between items-center text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{relatedMetric?.name || 'General'}:</span>
+                                <span>{trigger.threshold_type}</span>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 w-6 p-0" 
+                                onClick={() => handleEditTrigger(trigger, option)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {linkedMetrics.length === 0 && (
+                  <div className="mb-5">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-semibold text-validation-gray-700">No metric triggers</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-xs"
+                        onClick={() => handleAddTrigger(option)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Trigger
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Add metric triggers to automatically detect when this pivot option should be considered.
+                    </p>
                   </div>
                 )}
                 
@@ -385,11 +508,23 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
 
       {isFormOpen && (
         <PivotOptionForm
+          isOpen={isFormOpen}
           pivotOption={selectedPivotOption}
           projectId={projectId}
           metrics={metrics}
           onSave={refreshData}
           onClose={() => setIsFormOpen(false)}
+        />
+      )}
+      
+      {isTriggerFormOpen && (
+        <PivotTriggerForm
+          isOpen={isTriggerFormOpen}
+          pivotTrigger={selectedTrigger}
+          projectId={projectId}
+          metrics={metrics}
+          onSave={refreshData}
+          onClose={() => setIsTriggerFormOpen(false)}
         />
       )}
 
