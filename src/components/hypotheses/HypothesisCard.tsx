@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Lightbulb, Edit, Trash2 } from 'lucide-react';
+import { Lightbulb, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/StatusBadge';
 import Card from '@/components/Card';
@@ -10,10 +10,17 @@ interface HypothesisCardProps {
   hypothesis: Hypothesis;
   onEdit: (hypothesis: Hypothesis) => void;
   onDelete: (hypothesis: Hypothesis) => void;
+  onViewDetail: (hypothesis: Hypothesis) => void;
   onStatusChange: (hypothesis: Hypothesis, newStatus: 'validated' | 'validating' | 'not-started' | 'invalid') => void;
 }
 
-const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: HypothesisCardProps) => {
+const HypothesisCard = ({ 
+  hypothesis, 
+  onEdit, 
+  onDelete, 
+  onViewDetail,
+  onStatusChange 
+}: HypothesisCardProps) => {
   return (
     <Card 
       className="p-4 md:p-6 h-full flex flex-col animate-slideUpFade" 
@@ -72,6 +79,15 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
       
       <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-gray-100">
         <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => onViewDetail(hypothesis)}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="sr-only">View Details</span>
+          </Button>
           <Button 
             variant="outline" 
             size="sm"

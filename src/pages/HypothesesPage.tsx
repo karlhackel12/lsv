@@ -6,8 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import HypothesisList from '@/components/hypotheses/HypothesisList';
 import HypothesisForm from '@/components/forms/HypothesisForm';
-import { Loader2, Lightbulb } from 'lucide-react';
+import { Loader2, Lightbulb, ArrowLeft } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
+import HypothesisDetailView from '@/components/hypotheses/HypothesisDetailView';
+import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'react-router-dom';
 
 const HypothesesPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -15,6 +18,8 @@ const HypothesesPage = () => {
   const [isLoadingHypotheses, setIsLoadingHypotheses] = useState(true);
   const [selectedHypothesis, setSelectedHypothesis] = useState<Hypothesis | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
   const fetchHypotheses = async () => {
@@ -49,6 +54,17 @@ const HypothesesPage = () => {
     }
   }, [currentProject]);
 
+  useEffect(() => {
+    const hypothesisId = searchParams.get('id');
+    if (hypothesisId && hypotheses.length > 0) {
+      const hypothesis = hypotheses.find(h => h.id === hypothesisId);
+      if (hypothesis) {
+        setSelectedHypothesis(hypothesis);
+        setViewMode('detail');
+      }
+    }
+  }, [searchParams, hypotheses]);
+
   const handleEditHypothesis = (hypothesis: Hypothesis) => {
     setSelectedHypothesis(hypothesis);
     setIsFormOpen(true);
@@ -57,6 +73,18 @@ const HypothesesPage = () => {
   const handleCreateHypothesis = () => {
     setSelectedHypothesis(null);
     setIsFormOpen(true);
+  };
+
+  const handleViewDetail = (hypothesis: Hypothesis) => {
+    setSelectedHypothesis(hypothesis);
+    setViewMode('detail');
+    setSearchParams({ id: hypothesis.id });
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setSelectedHypothesis(null);
+    setSearchParams({});
   };
 
   const handleSaveHypothesis = async (formData: Hypothesis) => {
@@ -194,35 +222,37 @@ const HypothesesPage = () => {
 
   return (
     <div className="p-6">
-      <PageIntroduction
-        title="Hypothesis-Driven Development"
-        icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
-        description={
-          <>
-            <p>
-              Hypothesis-driven development is a scientific approach to building products that test specific assumptions.
-              Each hypothesis follows this structure:
-            </p>
-            <ul className="list-disc pl-5 mt-2">
-              <li><strong>Statement:</strong> "We believe that [doing this / building this / creating this] for [these people/personas] will achieve [this outcome]."</li>
-              <li><strong>Evidence criteria:</strong> "We'll know we're right when we see [this measurable outcome]."</li>
-            </ul>
-            <p className="mt-2">
-              <strong>Types of hypotheses:</strong>
-            </p>
-            <ul className="list-disc pl-5">
-              <li><strong>Problem hypothesis:</strong> Tests if the problem exists and is significant enough to solve</li>
-              <li><strong>Solution hypothesis:</strong> Tests if your proposed solution actually addresses the problem</li>
-              <li><strong>Implementation hypothesis:</strong> Tests specific features or approaches to implementing the solution</li>
-              <li><strong>Business model hypothesis:</strong> Tests if people will pay for your solution and if the business model is viable</li>
-            </ul>
-            <p className="mt-2">
-              Create and test your most critical hypotheses first, especially those that could invalidate your entire product idea.
-              This "fail fast" approach saves time and resources by quickly eliminating ideas that won't work.
-            </p>
-          </>
-        }
-      />
+      {viewMode === 'list' && (
+        <PageIntroduction
+          title="Hypothesis-Driven Development"
+          icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
+          description={
+            <>
+              <p>
+                Hypothesis-driven development is a scientific approach to building products that test specific assumptions.
+                Each hypothesis follows this structure:
+              </p>
+              <ul className="list-disc pl-5 mt-2">
+                <li><strong>Statement:</strong> "We believe that [doing this / building this / creating this] for [these people/personas] will achieve [this outcome]."</li>
+                <li><strong>Evidence criteria:</strong> "We'll know we're right when we see [this measurable outcome]."</li>
+              </ul>
+              <p className="mt-2">
+                <strong>Types of hypotheses:</strong>
+              </p>
+              <ul className="list-disc pl-5">
+                <li><strong>Problem hypothesis:</strong> Tests if the problem exists and is significant enough to solve</li>
+                <li><strong>Solution hypothesis:</strong> Tests if your proposed solution actually addresses the problem</li>
+                <li><strong>Implementation hypothesis:</strong> Tests specific features or approaches to implementing the solution</li>
+                <li><strong>Business model hypothesis:</strong> Tests if people will pay for your solution and if the business model is viable</li>
+              </ul>
+              <p className="mt-2">
+                Create and test your most critical hypotheses first, especially those that could invalidate your entire product idea.
+                This "fail fast" approach saves time and resources by quickly eliminating ideas that won't work.
+              </p>
+            </>
+          }
+        />
+      )}
       
       {/* Hypothesis form dialog */}
       {isFormOpen && (
@@ -235,32 +265,58 @@ const HypothesesPage = () => {
       )}
       
       {/* Main content */}
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="list">Hypothesis List</TabsTrigger>
-          <TabsTrigger value="create">Create Hypothesis</TabsTrigger>
-        </TabsList>
-        <TabsContent value="list" className="mt-6">
-          <HypothesisList 
-            hypotheses={hypotheses}
-            onEdit={handleEditHypothesis}
-            onDelete={handleDeleteHypothesis}
-            onCreateNew={handleCreateHypothesis}
-            isLoading={isLoadingHypotheses}
-            onStatusChange={updateHypothesisStatus}
-          />
-        </TabsContent>
-        <TabsContent value="create" className="mt-6">
-          <div className="flex items-center justify-center p-12">
-            <button
-              onClick={handleCreateHypothesis}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+      {viewMode === 'list' ? (
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="list">Hypothesis List</TabsTrigger>
+            <TabsTrigger value="create">Create Hypothesis</TabsTrigger>
+          </TabsList>
+          <TabsContent value="list" className="mt-6">
+            <HypothesisList 
+              hypotheses={hypotheses}
+              onEdit={handleEditHypothesis}
+              onDelete={handleDeleteHypothesis}
+              onCreateNew={handleCreateHypothesis}
+              onViewDetail={handleViewDetail}
+              isLoading={isLoadingHypotheses}
+              onStatusChange={updateHypothesisStatus}
+            />
+          </TabsContent>
+          <TabsContent value="create" className="mt-6">
+            <div className="flex items-center justify-center p-12">
+              <button
+                onClick={handleCreateHypothesis}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                Create New Hypothesis
+              </button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <>
+          <div className="mb-4">
+            <Button 
+              variant="outline" 
+              onClick={handleBackToList}
+              className="flex items-center"
             >
-              Create New Hypothesis
-            </button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Hypotheses
+            </Button>
           </div>
-        </TabsContent>
-      </Tabs>
+          
+          {selectedHypothesis && (
+            <HypothesisDetailView 
+              hypothesis={selectedHypothesis}
+              onEdit={() => setIsFormOpen(true)}
+              onClose={handleBackToList}
+              onRefresh={fetchHypotheses}
+              projectId={currentProject?.id}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

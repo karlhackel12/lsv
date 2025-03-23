@@ -9,6 +9,7 @@ import ExperimentForm from '@/components/forms/ExperimentForm';
 import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
 import { Loader2, FlaskConical } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
+import { useLocation } from 'react-router-dom';
 
 const ExperimentsPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -19,6 +20,7 @@ const ExperimentsPage = () => {
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
   const [relatedHypothesis, setRelatedHypothesis] = useState<Hypothesis | null>(null);
   const { toast } = useToast();
+  const location = useLocation();
 
   const fetchExperiments = async () => {
     if (!currentProject) return;
@@ -42,6 +44,15 @@ const ExperimentsPage = () => {
       }));
       
       setExperiments(transformedData);
+      
+      if (location.state && location.state.experimentId) {
+        const experiment = transformedData.find(e => e.id === location.state.experimentId);
+        if (experiment) {
+          setSelectedExperiment(experiment);
+          setIsDetailViewOpen(true);
+          fetchRelatedHypothesis(experiment);
+        }
+      }
     } catch (err) {
       console.error('Error fetching experiments:', err);
       toast({
@@ -54,11 +65,29 @@ const ExperimentsPage = () => {
     }
   };
 
+  const fetchRelatedHypothesis = async (experiment: Experiment) => {
+    if (!experiment.hypothesis_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('hypotheses')
+        .select('*')
+        .eq('id', experiment.hypothesis_id)
+        .single();
+        
+      if (error) throw error;
+      
+      setRelatedHypothesis(data);
+    } catch (err) {
+      console.error('Error fetching related hypothesis:', err);
+    }
+  };
+
   useEffect(() => {
     if (currentProject) {
       fetchExperiments();
     }
-  }, [currentProject]);
+  }, [currentProject, location]);
 
   const handleEditExperiment = (experiment: Experiment) => {
     setSelectedExperiment(experiment);
@@ -168,7 +197,6 @@ const ExperimentsPage = () => {
         }
       />
 
-      {/* Experiment form dialog */}
       {isFormOpen && (
         <ExperimentForm
           isOpen={isFormOpen}
@@ -179,7 +207,6 @@ const ExperimentsPage = () => {
         />
       )}
       
-      {/* Experiment detail view */}
       {isDetailViewOpen && selectedExperiment && (
         <ExperimentDetailView
           experiment={selectedExperiment}
@@ -191,7 +218,6 @@ const ExperimentsPage = () => {
         />
       )}
       
-      {/* Main content */}
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="list">Experiment List</TabsTrigger>

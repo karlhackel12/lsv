@@ -1,10 +1,8 @@
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Experiment } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Experiment } from '@/types/database';
-import { FormData } from '@/components/forms/ExperimentForm';
 
 interface UseExperimentFormProps {
   experiment?: Experiment | null;
@@ -14,43 +12,33 @@ interface UseExperimentFormProps {
   onClose: () => void;
 }
 
-export const useExperimentForm = ({ 
-  experiment, 
-  projectId, 
-  hypothesisId, 
-  onSave, 
-  onClose 
-}: UseExperimentFormProps) => {
+export function useExperimentForm({
+  experiment,
+  projectId,
+  hypothesisId,
+  onSave,
+  onClose
+}: UseExperimentFormProps) {
   const { toast } = useToast();
   const isEditing = !!experiment;
 
-  const form = useForm<FormData>({
-    defaultValues: experiment ? {
-      title: experiment.title,
-      hypothesis: experiment.hypothesis,
-      method: experiment.method,
-      metrics: experiment.metrics,
-      category: experiment.category || '',
-      results: experiment.results || '',
-      decisions: experiment.decisions || '',
-      insights: experiment.insights || '',
-      status: experiment.status,
-    } : {
+  const form = useForm<Experiment>({
+    defaultValues: experiment || {
       title: '',
       hypothesis: '',
       method: '',
       metrics: '',
-      category: '',
-      results: '',
-      decisions: '',
-      insights: '',
       status: 'planned',
-    }
+      category: 'problem',
+      results: '',
+      insights: '',
+      decisions: '',
+    },
   });
 
-  const handleSubmit = async (data: FormData) => {
+  const handleSubmit = async (data: Experiment) => {
     try {
-      if (isEditing && experiment) {
+      if (isEditing) {
         // Update existing experiment
         const { error } = await supabase
           .from('experiments')
@@ -59,27 +47,20 @@ export const useExperimentForm = ({
             hypothesis: data.hypothesis,
             method: data.method,
             metrics: data.metrics,
+            status: data.status,
             category: data.category,
             results: data.results,
-            decisions: data.decisions,
             insights: data.insights,
-            status: data.status as 'planned' | 'in-progress' | 'completed', 
+            decisions: data.decisions,
             updated_at: new Date().toISOString(),
           })
           .eq('id', experiment.id);
-
-        if (error) {
-          toast({
-            title: 'Error',
-            description: 'Failed to update experiment. Please try again.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
+          
+        if (error) throw error;
+        
         toast({
-          title: 'Experiment updated',
-          description: 'The experiment has been successfully updated.',
+          title: 'Success',
+          description: 'Experiment updated successfully',
         });
       } else {
         // Create new experiment
@@ -90,36 +71,27 @@ export const useExperimentForm = ({
             hypothesis: data.hypothesis,
             method: data.method,
             metrics: data.metrics,
-            category: data.category,
-            hypothesis_id: hypothesisId,
+            status: data.status || 'planned',
+            category: data.category || 'problem',
             project_id: projectId,
-            results: data.results,
-            decisions: data.decisions,
-            insights: data.insights,
-            status: data.status as 'planned' | 'in-progress' | 'completed',
+            hypothesis_id: hypothesisId || null,
           });
-
-        if (error) {
-          toast({
-            title: 'Error',
-            description: 'Failed to create experiment. Please try again.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
+          
+        if (error) throw error;
+        
         toast({
-          title: 'Experiment created',
-          description: 'A new experiment has been created successfully.',
+          title: 'Success',
+          description: 'New experiment created successfully',
         });
       }
       
       onSave();
       onClose();
-    } catch (error: any) {
+    } catch (err) {
+      console.error('Error saving experiment:', err);
       toast({
         title: 'Error',
-        description: error.message || 'An error occurred. Please try again.',
+        description: 'Failed to save experiment',
         variant: 'destructive',
       });
     }
@@ -128,6 +100,6 @@ export const useExperimentForm = ({
   return {
     form,
     isEditing,
-    handleSubmit
+    handleSubmit,
   };
-};
+}
