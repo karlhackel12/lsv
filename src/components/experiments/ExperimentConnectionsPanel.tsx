@@ -34,6 +34,15 @@ const ExperimentConnectionsPanel = ({
     fetchGrowthMetrics();
   }, [projectId]);
 
+  // Helper function to validate status
+  const validateGrowthMetricStatus = (status: string): 'on-track' | 'at-risk' | 'off-track' => {
+    if (status === 'on-track' || status === 'at-risk' || status === 'off-track') {
+      return status as 'on-track' | 'at-risk' | 'off-track';
+    }
+    // Default to 'off-track' if the status is not valid
+    return 'off-track';
+  };
+
   const fetchGrowthMetrics = async () => {
     try {
       setIsLoadingMetrics(true);
@@ -44,7 +53,13 @@ const ExperimentConnectionsPanel = ({
         
       if (error) throw error;
       
-      setGrowthMetrics(data);
+      // Transform the data to ensure status is of the correct type
+      const transformedData: GrowthMetric[] = (data || []).map(item => ({
+        ...item,
+        status: validateGrowthMetricStatus(item.status)
+      }));
+      
+      setGrowthMetrics(transformedData);
     } catch (err) {
       console.error('Error fetching growth metrics:', err);
     } finally {
