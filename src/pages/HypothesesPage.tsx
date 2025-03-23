@@ -44,6 +44,8 @@ const HypothesesPage = () => {
       // Add originalId field to each hypothesis for tracking original database ID
       const processedData = data?.map(item => ({
         ...item,
+        // Ensure phase is properly typed
+        phase: (item.phase === 'solution' ? 'solution' : 'problem') as PhaseType,
         originalId: item.id
       })) as Hypothesis[];
       

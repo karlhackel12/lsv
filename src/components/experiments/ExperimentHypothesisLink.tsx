@@ -32,6 +32,8 @@ const ExperimentHypothesisLink = ({ experiment, projectId, onHypothesisFound }: 
             // Convert from database schema to our type
             const hypothesis: Hypothesis = {
               ...data,
+              // Ensure phase is a valid union type
+              phase: (data.phase === 'solution' ? 'solution' : 'problem') as 'problem' | 'solution',
               originalId: data.id
             };
             onHypothesisFound(hypothesis);
@@ -57,6 +59,8 @@ const ExperimentHypothesisLink = ({ experiment, projectId, onHypothesisFound }: 
             if (exactMatch) {
               const hypothesis: Hypothesis = {
                 ...exactMatch,
+                // Ensure phase is a valid union type
+                phase: (exactMatch.phase === 'solution' ? 'solution' : 'problem') as 'problem' | 'solution',
                 originalId: exactMatch.id
               };
               onHypothesisFound(hypothesis);
@@ -64,6 +68,8 @@ const ExperimentHypothesisLink = ({ experiment, projectId, onHypothesisFound }: 
               // Use the first one as fallback
               const hypothesis: Hypothesis = {
                 ...data[0],
+                // Ensure phase is a valid union type
+                phase: (data[0].phase === 'solution' ? 'solution' : 'problem') as 'problem' | 'solution',
                 originalId: data[0].id
               };
               onHypothesisFound(hypothesis);

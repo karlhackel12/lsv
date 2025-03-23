@@ -905,7 +905,7 @@ export interface Hypothesis {
   status: 'validated' | 'validating' | 'not-started' | 'invalid';
   evidence?: string;
   result?: string;
-  phase?: 'problem' | 'solution';
+  phase: 'problem' | 'solution';
   project_id: string;
   created_at: string;
   updated_at: string;
