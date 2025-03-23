@@ -9,11 +9,14 @@ import GrowthModelSection from '@/components/growth/GrowthModelSection';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
+import GrowthTypesPanel from '@/components/growth/GrowthTypesPanel';
+import ScalingReadinessSection from '@/components/growth/ScalingReadinessSection';
 import { useGrowthModels } from '@/hooks/use-growth-models';
 
 const GrowthPage = () => {
   const { currentProject, isLoading, error } = useProject();
   const [activeTab, setActiveTab] = useState('metrics');
+  const [activePanelTab, setActivePanelTab] = useState('detail-view');
   const { toast } = useToast();
   const {
     growthModels,
@@ -88,41 +91,70 @@ const GrowthPage = () => {
           />
           
           {activeModel && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
-              <TabsList className="grid w-full max-w-md grid-cols-3">
-                <TabsTrigger value="metrics">Metrics</TabsTrigger>
-                <TabsTrigger value="channels">Channels</TabsTrigger>
-                <TabsTrigger value="experiments">Experiments</TabsTrigger>
-              </TabsList>
+            <div className="mt-8">
+              <Tabs value={activePanelTab} onValueChange={setActivePanelTab} className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                  <TabsTrigger value="detail-view">Detail View</TabsTrigger>
+                  <TabsTrigger value="growth-types">Growth Types</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="detail-view" className="mt-6">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full max-w-md grid-cols-3">
+                      <TabsTrigger value="metrics">Metrics</TabsTrigger>
+                      <TabsTrigger value="channels">Channels</TabsTrigger>
+                      <TabsTrigger value="experiments">Experiments</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="metrics" className="mt-6">
+                      <GrowthMetricsSection
+                        metrics={growthMetrics}
+                        growthModel={activeModel}
+                        projectId={currentProject.id}
+                        refreshData={() => fetchGrowthModelData(activeModel.id)}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="channels" className="mt-6">
+                      <GrowthChannelsSection
+                        channels={growthChannels}
+                        growthModel={activeModel}
+                        projectId={currentProject.id}
+                        refreshData={() => fetchGrowthModelData(activeModel.id)}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="experiments" className="mt-6">
+                      <GrowthExperimentsSection
+                        experiments={growthExperiments}
+                        metrics={growthMetrics}
+                        growthModel={activeModel}
+                        projectId={currentProject.id}
+                        refreshData={() => fetchGrowthModelData(activeModel.id)}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
+                
+                <TabsContent value="growth-types" className="mt-6">
+                  <GrowthTypesPanel 
+                    growthModel={activeModel}
+                    projectId={currentProject.id}
+                    metrics={growthMetrics}
+                    channels={growthChannels}
+                  />
+                </TabsContent>
+              </Tabs>
               
-              <TabsContent value="metrics" className="mt-6">
-                <GrowthMetricsSection
-                  metrics={growthMetrics}
+              <div className="mt-10">
+                <ScalingReadinessSection 
                   growthModel={activeModel}
                   projectId={currentProject.id}
-                  refreshData={() => fetchGrowthModelData(activeModel.id)}
-                />
-              </TabsContent>
-              
-              <TabsContent value="channels" className="mt-6">
-                <GrowthChannelsSection
+                  metrics={growthMetrics}
                   channels={growthChannels}
-                  growthModel={activeModel}
-                  projectId={currentProject.id}
-                  refreshData={() => fetchGrowthModelData(activeModel.id)}
                 />
-              </TabsContent>
-              
-              <TabsContent value="experiments" className="mt-6">
-                <GrowthExperimentsSection
-                  experiments={growthExperiments}
-                  metrics={growthMetrics}
-                  growthModel={activeModel}
-                  projectId={currentProject.id}
-                  refreshData={() => fetchGrowthModelData(activeModel.id)}
-                />
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           )}
         </>
       )}

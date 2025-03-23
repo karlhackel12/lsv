@@ -236,7 +236,7 @@ const GrowthMetricsSection = ({
                         </CardContent>
                         <CardFooter className="pt-2 pb-3">
                           <div className="flex items-center gap-1 text-xs">
-                            <div className={`h-2 w-2 rounded-full ${STATUS_COLORS[metric.status]}`}></div>
+                            <div className={`h-2 w-2 rounded-full ${STATUS_COLORS[metric.status as keyof typeof STATUS_COLORS]}`}></div>
                             <span className="capitalize">{metric.status}</span>
                             {metric.current_value < metric.target_value ? (
                               <TrendingUp className="h-3 w-3 ml-auto text-green-500" />
