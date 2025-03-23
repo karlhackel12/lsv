@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, CheckCircle2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, TrendingUp, CheckCircle2, Beaker, BarChart2, Target, ArrowRight } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
 import GrowthModelSection from '@/components/growth/GrowthModelSection';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
@@ -12,12 +11,12 @@ import GrowthHypothesesSection from '@/components/growth/GrowthHypothesesSection
 import GrowthTypesPanel from '@/components/growth/GrowthTypesPanel';
 import ScalingReadinessSection from '@/components/growth/ScalingReadinessSection';
 import { useGrowthModels } from '@/hooks/use-growth-models';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import StepJourney, { Step } from '@/components/StepJourney';
 import ValidationStageCard from '@/components/growth/ValidationStageCard';
 import { useLocation } from 'react-router-dom';
 import PhaseNavigation from '@/components/PhaseNavigation';
+import TabNavigation, { TabItem } from '@/components/TabNavigation';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 const VALIDATION_STAGES = [
   {
@@ -82,38 +81,9 @@ const VALIDATION_STAGES = [
   }
 ];
 
-const GROWTH_JOURNEY_STEPS: Step[] = [
-  { 
-    id: 'setup', 
-    label: 'Define Channels & Metrics',
-    description: 'Set up your growth metrics and acquisition channels'
-  },
-  { 
-    id: 'hypotheses', 
-    label: 'Create Hypotheses',
-    description: 'Define and structure your growth hypotheses'
-  },
-  { 
-    id: 'experiments', 
-    label: 'Run Experiments',
-    description: 'Design experiments to test your growth hypotheses'
-  },
-  { 
-    id: 'validation', 
-    label: 'Scaling Checklist',
-    description: 'Validate your growth model readiness'
-  },
-  { 
-    id: 'followup', 
-    label: 'Follow Up Actions',
-    description: 'Plan next steps based on your findings'
-  }
-];
-
 const GrowthPage = () => {
   const { currentProject, isLoading, error } = useProject();
-  const [currentStep, setCurrentStep] = useState('setup');
-  const [setupTab, setSetupTab] = useState('metrics');
+  const [activeSection, setActiveSection] = useState('metrics');
   const [validationTab, setValidationTab] = useState('stages');
   const { toast } = useToast();
   const location = useLocation();
@@ -131,7 +101,14 @@ const GrowthPage = () => {
   } = useGrowthModels(currentProject?.id || '');
 
   const activeModel = getActiveModel();
-  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+
+  const mainNavigationTabs: TabItem[] = [
+    { id: 'metrics', label: 'Metrics', icon: BarChart2 },
+    { id: 'channels', label: 'Channels', icon: Target },
+    { id: 'hypotheses', label: 'Hypotheses', icon: Beaker },
+    { id: 'experiments', label: 'Experiments', icon: TrendingUp },
+    { id: 'validation', label: 'Scaling Readiness', icon: CheckCircle2 },
+  ];
 
   useEffect(() => {
     if (currentProject) {
@@ -144,57 +121,36 @@ const GrowthPage = () => {
     
     if (state) {
       if (state.tab === 'metrics') {
-        setCurrentStep('setup');
-        setSetupTab('metrics');
+        setActiveSection('metrics');
       } else if (state.tab === 'channels') {
-        setCurrentStep('setup');
-        setSetupTab('channels');
+        setActiveSection('channels');
       } else if (state.tab === 'hypotheses') {
-        setCurrentStep('hypotheses');
+        setActiveSection('hypotheses');
       } else if (state.tab === 'experiments') {
-        setCurrentStep('experiments');
+        setActiveSection('experiments');
       }
     }
   }, [location.state]);
 
-  const canAccessStep = (stepId: string) => {
-    if (stepId === 'setup') return true;
-    if (stepId === 'hypotheses') return growthMetrics.length > 0 && growthChannels.length > 0;
-    if (stepId === 'experiments') return growthMetrics.length > 0 && growthChannels.length > 0;
-    if (stepId === 'validation') return growthExperiments.length > 0;
-    if (stepId === 'followup') return completedSteps.includes('validation');
-    return false;
-  };
-
-  const goToNextStep = () => {
-    const currentIndex = GROWTH_JOURNEY_STEPS.findIndex(step => step.id === currentStep);
-    if (currentIndex < GROWTH_JOURNEY_STEPS.length - 1) {
-      const nextStep = GROWTH_JOURNEY_STEPS[currentIndex + 1].id;
-      if (canAccessStep(nextStep)) {
-        if (!completedSteps.includes(currentStep)) {
-          setCompletedSteps([...completedSteps, currentStep]);
-        }
-        setCurrentStep(nextStep);
-      } else {
-        toast({
-          title: "Can't proceed yet",
-          description: "You need to complete the current step first.",
-          variant: "destructive"
-        });
-      }
+  const getBreadcrumb = () => {
+    switch (activeSection) {
+      case 'metrics':
+        return 'Growth Metrics';
+      case 'channels':
+        return 'Acquisition Channels';
+      case 'hypotheses':
+        return 'Growth Hypotheses';
+      case 'experiments':
+        return 'Growth Experiments';
+      case 'validation':
+        return 'Scaling Readiness';
+      default:
+        return '';
     }
   };
 
-  const handleStepChange = (stepId: string) => {
-    if (canAccessStep(stepId)) {
-      setCurrentStep(stepId);
-    } else {
-      toast({
-        title: "Can't access this step yet",
-        description: "Complete the previous steps first.",
-        variant: "destructive"
-      });
-    }
+  const handleNavigationChange = (sectionId: string) => {
+    setActiveSection(sectionId);
   };
 
   if (isLoading) {
@@ -244,102 +200,61 @@ const GrowthPage = () => {
           />
           
           {activeModel && (
-            <div className="mt-8">
-              <Card className="mb-6">
-                <CardContent className="pt-6">
-                  <StepJourney
-                    steps={GROWTH_JOURNEY_STEPS}
-                    currentStepId={currentStep}
-                    onStepChange={handleStepChange}
-                    completedStepIds={completedSteps}
+            <div className="mt-8 space-y-6">
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <TabNavigation
+                    tabs={mainNavigationTabs}
+                    activeTab={activeSection}
+                    onChange={handleNavigationChange}
+                    className="p-1"
                   />
                 </CardContent>
               </Card>
-
-              {currentStep === 'setup' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">1. Define Your Channels & Metrics</h2>
-                    <Button 
-                      onClick={goToNextStep} 
-                      disabled={!canAccessStep('hypotheses')}
-                      className="ml-auto"
-                    >
-                      Next Step
-                    </Button>
-                  </div>
-                  
-                  <Tabs defaultValue={setupTab} value={setupTab} onValueChange={setSetupTab} className="w-full">
-                    <TabsList className="grid w-full max-w-md grid-cols-2">
-                      <TabsTrigger value="metrics">Metrics</TabsTrigger>
-                      <TabsTrigger value="channels">Channels</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="metrics" className="mt-6">
-                      <GrowthMetricsSection
-                        metrics={growthMetrics}
-                        growthModel={activeModel}
-                        projectId={currentProject.id}
-                        refreshData={() => fetchGrowthModelData(activeModel.id)}
-                      />
-                    </TabsContent>
-                    
-                    <TabsContent value="channels" className="mt-6">
-                      <GrowthChannelsSection
-                        channels={growthChannels}
-                        growthModel={activeModel}
-                        projectId={currentProject.id}
-                        refreshData={() => fetchGrowthModelData(activeModel.id)}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </div>
+              
+              <div className="mb-6">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink href="#">Growth</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink>{getBreadcrumb()}</BreadcrumbLink>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+              
+              {activeSection === 'metrics' && (
+                <GrowthMetricsSection
+                  metrics={growthMetrics}
+                  growthModel={activeModel}
+                  projectId={currentProject.id}
+                  refreshData={() => fetchGrowthModelData(activeModel.id)}
+                />
               )}
-
-              {currentStep === 'hypotheses' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">2. Create Growth Hypotheses</h2>
-                    <Button 
-                      onClick={goToNextStep} 
-                      className="ml-auto"
-                    >
-                      Next Step
-                    </Button>
-                  </div>
-
-                  <p className="text-gray-600">
-                    Create structured hypotheses about how to grow your product. Each hypothesis should target a specific growth stage
-                    and have a clear expected outcome that can be measured.
-                  </p>
-                  
-                  <GrowthHypothesesSection
-                    growthModel={activeModel}
-                    projectId={currentProject.id}
-                    metrics={growthMetrics}
-                    refreshData={() => fetchGrowthModelData(activeModel.id)}
-                  />
-                </div>
+              
+              {activeSection === 'channels' && (
+                <GrowthChannelsSection
+                  channels={growthChannels}
+                  growthModel={activeModel}
+                  projectId={currentProject.id}
+                  refreshData={() => fetchGrowthModelData(activeModel.id)}
+                />
               )}
-
-              {currentStep === 'experiments' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">3. Run Growth Experiments</h2>
-                    <Button 
-                      onClick={goToNextStep} 
-                      disabled={!canAccessStep('validation')}
-                      className="ml-auto"
-                    >
-                      Next Step
-                    </Button>
-                  </div>
-
-                  <p className="text-gray-600">
-                    Design experiments to test your growth hypotheses. Each experiment should target a specific metric
-                    and have a clear expected outcome.
-                  </p>
-                  
+              
+              {activeSection === 'hypotheses' && (
+                <GrowthHypothesesSection
+                  growthModel={activeModel}
+                  projectId={currentProject.id}
+                  metrics={growthMetrics}
+                  refreshData={() => fetchGrowthModelData(activeModel.id)}
+                />
+              )}
+              
+              {activeSection === 'experiments' && (
+                <>
                   <GrowthExperimentsSection
                     experiments={growthExperiments}
                     metrics={growthMetrics}
@@ -357,29 +272,16 @@ const GrowthPage = () => {
                       channels={growthChannels}
                     />
                   </div>
-                </div>
+                </>
               )}
-
-              {currentStep === 'validation' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">4. Growth Validation & Scaling Readiness</h2>
-                    <Button 
-                      onClick={goToNextStep} 
-                      className="ml-auto"
-                    >
-                      Next Step
-                    </Button>
-                  </div>
-                  
-                  <Tabs defaultValue={validationTab} value={validationTab} onValueChange={setValidationTab} className="w-full">
-                    <TabsList className="grid w-full max-w-md grid-cols-2">
-                      <TabsTrigger value="stages">Validation Stages</TabsTrigger>
-                      <TabsTrigger value="checklist">Scaling Checklist</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="stages" className="mt-6">
-                      <p className="text-gray-600 mb-4">
+              
+              {activeSection === 'validation' && (
+                <>
+                  <div className="flex flex-col gap-6">
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-semibold">Scaling Readiness Assessment</h2>
+                      
+                      <p className="text-gray-600">
                         Track your progress through the key validation stages of the Lean Startup Growth Model.
                         Each stage must be validated before moving to the next.
                       </p>
@@ -394,9 +296,11 @@ const GrowthPage = () => {
                           />
                         ))}
                       </div>
-                    </TabsContent>
+                    </div>
                     
-                    <TabsContent value="checklist" className="mt-6">
+                    <div className="space-y-6 mt-8">
+                      <h2 className="text-xl font-semibold">Growth Scaling Checklist</h2>
+                      
                       <p className="text-gray-600 mb-4">
                         Review your scaling readiness to determine if your growth model is validated and ready for scaling.
                       </p>
@@ -407,79 +311,38 @@ const GrowthPage = () => {
                         metrics={growthMetrics}
                         channels={growthChannels}
                       />
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              )}
-
-              {currentStep === 'followup' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">5. Follow Up Actions</h2>
+                    </div>
                   </div>
-                  
-                  <p className="text-gray-600">
-                    Based on your growth model validation, here are the recommended next steps:
-                  </p>
-                  
-                  <Card>
-                    <CardContent className="pt-6">
-                      <h3 className="text-lg font-medium mb-4">Recommended Actions</h3>
-                      
-                      <ul className="space-y-4">
-                        {growthMetrics.filter(m => m.status === 'off-track').length > 0 && (
-                          <li className="flex items-start">
-                            <div className="mr-3 mt-0.5 bg-amber-100 text-amber-800 p-1 rounded">
-                              <TrendingUp className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p className="font-medium">Improve Off-Track Metrics</p>
-                              <p className="text-gray-600 text-sm">
-                                Focus on improving your {growthMetrics.filter(m => m.status === 'off-track').length} off-track metrics
-                                through targeted experiments.
-                              </p>
-                            </div>
-                          </li>
-                        )}
-                        
-                        {growthChannels.filter(c => c.category === 'paid' && c.status === 'active').length > 0 && (
-                          <li className="flex items-start">
-                            <div className="mr-3 mt-0.5 bg-blue-100 text-blue-800 p-1 rounded">
-                              <TrendingUp className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p className="font-medium">Optimize Paid Channels</p>
-                              <p className="text-gray-600 text-sm">
-                                Review and optimize your active paid channels to improve CAC and conversion rates.
-                              </p>
-                            </div>
-                          </li>
-                        )}
-                        
-                        <li className="flex items-start">
-                          <div className="mr-3 mt-0.5 bg-green-100 text-green-800 p-1 rounded">
-                            <TrendingUp className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <p className="font-medium">Run More Experiments</p>
-                            <p className="text-gray-600 text-sm">
-                              Continue running experiments to validate your growth model and improve key metrics.
-                            </p>
-                          </div>
-                        </li>
-                      </ul>
-                      
-                      <div className="mt-6 pt-6 border-t border-gray-200">
-                        <h3 className="text-lg font-medium mb-4">Update Schedule</h3>
-                        <p className="text-gray-600">
-                          Set a regular cadence to update your growth metrics and review experiments.
-                          Weekly updates are recommended during active experimentation.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                </>
               )}
+              
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                {mainNavigationTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeSection === tab.id;
+                  if (tab.id === activeSection) return null;
+                  
+                  return (
+                    <Card 
+                      key={tab.id}
+                      className={`cursor-pointer hover:border-blue-200 transition-all ${isActive ? 'border-blue-400' : ''}`}
+                      onClick={() => setActiveSection(tab.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="bg-blue-50 p-2 rounded-full mr-3">
+                              <Icon className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <span className="font-medium">{tab.label}</span>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           )}
         </>
