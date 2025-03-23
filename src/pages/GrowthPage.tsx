@@ -14,13 +14,30 @@ import ScalingReadinessSection from '@/components/growth/ScalingReadinessSection
 import { useGrowthModels } from '@/hooks/use-growth-models';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import StepJourney, { Step } from '@/components/StepJourney';
 
 // Define the steps in the growth journey
-const GROWTH_JOURNEY_STEPS = [
-  { id: 'setup', label: '1. Define Channels & Metrics' },
-  { id: 'experiments', label: '2. Define Experiments' },
-  { id: 'validation', label: '3. Scaling Checklist' },
-  { id: 'followup', label: '4. Follow Up Actions' }
+const GROWTH_JOURNEY_STEPS: Step[] = [
+  { 
+    id: 'setup', 
+    label: 'Define Channels & Metrics',
+    description: 'Set up your growth metrics and acquisition channels'
+  },
+  { 
+    id: 'experiments', 
+    label: 'Define Experiments',
+    description: 'Design experiments to test your growth hypotheses'
+  },
+  { 
+    id: 'validation', 
+    label: 'Scaling Checklist',
+    description: 'Validate your growth model readiness'
+  },
+  { 
+    id: 'followup', 
+    label: 'Follow Up Actions',
+    description: 'Plan next steps based on your findings'
+  }
 ];
 
 const GrowthPage = () => {
@@ -41,6 +58,7 @@ const GrowthPage = () => {
   } = useGrowthModels(currentProject?.id || '');
 
   const activeModel = getActiveModel();
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
 
   useEffect(() => {
     if (currentProject) {
@@ -63,14 +81,25 @@ const GrowthPage = () => {
     if (currentIndex < GROWTH_JOURNEY_STEPS.length - 1) {
       const nextStep = GROWTH_JOURNEY_STEPS[currentIndex + 1].id;
       if (canAccessStep(nextStep)) {
+        // Mark the current step as completed
+        if (!completedSteps.includes(currentStep)) {
+          setCompletedSteps([...completedSteps, currentStep]);
+        }
         setCurrentStep(nextStep);
       } else {
         toast({
           title: "Can't proceed yet",
           description: "You need to complete the current step first.",
-          variant: "warning"
+          variant: "destructive" // Fixed the type error by using a valid variant
         });
       }
+    }
+  };
+
+  // Handle step change from the StepJourney component
+  const handleStepChange = (stepId: string) => {
+    if (canAccessStep(stepId)) {
+      setCurrentStep(stepId);
     }
   };
 
@@ -122,25 +151,12 @@ const GrowthPage = () => {
             <div className="mt-8">
               <Card className="mb-6">
                 <CardContent className="pt-6">
-                  <nav className="flex flex-col sm:flex-row gap-2">
-                    {GROWTH_JOURNEY_STEPS.map((step, index) => (
-                      <Button
-                        key={step.id}
-                        variant={currentStep === step.id ? "default" : "outline"}
-                        className={`flex-1 justify-start ${!canAccessStep(step.id) ? 'opacity-60 cursor-not-allowed' : ''}`}
-                        onClick={() => canAccessStep(step.id) && setCurrentStep(step.id)}
-                        disabled={!canAccessStep(step.id)}
-                      >
-                        <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center mr-2 text-sm">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm">{step.label.split('.')[1]}</span>
-                        {canAccessStep(step.id) && index < GROWTH_JOURNEY_STEPS.findIndex(s => s.id === currentStep) && (
-                          <CheckCircle2 className="ml-2 h-4 w-4 text-green-500" />
-                        )}
-                      </Button>
-                    ))}
-                  </nav>
+                  <StepJourney
+                    steps={GROWTH_JOURNEY_STEPS}
+                    currentStepId={currentStep}
+                    onStepChange={handleStepChange}
+                    completedStepIds={completedSteps}
+                  />
                 </CardContent>
               </Card>
 
