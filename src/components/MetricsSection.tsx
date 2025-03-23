@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Card from './Card';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
-import { Gauge, Plus, Edit, Trash2, AlertCircle, TrendingUp } from 'lucide-react';
+import { Gauge, Plus, Edit, Trash2, AlertCircle, TrendingUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MetricsSectionProps {
   metrics: MetricData[];
@@ -33,6 +34,7 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
   const [selectedMetric, setSelectedMetric] = useState<MetricData | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [metricToDelete, setMetricToDelete] = useState<MetricData | null>(null);
+  const [highlightedMetricId, setHighlightedMetricId] = useState<string | null>(null);
 
   const handleCreateNew = () => {
     setSelectedMetric(null);
@@ -53,6 +55,21 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
   const handleCardUpdate = (metric: MetricData) => {
     setSelectedMetric(metric);
     setIsFormOpen(true);
+  };
+
+  const scrollToMetric = (metricId: string) => {
+    setHighlightedMetricId(metricId);
+    
+    // Find the table row element
+    const element = document.getElementById(`metric-row-${metricId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Reset the highlight after a few seconds
+      setTimeout(() => {
+        setHighlightedMetricId(null);
+      }, 3000);
+    }
   };
 
   const confirmDelete = async () => {
@@ -104,6 +121,7 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
         targetDescription: 'N/A',
         progress: 0,
         status: 'default',
+        id: null
       };
     }
 
@@ -117,6 +135,7 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
                primaryMetric.status === 'warning' ? 90 : 
                primaryMetric.status === 'error' ? 50 : 0,
       status: primaryMetric.status,
+      id: primaryMetric.id
     };
   };
 
@@ -139,27 +158,51 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
         size="sm" 
         className="w-full mt-auto" 
       />
-      {metrics.length > 0 ? (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-3"
-          onClick={() => handleCardUpdate(metrics[0])}
-        >
-          Update
-        </Button>
-      ) : (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-3"
-          onClick={handleCreateNew}
-        >
-          Add Metric
-        </Button>
-      )}
+      <div className="flex space-x-2 mt-3">
+        {metrics.length > 0 ? (
+          <>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleCardUpdate(metrics[0])}
+            >
+              <Edit className="h-3.5 w-3.5 mr-1" />
+              Update
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => displayValues.id && scrollToMetric(displayValues.id)}
+              className="text-blue-600 hover:bg-blue-50"
+            >
+              <ArrowDown className="h-3.5 w-3.5 mr-1" />
+              View
+            </Button>
+          </>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleCreateNew}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Add Metric
+          </Button>
+        )}
+      </div>
     </Card>
   );
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'acquisition': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'activation': return 'bg-green-50 text-green-700 border-green-200';
+      case 'retention': return 'bg-purple-50 text-purple-700 border-purple-200'; 
+      case 'revenue': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'referral': return 'bg-pink-50 text-pink-700 border-pink-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
 
   return (
     <div className="animate-fadeIn">
@@ -204,71 +247,81 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
         </Card>
       ) : (
         <Card className="overflow-hidden animate-slideUpFade animate-delay-500">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-validation-gray-200">
-              <thead>
-                <tr className="bg-validation-gray-50">
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Category</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Metric</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Target</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Current</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">History</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-validation-gray-200">
-                {metrics.map((metric) => (
-                  <tr key={metric.id} className="hover:bg-validation-gray-50 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-validation-gray-900">
-                      {metric.category.charAt(0).toUpperCase() + metric.category.slice(1)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">
-                      <div>
-                        <div>{metric.name}</div>
-                        {metric.description && (
-                          <div className="text-xs text-gray-500 mt-1">{metric.description}</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">{metric.target}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">{metric.current || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <StatusBadge status={metric.status as any} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Badge variant="outline" className="flex items-center gap-1 cursor-pointer">
-                        <TrendingUp className="h-3 w-3" />
-                        View Trend
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="h-7 px-2"
-                          onClick={() => handleEdit(metric)}
-                        >
-                          <Edit className="h-3.5 w-3.5 mr-1" />
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="h-7 px-2 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
-                          onClick={() => handleDelete(metric)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
+          <ScrollArea className="h-[500px]">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-validation-gray-200">
+                <thead className="sticky top-0 bg-validation-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Category</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Metric</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Target</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Current</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">History</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-validation-gray-200">
+                  {metrics.map((metric) => (
+                    <tr 
+                      key={metric.id} 
+                      id={`metric-row-${metric.id}`}
+                      className={`hover:bg-validation-gray-50 transition-colors duration-300 ${
+                        highlightedMetricId === metric.id ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <td className="px-6 py-4 text-sm">
+                        <Badge className={`${getCategoryColor(metric.category)} font-normal uppercase text-xs px-2 py-0.5`}>
+                          {metric.category}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-validation-gray-600">
+                        <div>
+                          <div className="font-medium text-validation-gray-900">{metric.name}</div>
+                          {metric.description && (
+                            <div className="text-xs text-gray-500 mt-1">{metric.description}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-validation-gray-600">{metric.target}</td>
+                      <td className="px-6 py-4 text-sm text-validation-gray-600">{metric.current || '-'}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <StatusBadge status={metric.status as any} />
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <Badge variant="outline" className="flex items-center gap-1 cursor-pointer" onClick={() => handleEdit(metric)}>
+                          <TrendingUp className="h-3 w-3" />
+                          View Trend
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() => handleEdit(metric)}
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-1" />
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-7 px-2 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
+                            onClick={() => handleDelete(metric)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ScrollArea>
         </Card>
       )}
 

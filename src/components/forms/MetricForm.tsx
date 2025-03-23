@@ -16,6 +16,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { MetricData } from '@/types/metrics';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LineChart } from 'lucide-react';
 
 interface MetricFormProps {
   isOpen: boolean;
@@ -295,132 +297,184 @@ const MetricForm = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{metric ? 'Edit Metric' : 'Create New Metric'}</DialogTitle>
-          <DialogDescription>
-            {metric ? 'Update your metric here.' : 'Add a new metric to track.'}
+      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
+        <DialogHeader className="px-6 pt-6 pb-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+          <DialogTitle className="text-xl font-bold">
+            {metric ? 'Edit Metric' : 'Create New Metric'}
+          </DialogTitle>
+          <DialogDescription className="text-sm opacity-90 mt-1 text-white">
+            {metric ? 'Update your metric and review the data' : 'Define a clear, measurable metric to track your progress'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSave} className="grid gap-4 py-4">
-          {error && <p className="text-red-500">{error}</p>}
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Metric Name"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Metric Description"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="acquisition">Acquisition</SelectItem>
-                <SelectItem value="activation">Activation</SelectItem>
-                <SelectItem value="retention">Retention</SelectItem>
-                <SelectItem value="referral">Referral</SelectItem>
-                <SelectItem value="revenue">Revenue</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="current">Current Value</Label>
-              <Input
-                type="number"
-                id="current"
-                value={current}
-                onChange={(e) => setCurrent(e.target.value)}
-                placeholder="Current Value"
-              />
+        
+        <form onSubmit={handleSave}>
+          <Tabs defaultValue="details" className="w-full">
+            <div className="px-6">
+              <TabsList className="w-full mt-4 bg-gray-100 dark:bg-gray-700">
+                <TabsTrigger value="details" className="flex-1">
+                  Metric Details
+                </TabsTrigger>
+                {metric && (
+                  <TabsTrigger value="thresholds" className="flex-1">
+                    Thresholds & History
+                  </TabsTrigger>
+                )}
+              </TabsList>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="target">Target Value</Label>
-              <Input
-                type="number"
-                id="target"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="Target Value"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="warningThreshold">Warning Threshold</Label>
-              <Input
-                type="number"
-                id="warningThreshold"
-                value={warningThreshold}
-                onChange={(e) => setWarningThreshold(e.target.value)}
-                placeholder="Warning Threshold"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="errorThreshold">Error Threshold</Label>
-              <Input
-                type="number"
-                id="errorThreshold"
-                value={errorThreshold}
-                onChange={(e) => setErrorThreshold(e.target.value)}
-                placeholder="Error Threshold"
-              />
-            </div>
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={handleStatusChange}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select a status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="not-started">Not Started</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          {metric && (
-            <div className="grid gap-2">
-              <Label htmlFor="notes">Update Notes (optional)</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add notes about this update"
-              />
+            <div className="px-6 py-4 space-y-6 max-h-[70vh] overflow-y-auto">
+              <TabsContent value="details" className="space-y-6 mt-0">
+                {error && <p className="text-red-500">{error}</p>}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Metric Name"
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="acquisition">Acquisition</SelectItem>
+                        <SelectItem value="activation">Activation</SelectItem>
+                        <SelectItem value="retention">Retention</SelectItem>
+                        <SelectItem value="referral">Referral</SelectItem>
+                        <SelectItem value="revenue">Revenue</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe what this metric measures and why it's important"
+                    className="min-h-[80px]"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="current">Current Value</Label>
+                    <Input
+                      type="number"
+                      id="current"
+                      value={current}
+                      onChange={(e) => setCurrent(e.target.value)}
+                      placeholder="Current Value"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="target">Target Value</Label>
+                    <Input
+                      type="number"
+                      id="target"
+                      value={target}
+                      onChange={(e) => setTarget(e.target.value)}
+                      placeholder="Target Value"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={status} onValueChange={handleStatusChange}>
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="error">Error</SelectItem>
+                      <SelectItem value="not-started">Not Started</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="thresholds" className="space-y-6 mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="warningThreshold">Warning Threshold</Label>
+                    <Input
+                      type="number"
+                      id="warningThreshold"
+                      value={warningThreshold}
+                      onChange={(e) => setWarningThreshold(e.target.value)}
+                      placeholder="Warning Threshold"
+                    />
+                    <p className="text-xs text-gray-500">Metric will show warning status when below this value</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="errorThreshold">Error Threshold</Label>
+                    <Input
+                      type="number"
+                      id="errorThreshold"
+                      value={errorThreshold}
+                      onChange={(e) => setErrorThreshold(e.target.value)}
+                      placeholder="Error Threshold"
+                    />
+                    <p className="text-xs text-gray-500">Metric will show error status when below this value</p>
+                  </div>
+                </div>
+                
+                {metric && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="notes">Update Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Add notes about this update (will be saved in history)"
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                )}
+                
+                {metric && (
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                    <div className="flex items-center mb-2">
+                      <LineChart className="h-5 w-5 text-blue-500 mr-2" />
+                      <h3 className="font-medium text-gray-900">Historical Data</h3>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Each update to this metric is recorded in its history. Update notes help provide context for changes.
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
             </div>
-          )}
+          </Tabs>
+          
+          <DialogFooter className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <Button type="button" variant="outline" onClick={onClose} className="mr-2">
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : metric ? 'Update Metric' : 'Create Metric'}
+            </Button>
+          </DialogFooter>
         </form>
-        <DialogFooter>
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save changes'}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
