@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Experiment, Hypothesis } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,7 +29,12 @@ const ExperimentHypothesisLink = ({ experiment, projectId, onHypothesisFound }: 
             console.error('Error fetching related hypothesis by ID:', error);
             onHypothesisFound(null);
           } else if (data) {
-            onHypothesisFound(data);
+            // Convert from database schema to our type
+            const hypothesis: Hypothesis = {
+              ...data,
+              originalId: data.id
+            };
+            onHypothesisFound(hypothesis);
           }
         } 
         // Otherwise, try to match by statement
@@ -49,10 +55,18 @@ const ExperimentHypothesisLink = ({ experiment, projectId, onHypothesisFound }: 
             );
             
             if (exactMatch) {
-              onHypothesisFound(exactMatch);
+              const hypothesis: Hypothesis = {
+                ...exactMatch,
+                originalId: exactMatch.id
+              };
+              onHypothesisFound(hypothesis);
             } else {
               // Use the first one as fallback
-              onHypothesisFound(data[0]);
+              const hypothesis: Hypothesis = {
+                ...data[0],
+                originalId: data[0].id
+              };
+              onHypothesisFound(hypothesis);
             }
           } else {
             onHypothesisFound(null);

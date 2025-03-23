@@ -2,10 +2,10 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { MvpFeature, TEMPLATE_FEATURE_PRIORITY } from '@/types/database';
+import { MVPFeature, TEMPLATE_FEATURE_PRIORITY } from '@/types/database';
 
 export interface CurrentlyWorkingOnProps {
-  features: MvpFeature[];
+  features: MVPFeature[];
 }
 
 const CurrentlyWorkingOn = ({ features }: CurrentlyWorkingOnProps) => {

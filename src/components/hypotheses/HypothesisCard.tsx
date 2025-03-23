@@ -21,11 +21,11 @@ const HypothesisCard = ({ hypothesis, onEdit, onDelete, onStatusChange }: Hypoth
     >
       <div className="flex flex-wrap justify-between gap-2 mb-3 md:mb-5">
         <span className={`text-xs font-semibold inline-block px-3 py-1 rounded-full ${
-          hypothesis.category === 'value' 
-            ? 'bg-validation-blue-50 text-validation-blue-700 border border-validation-blue-200' 
-            : 'bg-validation-green-50 text-validation-green-700 border border-validation-green-200'
+          hypothesis.category === 'growth' 
+            ? 'bg-validation-green-50 text-validation-green-700 border border-validation-green-200'
+            : 'bg-validation-blue-50 text-validation-blue-700 border border-validation-blue-200'
         }`}>
-          {hypothesis.category === 'value' ? 'Value Hypothesis' : 'Growth Hypothesis'}
+          {hypothesis.category === 'growth' ? 'Growth Hypothesis' : 'Value Hypothesis'}
         </span>
         <div className="flex space-x-2">
           <StatusBadge status={hypothesis.status} />

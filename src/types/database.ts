@@ -14,13 +14,14 @@ export interface Hypothesis {
   statement: string;
   criteria: string;
   experiment: string;
-  status: 'not-started' | 'validated' | 'invalidated' | 'testing';
+  status: 'not-started' | 'validated' | 'validating' | 'invalid';
   created_at: string;
   updated_at: string;
   project_id: string;
-  category: 'problem' | 'solution' | 'customer' | 'market' | 'business-model';
+  category: 'problem' | 'solution' | 'customer' | 'market' | 'business-model' | 'value' | 'growth';
   evidence?: string;
   result?: string;
+  originalId?: string; // Added for data mapping from Supabase
 }
 
 export interface Experiment {
@@ -42,6 +43,7 @@ export interface Experiment {
   typeform_url?: string;
   typeform_workspace_id?: string;
   typeform_responses_count?: number;
+  originalId?: string; // Added for data mapping from Supabase
 }
 
 export interface Profile {
@@ -66,10 +68,11 @@ export interface MVPFeature {
   feature: string;
   notes?: string;
   priority: 'high' | 'medium' | 'low';
-  status: 'planned' | 'in-progress' | 'completed';
+  status: 'planned' | 'in-progress' | 'completed' | 'post-mvp';
   project_id: string;
   created_at: string;
   updated_at: string;
+  originalId?: string; // Added for data mapping from Supabase
 }
 
 export interface Metric {
@@ -83,6 +86,7 @@ export interface Metric {
   created_at: string;
   updated_at: string;
   description?: string;
+  originalId?: string; // Added for data mapping from Supabase
 }
 
 export interface MetricThreshold {
@@ -128,3 +132,33 @@ export interface PivotMetricTrigger {
   created_at: string;
   updated_at: string;
 }
+
+// Constants for feature status and priority descriptions
+export const TEMPLATE_FEATURE_STATUS = {
+  'planned': 'Feature is planned for development but work has not started yet.',
+  'in-progress': 'Development of this feature is currently underway.',
+  'completed': 'This feature has been fully implemented and is ready for use.',
+  'post-mvp': 'This feature will be implemented after the initial MVP release.'
+};
+
+export const TEMPLATE_FEATURE_PRIORITY = {
+  'high': 'Critical for product viability and must be included in the MVP.',
+  'medium': 'Important for product functionality but not a deal-breaker.',
+  'low': 'Desirable but can be deprioritized if time constraints arise.'
+};
+
+// Constants for hypothesis templates
+export const TEMPLATE_VALUE_HYPOTHESES = [
+  'We believe [customer segment] will [action] in order to [achieve benefit].',
+  'We believe [customer segment] has a problem [achieving goal] because [obstacle].',
+  'We believe [solution] will solve [customer segment]\'s problem of [problem description].',
+  'We believe [customer segment] will pay [price] for [solution] because [value proposition].'
+];
+
+export const TEMPLATE_GROWTH_HYPOTHESES = [
+  'We believe [marketing channel] will result in [acquisition metric] for [customer segment].',
+  'We believe [onboarding change] will improve [activation metric] by [X%].',
+  'We believe [feature change] will improve [retention metric] by [X%].',
+  'We believe [pricing model] will increase [revenue metric] by [X%].',
+  'We believe [referral program] will generate [X] new customers per existing customer.'
+];

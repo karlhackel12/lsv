@@ -18,18 +18,17 @@ export function useHypotheses(refreshData: () => void) {
   };
 
   const handleEdit = (hypothesis: Hypothesis) => {
-    const originalHypothesis = {
+    setSelectedHypothesis({
       ...hypothesis,
-      id: hypothesis.originalId
-    };
-    setSelectedHypothesis(originalHypothesis);
+      id: hypothesis.originalId || hypothesis.id
+    });
     setIsFormOpen(true);
   };
 
   const handleDelete = (hypothesis: Hypothesis) => {
     setHypothesisToDelete({
       ...hypothesis,
-      id: hypothesis.originalId
+      id: hypothesis.originalId || hypothesis.id
     });
     setIsDeleteDialogOpen(true);
   };
@@ -71,7 +70,7 @@ export function useHypotheses(refreshData: () => void) {
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', hypothesis.originalId);
+        .eq('id', hypothesis.originalId || hypothesis.id);
       
       if (error) throw error;
       

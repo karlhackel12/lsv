@@ -14,7 +14,7 @@ export const useHypothesisForm = (
   const form = useForm<Hypothesis>({
     defaultValues: hypothesis || {
       statement: '',
-      category: 'value',
+      category: 'problem', // Changed from 'value' to 'problem'
       criteria: '',
       experiment: '',
       status: 'not-started',
@@ -69,9 +69,9 @@ export const useHypothesisForm = (
 
   const getHypothesisTemplates = () => {
     const category = form.watch('category');
-    return category === 'value' 
-      ? TEMPLATE_VALUE_HYPOTHESES 
-      : TEMPLATE_GROWTH_HYPOTHESES;
+    return category === 'growth' 
+      ? TEMPLATE_GROWTH_HYPOTHESES 
+      : TEMPLATE_VALUE_HYPOTHESES;
   };
 
   return {
@@ -87,4 +87,4 @@ export const useHypothesisForm = (
 import { 
   TEMPLATE_VALUE_HYPOTHESES, 
   TEMPLATE_GROWTH_HYPOTHESES 
-} from '@/types/pivot';
+} from '@/types/database';

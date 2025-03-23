@@ -20,18 +20,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MvpFeature, TEMPLATE_FEATURE_PRIORITY, TEMPLATE_FEATURE_STATUS } from '@/types/database';
+import { MVPFeature, TEMPLATE_FEATURE_PRIORITY, TEMPLATE_FEATURE_STATUS } from '@/types/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-type FormData = Omit<MvpFeature, 'id' | 'created_at' | 'updated_at' | 'project_id'>;
+type FormData = Omit<MVPFeature, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'originalId'>;
 
 interface MVPFeatureFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  feature?: MvpFeature | null;
+  feature?: MVPFeature | null;
   projectId: string;
 }
 
@@ -49,7 +49,7 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
       feature: '',
       priority: 'medium',
       status: 'planned',
-      notes: null,
+      notes: '',
     }
   });
 
@@ -60,10 +60,13 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
         const { error } = await supabase
           .from('mvp_features')
           .update({
-            ...data,
+            feature: data.feature,
+            priority: data.priority,
+            status: data.status,
+            notes: data.notes,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', feature.id);
+          .eq('id', feature.originalId || feature.id);
 
         if (error) throw error;
         toast({
@@ -75,7 +78,10 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
         const { error } = await supabase
           .from('mvp_features')
           .insert({
-            ...data,
+            feature: data.feature,
+            priority: data.priority,
+            status: data.status,
+            notes: data.notes,
             project_id: projectId,
           });
 

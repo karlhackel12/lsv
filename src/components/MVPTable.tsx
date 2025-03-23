@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { MvpFeature, TEMPLATE_FEATURE_STATUS } from '@/types/database';
+import { MVPFeature, TEMPLATE_FEATURE_STATUS } from '@/types/database';
 import { 
   Table, 
   TableBody, 
@@ -15,9 +15,9 @@ import { ArrowUpDown, Edit, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MVPTableProps {
-  features: MvpFeature[];
-  onEdit: (feature: MvpFeature) => void;
-  onDelete: (feature: MvpFeature) => void;
+  features: MVPFeature[];
+  onEdit: (feature: MVPFeature) => void;
+  onDelete: (feature: MVPFeature) => void;
   isLoading?: boolean;
 }
 
