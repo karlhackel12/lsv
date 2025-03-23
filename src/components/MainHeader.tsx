@@ -6,7 +6,8 @@ import {
   LogOut, 
   Settings, 
   ChevronsUpDown, 
-  Check 
+  Check,
+  PlusCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,27 +38,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useProject } from '@/hooks/use-project';
+import ProjectForm from '@/components/forms/ProjectForm';
 
 const MainHeader = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const isMobile = useIsMobile();
-
-  const { data: projects = [], isLoading } = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data as Project[];
-    },
-    enabled: !!user,
-  });
+  const { projects, currentProject, selectProject, createProject } = useProject();
 
   const handleSignOut = async () => {
     await signOut();
@@ -65,10 +55,13 @@ const MainHeader = () => {
   };
 
   const handleProjectSelect = (project: Project) => {
-    setSelectedProject(project);
+    selectProject(project);
     setOpen(false);
-    // Here you would typically update the app state or context
-    // to reflect the selected project
+  };
+
+  const handleCreateProject = async (projectData: { name: string; description: string; stage: string }) => {
+    await createProject(projectData);
+    setIsProjectFormOpen(false);
   };
 
   const initials = user?.email 
@@ -87,9 +80,9 @@ const MainHeader = () => {
                 aria-expanded={open}
                 className="w-full justify-between truncate"
               >
-                {selectedProject ? (
+                {currentProject ? (
                   <span className="truncate max-w-[120px] md:max-w-[200px]">
-                    {selectedProject.name}
+                    {currentProject.name}
                   </span>
                 ) : (
                   "Select project..."
@@ -112,7 +105,7 @@ const MainHeader = () => {
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            selectedProject?.id === project.id ? "opacity-100" : "opacity-0"
+                            currentProject?.id === project.id ? "opacity-100" : "opacity-0"
                           )}
                         />
                         <span className="truncate">{project.name}</span>
@@ -120,11 +113,33 @@ const MainHeader = () => {
                     ))}
                   </CommandGroup>
                 </CommandList>
+                <div className="p-2 border-t">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    onClick={() => {
+                      setOpen(false);
+                      setIsProjectFormOpen(true);
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Project
+                  </Button>
+                </div>
               </Command>
             </PopoverContent>
           </Popover>
         </div>
         <div className="flex items-center space-x-4">
+          <Button 
+            onClick={() => setIsProjectFormOpen(true)}
+            className="hidden md:flex"
+            size="sm"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Project
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -161,6 +176,13 @@ const MainHeader = () => {
           </DropdownMenu>
         </div>
       </div>
+      
+      {/* Project Creation Dialog */}
+      <ProjectForm 
+        isOpen={isProjectFormOpen} 
+        onClose={() => setIsProjectFormOpen(false)} 
+        onSave={handleCreateProject}
+      />
     </header>
   );
 };

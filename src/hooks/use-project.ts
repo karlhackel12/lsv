@@ -9,7 +9,7 @@ export function useProject() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
-  const { data: projects = [], isLoading, error } = useQuery({
+  const { data: projects = [], isLoading, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
       try {
@@ -51,6 +51,52 @@ export function useProject() {
     setCurrentProject(project);
     // Save to localStorage for persistence
     localStorage.setItem('selectedProjectId', project.id);
+  };
+
+  // Create a new project
+  const createProject = async (projectData: { name: string; description: string; stage: string }) => {
+    try {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          name: projectData.name,
+          description: projectData.description,
+          stage: projectData.stage,
+          created_at: now,
+          updated_at: now
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        // Refetch the projects list
+        refetch();
+        
+        // Set the newly created project as the current project
+        selectProject(data as Project);
+        
+        // Create default stages for the new project
+        await createDefaultStages(data.id);
+        
+        toast({
+          title: 'Project Created',
+          description: `"${projectData.name}" has been created successfully.`,
+        });
+        
+        return data as Project;
+      }
+    } catch (err) {
+      console.error('Error creating project:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to create project',
+        variant: 'destructive',
+      });
+      throw err;
+    }
   };
 
   // Used to update project stage when moving to next stage
@@ -234,6 +280,7 @@ export function useProject() {
     projects,
     currentProject,
     selectProject,
+    createProject,
     updateProjectStage,
     fetchProjectStages,
     updateStage,
