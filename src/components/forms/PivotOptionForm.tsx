@@ -45,7 +45,7 @@ const PivotOptionForm = ({
   });
 
   useEffect(() => {
-    if (pivotOption) {
+    if (isOpen && pivotOption) {
       setFormData({
         id: pivotOption?.id || '',
         type: pivotOption?.type || pivotOption?.pivot_type || '',
@@ -64,8 +64,27 @@ const PivotOptionForm = ({
         status: pivotOption?.status || 'active',
         originalId: pivotOption?.originalId || pivotOption?.id || '',
       });
+    } else if (isOpen) {
+      // Reset form when creating a new pivot option
+      setFormData({
+        id: '',
+        type: '',
+        description: '',
+        trigger: '',
+        likelihood: "medium",
+        project_id: projectId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        name: '',
+        pivot_type: '',
+        potential_impact: "medium",
+        implementation_effort: "medium",
+        evidence: '',
+        status: 'active',
+        originalId: '',
+      });
     }
-  }, [pivotOption, projectId]);
+  }, [pivotOption, projectId, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

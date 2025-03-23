@@ -80,23 +80,25 @@ const MetricForm = ({
   }, [metric]);
 
   useEffect(() => {
-    if (metric) {
-      setName(metric.name || '');
-      setDescription(metric.description || '');
-      setCategory(metric.category || '');
-      setCurrent(metric.current || '');
-      setTarget(metric.target || '');
-      setStatus(metric.status || 'not-started');
-    } else {
-      // Reset form when creating a new metric
-      setName('');
-      setDescription('');
-      setCategory('');
-      setCurrent('');
-      setTarget('');
-      setStatus('not-started');
-      setWarningThreshold('0');
-      setErrorThreshold('0');
+    if (isOpen) {
+      if (metric) {
+        setName(metric.name || '');
+        setDescription(metric.description || '');
+        setCategory(metric.category || '');
+        setCurrent(metric.current || '');
+        setTarget(metric.target || '');
+        setStatus(metric.status || 'not-started');
+      } else {
+        // Reset form when creating a new metric
+        setName('');
+        setDescription('');
+        setCategory('');
+        setCurrent('');
+        setTarget('');
+        setStatus('not-started');
+        setWarningThreshold('0');
+        setErrorThreshold('0');
+      }
     }
   }, [metric, isOpen]);
 
@@ -127,6 +129,7 @@ const MetricForm = ({
     }
     
     setIsSaving(true);
+    setError(null);
     
     try {
       // Calculate the status based on current values and thresholds

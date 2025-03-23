@@ -51,7 +51,7 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
     // Find original metric with string ID for database operations
     const originalMetric = {
       ...metric,
-      id: metric.originalId
+      id: metric.originalId // Ensure we're using the original string ID
     };
     setSelectedMetric(originalMetric);
     setIsFormOpen(true);
@@ -60,7 +60,7 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
   const handleDelete = (metric: Metric) => {
     setMetricToDelete({
       ...metric,
-      id: metric.originalId
+      id: metric.originalId // Ensure we're using the original string ID
     });
     setIsDeleteDialogOpen(true);
   };
