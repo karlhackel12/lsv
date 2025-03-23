@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,16 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PivotOption, Metric } from '@/types/database';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 // Extended PivotOption interface to include additional properties used in the form
 interface ExtendedPivotOption extends PivotOption {
@@ -27,6 +18,7 @@ interface ExtendedPivotOption extends PivotOption {
   implementation_effort?: string;
   evidence?: string;
   status?: string;
+  originalId?: string;
 }
 
 // Extended Metric interface to include description if it's being used
@@ -52,7 +44,6 @@ const PivotOptionForm = ({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMetricId, setSelectedMetricId] = useState<string>('');
 
   // Initialize form with existing or default values
@@ -61,15 +52,15 @@ const PivotOptionForm = ({
     type: pivotOption?.type || pivotOption?.pivot_type || '',
     description: pivotOption?.description || '',
     trigger: pivotOption?.trigger || '',
-    likelihood: pivotOption?.likelihood || pivotOption?.potential_impact || 'medium',
+    likelihood: (pivotOption?.likelihood as "high" | "medium" | "low") || (pivotOption?.potential_impact as "high" | "medium" | "low") || "medium",
     project_id: projectId,
     created_at: pivotOption?.created_at || new Date().toISOString(),
     updated_at: pivotOption?.updated_at || new Date().toISOString(),
     // Add support for extended properties if they're being used
     name: pivotOption?.name || '',
     pivot_type: pivotOption?.pivot_type || pivotOption?.type || '',
-    potential_impact: pivotOption?.potential_impact || pivotOption?.likelihood || 'medium',
-    implementation_effort: pivotOption?.implementation_effort || 'medium',
+    potential_impact: pivotOption?.potential_impact || pivotOption?.likelihood || "medium",
+    implementation_effort: pivotOption?.implementation_effort || "medium",
     evidence: pivotOption?.evidence || '',
     status: pivotOption?.status || 'active',
     originalId: pivotOption?.originalId || pivotOption?.id || '',
@@ -82,15 +73,15 @@ const PivotOptionForm = ({
         type: pivotOption?.type || pivotOption?.pivot_type || '',
         description: pivotOption?.description || '',
         trigger: pivotOption?.trigger || '',
-        likelihood: pivotOption?.likelihood || pivotOption?.potential_impact || 'medium',
+        likelihood: (pivotOption?.likelihood as "high" | "medium" | "low") || (pivotOption?.potential_impact as "high" | "medium" | "low") || "medium",
         project_id: projectId,
         created_at: pivotOption?.created_at || new Date().toISOString(),
         updated_at: pivotOption?.updated_at || new Date().toISOString(),
         // Add support for extended properties if they're being used
         name: pivotOption?.name || '',
         pivot_type: pivotOption?.pivot_type || pivotOption?.type || '',
-        potential_impact: pivotOption?.potential_impact || pivotOption?.likelihood || 'medium',
-        implementation_effort: pivotOption?.implementation_effort || 'medium',
+        potential_impact: pivotOption?.potential_impact || pivotOption?.likelihood || "medium",
+        implementation_effort: pivotOption?.implementation_effort || "medium",
         evidence: pivotOption?.evidence || '',
         status: pivotOption?.status || 'active',
         originalId: pivotOption?.originalId || pivotOption?.id || '',
@@ -166,36 +157,6 @@ const PivotOptionForm = ({
     }
   };
 
-  const handleDelete = async () => {
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      if (pivotOption) {
-        const { error } = await supabase
-          .from('pivot_options')
-          .delete()
-          .eq('id', pivotOption.id);
-
-        if (error) throw error;
-
-        toast({
-          title: 'Success',
-          description: `Pivot option "${formData.type}" has been deleted.`,
-        });
-
-        onSave();
-        onClose();
-      }
-    } catch (err: any) {
-      console.error('Error deleting pivot option:', err);
-      setError('Failed to delete pivot option. Please try again.');
-    } finally {
-      setIsSaving(false);
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prevData => ({
@@ -204,7 +165,7 @@ const PivotOptionForm = ({
     }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = (name: string, value: "high" | "medium" | "low") => {
     setFormData(prevData => ({
       ...prevData,
       [name]: value,
@@ -260,7 +221,10 @@ const PivotOptionForm = ({
 
             <div>
               <Label htmlFor="likelihood" className="text-sm font-medium">Likelihood</Label>
-              <Select value={formData.likelihood} onValueChange={(value) => handleSelectChange('likelihood', value)}>
+              <Select 
+                value={formData.likelihood} 
+                onValueChange={(value: "high" | "medium" | "low") => handleSelectChange('likelihood', value)}
+              >
                 <SelectTrigger id="likelihood">
                   <SelectValue placeholder="Select likelihood" />
                 </SelectTrigger>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +37,12 @@ interface MVPFeatureFormProps {
 
 const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeatureFormProps) => {
   const [featureText, setFeatureText] = useState(feature?.feature || "");
-  const [priority, setPriority] = useState(feature?.priority || "medium");
-  const [status, setStatus] = useState(feature?.status || "planned");
+  const [priority, setPriority] = useState<"high" | "medium" | "low">(
+    (feature?.priority as "high" | "medium" | "low") || "medium"
+  );
+  const [status, setStatus] = useState<"planned" | "in-progress" | "completed" | "post-mvp">(
+    (feature?.status as "planned" | "in-progress" | "completed" | "post-mvp") || "planned"
+  );
   const [notes, setNotes] = useState(feature?.notes || "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +129,10 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
             </div>
             <div className="grid gap-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={priority} onValueChange={setPriority}>
+              <Select 
+                value={priority} 
+                onValueChange={(value: "high" | "medium" | "low") => setPriority(value)}
+              >
                 <SelectTrigger id="priority">
                   <SelectValue placeholder="Select a priority" />
                 </SelectTrigger>
@@ -137,7 +145,10 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select 
+                value={status} 
+                onValueChange={(value: "planned" | "in-progress" | "completed" | "post-mvp") => setStatus(value)}
+              >
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Select a status" />
                 </SelectTrigger>

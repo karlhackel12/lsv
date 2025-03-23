@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { RotateCcw, Plus, Edit, Trash2, AlertCircle, ArrowRight, TrendingUp } from 'lucide-react';
@@ -87,7 +86,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
   }, [projectId, pivotOptions]);
 
   useEffect(() => {
-    // Find active triggers (where metric status is 'error' or 'warning')
     const findActiveTriggers = () => {
       const active: ActiveTrigger[] = [];
       
@@ -135,13 +133,11 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
     if (!pivotOptionToDelete) return;
     
     try {
-      // First delete any associated metric triggers
       await supabase
         .from('pivot_metric_triggers')
         .delete()
         .eq('pivot_option_id', pivotOptionToDelete.id);
       
-      // Then delete the pivot option
       const { error } = await supabase
         .from('pivot_options')
         .delete()
@@ -300,7 +296,6 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {pivotOptions.map((option) => {
-            // Check if this option has any linked metrics
             const linkedMetricIds = metricTriggers
               .filter(t => t.pivot_option_id === option.id || t.pivot_option_id === option.originalId)
               .map(t => t.metric_id);
@@ -388,13 +383,15 @@ const PivotSection = ({ pivotOptions, refreshData, projectId }: PivotSectionProp
         </button>
       </div>
 
-      <PivotOptionForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSave={refreshData}
-        pivotOption={selectedPivotOption}
-        projectId={projectId}
-      />
+      {isFormOpen && (
+        <PivotOptionForm
+          pivotOption={selectedPivotOption}
+          projectId={projectId}
+          metrics={metrics}
+          onSave={refreshData}
+          onClose={() => setIsFormOpen(false)}
+        />
+      )}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lightbulb, FlaskConical, Layers, LineChart, ChevronRight, Share2, FileUp, ArrowRight, Edit } from 'lucide-react';
@@ -23,7 +22,7 @@ const Dashboard = () => {
   const { currentProject, updateProjectStage } = useProject();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [mvpFeatures, setMvpFeatures] = useState<MvpFeature[]>([]);
+  const [mvpFeatures, setMvpFeatures] = useState<MVPFeature[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [pivotOptions, setPivotOptions] = useState<PivotOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,11 +104,11 @@ const Dashboard = () => {
           category: item.category as 'problem' | 'solution' | 'business-model' | string | null
         }));
 
-        const transformedMvpFeatures: MvpFeature[] = mvpFeaturesData.map(item => ({
+        const transformedMvpFeatures: MVPFeature[] = mvpFeaturesData.map(item => ({
           ...item,
           originalId: item.id,
           id: item.id,
-          // Add required fields to match MvpFeature interface
+          // Add required fields to match MVPFeature interface
           name: item.feature,
           description: item.notes || '',
           effort: 'medium', // Default value
@@ -161,7 +160,6 @@ const Dashboard = () => {
     return stages.indexOf(stage);
   };
 
-  // Add null check for currentProject before accessing stage
   const stageIndex = currentProject && currentProject.stage ? getStageIndex(currentProject.stage) : 0;
   const progress = ((stageIndex + 1) / 6) * 100;
 
@@ -173,7 +171,6 @@ const Dashboard = () => {
     );
   }
 
-  // Add a check to handle case when currentProject is null
   if (!currentProject) {
     return (
       <div className="p-8 text-center">
@@ -190,19 +187,14 @@ const Dashboard = () => {
     const currentIndex = stages.indexOf(currentProject.stage);
     if (currentIndex < stages.length - 1) {
       const nextStage = stages[currentIndex + 1];
-      // Call updateProjectStage function to update the stage in the database
       const updated = await updateProjectStage(currentProject.id, nextStage);
       if (updated) {
-        // The toast is already handled in the updateProjectStage function
-        // Update the status in the stages table if we're tracking stages
         try {
-          // Update the previous stage to complete
           await supabase
             .from('stages')
             .update({ status: 'complete' })
             .eq('id', currentProject.stage);
           
-          // Update the next stage to in-progress
           await supabase
             .from('stages')
             .update({ status: 'in-progress' })
@@ -224,7 +216,6 @@ const Dashboard = () => {
       <div className="col-span-2">
         <OverviewSection />
         
-        {/* Quick Actions Panel */}
         <Card className="p-4 bg-white mt-4 border-t-4 border-t-validation-blue-500">
           <div className="flex flex-col sm:flex-row items-center justify-between">
             <h3 className="text-lg font-semibold text-validation-gray-900 mb-3 sm:mb-0">Quick Actions</h3>
