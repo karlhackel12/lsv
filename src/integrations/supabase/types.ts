@@ -370,22 +370,28 @@ export type Database = {
       }
       metric_history: {
         Row: {
+          context: string | null
           id: string
           metric_id: string
+          notes: string | null
           recorded_at: string
           status: string
           value: string | null
         }
         Insert: {
+          context?: string | null
           id?: string
           metric_id: string
+          notes?: string | null
           recorded_at?: string
           status: string
           value?: string | null
         }
         Update: {
+          context?: string | null
           id?: string
           metric_id?: string
+          notes?: string | null
           recorded_at?: string
           status?: string
           value?: string | null
@@ -440,6 +446,7 @@ export type Database = {
           category: string
           created_at: string
           current: string | null
+          description: string | null
           id: string
           name: string
           project_id: string | null
@@ -451,6 +458,7 @@ export type Database = {
           category: string
           created_at?: string
           current?: string | null
+          description?: string | null
           id?: string
           name: string
           project_id?: string | null
@@ -462,6 +470,7 @@ export type Database = {
           category?: string
           created_at?: string
           current?: string | null
+          description?: string | null
           id?: string
           name?: string
           project_id?: string | null

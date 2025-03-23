@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -204,6 +203,7 @@ const MetricForm = ({
           target,
           current: current || "0",
           status: calculatedStatus,
+          description: description,
           project_id: projectId,
           created_at: timestamp,
           updated_at: timestamp
@@ -481,3 +481,4 @@ const MetricForm = ({
 };
 
 export default MetricForm;
+
