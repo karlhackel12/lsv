@@ -60,20 +60,18 @@ const GrowthTypesPanel = ({
           badgeColor="bg-purple-100 text-purple-800"
         />
 
-        {/* Paid Growth Card with Channels Section */}
-        <div>
-          <GrowthTypeCard
-            title="Paid Growth"
-            description="Acquisition through paid channels"
-            icon={<DollarSign className="h-5 w-5 mr-2 text-blue-500" />}
-            metrics={paidMetrics}
-            badgeColor="bg-blue-100 text-blue-800"
-          />
-          
-          {/* Conditionally render the paid channels section */}
-          <PaidChannelsSection channels={channels} />
-        </div>
+        {/* Paid Growth Card */}
+        <GrowthTypeCard
+          title="Paid Growth"
+          description="Acquisition through paid channels"
+          icon={<DollarSign className="h-5 w-5 mr-2 text-blue-500" />}
+          metrics={paidMetrics}
+          badgeColor="bg-blue-100 text-blue-800"
+        />
       </div>
+      
+      {/* Paid Channels Section displayed separately for better layout */}
+      <PaidChannelsSection channels={channels} />
     </div>
   );
 };
