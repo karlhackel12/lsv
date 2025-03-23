@@ -326,6 +326,7 @@ export type Database = {
           evidence: string | null
           experiment: string
           id: string
+          phase: string
           project_id: string | null
           result: string | null
           statement: string
@@ -339,6 +340,7 @@ export type Database = {
           evidence?: string | null
           experiment: string
           id?: string
+          phase?: string
           project_id?: string | null
           result?: string | null
           statement: string
@@ -352,6 +354,7 @@ export type Database = {
           evidence?: string | null
           experiment?: string
           id?: string
+          phase?: string
           project_id?: string | null
           result?: string | null
           statement?: string
