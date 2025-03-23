@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Dashboard from '@/components/Dashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import PageIntroduction from '@/components/PageIntroduction';
 import { LayoutGrid, Lightbulb, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import QuickActions from '@/components/QuickActions';
 
 const Index = () => {
   const { user } = useAuth();
@@ -16,26 +16,14 @@ const Index = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        {projects?.length > 0 && (
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => navigate('/hypotheses')}
-              variant="outline"
-              size="sm"
-            >
-              <Lightbulb className="h-4 w-4 mr-2" />
-              Hypotheses
-            </Button>
-            <Button 
-              onClick={() => navigate('/experiments')}
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Experiment
-            </Button>
-          </div>
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          {currentProject && <QuickActions />}
+        </div>
+        
+        {currentProject && !isLoading && (
+          <QuickActions variant="expanded" className="mb-2" />
         )}
       </div>
       
