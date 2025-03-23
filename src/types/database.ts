@@ -912,10 +912,8 @@ export interface Hypothesis {
 
 export interface Experiment {
   id: string;
-  originalId?: string;
   title: string;
   hypothesis: string;
-  hypothesis_id?: string;
   method: string;
   metrics: string;
   results?: string;
@@ -923,13 +921,15 @@ export interface Experiment {
   decisions?: string;
   status: 'planned' | 'in-progress' | 'completed';
   category?: string;
-  project_id: string;
+  created_at: string;
+  updated_at: string;
+  project_id?: string;
+  hypothesis_id?: string;
   typeform_id?: string;
   typeform_url?: string;
   typeform_workspace_id?: string;
   typeform_responses_count?: number;
-  created_at: string;
-  updated_at: string;
+  originalId?: string;
 }
 
 export interface Metric {

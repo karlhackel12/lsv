@@ -10,19 +10,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExperimentTimeline from './ExperimentTimeline';
 import TypeformEmbed from './TypeformEmbed';
 import { useNavigate } from 'react-router-dom';
+import ExperimentConnectionsPanel from './ExperimentConnectionsPanel';
 
 interface ExperimentDetailViewProps {
   experiment: Experiment;
   onEdit: () => void;
   onClose?: () => void;
   relatedHypothesis: Hypothesis | null;
+  onRefresh?: () => void;
+  projectId?: string;
 }
 
 const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
   experiment,
   onEdit,
   onClose,
-  relatedHypothesis
+  relatedHypothesis,
+  onRefresh,
+  projectId
 }) => {
   const navigate = useNavigate();
   
@@ -33,6 +38,12 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
   };
 
   const hasTypeform = experiment.typeform_id || experiment.typeform_url;
+  
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
   
   return (
     <div className="animate-fadeIn space-y-8">
@@ -62,6 +73,16 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
           Edit Experiment
         </Button>
       </div>
+      
+      {/* Add the connections panel if we have projectId */}
+      {projectId && (
+        <ExperimentConnectionsPanel
+          experiment={experiment}
+          projectId={projectId}
+          relatedHypothesis={relatedHypothesis}
+          onRefresh={handleRefresh}
+        />
+      )}
       
       <Tabs defaultValue="details" className="w-full">
         <TabsList>

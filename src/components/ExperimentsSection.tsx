@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Experiment, Hypothesis } from '@/types/database';
 import ExperimentForm from './forms/ExperimentForm';
@@ -28,7 +27,6 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
   const [relatedHypothesis, setRelatedHypothesis] = useState<Hypothesis | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
 
-  // Check URL parameters for experiment id
   useEffect(() => {
     const experimentId = searchParams.get('id');
     if (experimentId && experiments.length > 0) {
@@ -112,13 +110,14 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
                 relatedHypothesis={relatedHypothesis}
                 onEdit={() => setIsFormOpen(true)}
                 onClose={handleBackToList}
+                onRefresh={refreshData}
+                projectId={projectId}
               />
             </>
           )}
         </>
       )}
 
-      {/* Experiment Form Dialog */}
       <ExperimentForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
@@ -127,7 +126,6 @@ const ExperimentsSection = ({ experiments, refreshData, projectId }: Experiments
         projectId={projectId}
       />
 
-      {/* Delete Confirmation Dialog */}
       <DeleteExperimentDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

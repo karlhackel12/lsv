@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +33,6 @@ const ExperimentsPage = () => {
         
       if (error) throw error;
       
-      // Ensure we cast the status and category to the correct types
       const transformedData: Experiment[] = data.map(item => ({
         ...item,
         originalId: item.id,
@@ -188,6 +186,8 @@ const ExperimentsPage = () => {
           onEdit={() => handleEditExperiment(selectedExperiment)}
           onClose={handleDetailViewClose}
           relatedHypothesis={relatedHypothesis}
+          onRefresh={fetchExperiments}
+          projectId={currentProject?.id || ''}
         />
       )}
       
