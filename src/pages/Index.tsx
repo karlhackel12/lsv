@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import PageIntroduction from '@/components/PageIntroduction';
 import { LayoutGrid, Lightbulb, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import QuickActions from '@/components/QuickActions';
 
 const Index = () => {
   const { user } = useAuth();
@@ -19,12 +18,7 @@ const Index = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        {currentProject && <QuickActions />}
       </div>
-      
-      {currentProject && !isLoading && (
-        <QuickActions variant="expanded" className="mb-2" />
-      )}
       
       <PageIntroduction
         title="Product Validation Dashboard"
