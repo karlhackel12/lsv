@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Form,
   FormControl,
@@ -18,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FlaskConical } from 'lucide-react';
 import { Experiment } from '@/types/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +36,14 @@ interface ExperimentFormProps {
   projectId: string;
   hypothesisId?: string;
 }
+
+const EXPERIMENT_CATEGORIES = [
+  { value: 'problem', label: 'Problem' },
+  { value: 'solution', label: 'Solution' },
+  { value: 'business-model', label: 'Business Model' },
+  { value: 'growth', label: 'Growth' },
+  { value: 'other', label: 'Other' }
+];
 
 const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypothesisId }: ExperimentFormProps) => {
   const { toast } = useToast();
@@ -77,7 +88,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
             results: data.results,
             decisions: data.decisions,
             insights: data.insights,
-            status: data.status as 'planned' | 'in-progress' | 'completed', // Fix the type cast
+            status: data.status as 'planned' | 'in-progress' | 'completed', 
             updated_at: new Date().toISOString(),
           })
           .eq('id', experiment.id);
@@ -107,7 +118,10 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
             category: data.category,
             hypothesis_id: hypothesisId,
             project_id: projectId,
-            status: data.status as 'planned' | 'in-progress' | 'completed', // Fix the type cast
+            results: data.results,
+            decisions: data.decisions,
+            insights: data.insights,
+            status: data.status as 'planned' | 'in-progress' | 'completed',
           });
 
         if (error) {
@@ -138,13 +152,16 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
 
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Experiment' : 'Create New Experiment'}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FlaskConical className="h-5 w-5 text-blue-500" />
+            {isEditing ? 'Edit Experiment' : 'Create New Experiment'}
+          </DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
             <FormField
               control={form.control}
               name="title"
@@ -152,8 +169,36 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Experiment title" {...field} />
+                    <Input placeholder="A descriptive title for your experiment" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {EXPERIMENT_CATEGORIES.map(category => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -166,7 +211,11 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
                 <FormItem>
                   <FormLabel>Hypothesis</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment hypothesis" {...field} />
+                    <Textarea 
+                      placeholder="What are you trying to validate?" 
+                      className="min-h-[80px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,7 +229,11 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
                 <FormItem>
                   <FormLabel>Method</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment method" {...field} />
+                    <Textarea 
+                      placeholder="How will you conduct this experiment?" 
+                      className="min-h-[80px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -194,63 +247,11 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
                 <FormItem>
                   <FormLabel>Metrics</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment metrics" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Experiment category" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="results"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Results</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Experiment results" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="decisions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Decisions</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Experiment decisions" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="insights"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Insights</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Experiment insights" {...field} />
+                    <Textarea 
+                      placeholder="What data will you collect? How will you measure success?" 
+                      className="min-h-[80px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -261,29 +262,99 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypoth
               control={form.control}
               name="status"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="planned">Planned</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="planned" id="planned" />
+                        <FormLabel htmlFor="planned" className="font-normal cursor-pointer">
+                          Planned
+                        </FormLabel>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="in-progress" id="in-progress" />
+                        <FormLabel htmlFor="in-progress" className="font-normal cursor-pointer">
+                          In Progress
+                        </FormLabel>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="completed" id="completed" />
+                        <FormLabel htmlFor="completed" className="font-normal cursor-pointer">
+                          Completed
+                        </FormLabel>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <DialogFooter>
+            {/* Results, Decisions and Insights sections - shown only for in-progress or completed experiments */}
+            {(form.watch('status') === 'in-progress' || form.watch('status') === 'completed') && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="results"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Results</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="What were the outcomes of your experiment?" 
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="decisions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Decisions</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="What decisions were made based on the results?" 
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="insights"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Insights</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="What insights did you gain?" 
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+            
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
             </DialogFooter>
