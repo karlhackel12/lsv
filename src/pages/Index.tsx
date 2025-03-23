@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Dashboard from '@/components/Dashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,16 +17,14 @@ const Index = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          {currentProject && <QuickActions />}
-        </div>
-        
-        {currentProject && !isLoading && (
-          <QuickActions variant="expanded" className="mb-2" />
-        )}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        {currentProject && <QuickActions />}
       </div>
+      
+      {currentProject && !isLoading && (
+        <QuickActions variant="expanded" className="mb-2" />
+      )}
       
       <PageIntroduction
         title="Product Validation Dashboard"
