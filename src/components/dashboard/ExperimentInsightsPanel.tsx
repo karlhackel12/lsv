@@ -64,7 +64,16 @@ const ExperimentInsightsPanel = ({ projectId }: ExperimentInsightsPanelProps) =>
         .limit(5);
         
       if (error) throw error;
-      setHypotheses(data || []);
+      
+      // Transform the data to ensure phase is of the correct type
+      const transformedData: Hypothesis[] = (data || []).map(item => ({
+        ...item,
+        // Ensure phase is properly typed as 'problem' | 'solution'
+        phase: (item.phase === 'solution' ? 'solution' : 'problem') as 'problem' | 'solution',
+        originalId: item.id
+      }));
+      
+      setHypotheses(transformedData);
     } catch (err) {
       console.error('Error fetching hypotheses:', err);
     }

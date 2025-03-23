@@ -30,7 +30,15 @@ const Hypotheses = () => {
         
       if (error) throw error;
       
-      setHypotheses(data);
+      // Transform the data to ensure phase is of the correct type
+      const transformedData: Hypothesis[] = (data || []).map(item => ({
+        ...item,
+        // Ensure phase is properly typed as 'problem' | 'solution'
+        phase: (item.phase === 'solution' ? 'solution' : 'problem') as 'problem' | 'solution',
+        originalId: item.id
+      }));
+      
+      setHypotheses(transformedData);
     } catch (err) {
       console.error('Error fetching hypotheses:', err);
       toast({
@@ -78,6 +86,7 @@ const Hypotheses = () => {
             experiment: formData.experiment,
             evidence: formData.evidence,
             result: formData.result,
+            phase: formData.phase,
             updated_at: new Date().toISOString(),
           })
           .eq('id', selectedHypothesis.id);
@@ -99,6 +108,7 @@ const Hypotheses = () => {
             criteria: formData.criteria,
             experiment: formData.experiment,
             project_id: currentProject?.id,
+            phase: formData.phase || 'problem', // Ensure phase is set
           });
           
         if (error) throw error;
