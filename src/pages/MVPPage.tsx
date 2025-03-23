@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
-import { MvpFeature } from '@/types/database';
+import { MVPFeature } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Layers } from 'lucide-react';
 import MVPTable from '@/components/MVPTable';

@@ -14,7 +14,7 @@ export const useHypothesisForm = (
   const form = useForm<Hypothesis>({
     defaultValues: hypothesis || {
       statement: '',
-      category: 'problem', // Changed from 'value' to 'problem'
+      category: 'problem',
       criteria: '',
       experiment: '',
       status: 'not-started',

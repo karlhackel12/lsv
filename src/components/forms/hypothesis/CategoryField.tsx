@@ -50,6 +50,36 @@ const CategoryField = ({ form }: CategoryFieldProps) => {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
+              <SelectItem value="problem" className="cursor-pointer">
+                <div className="flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-validation-red-500 mr-2"></span>
+                  Problem Hypothesis
+                </div>
+              </SelectItem>
+              <SelectItem value="solution" className="cursor-pointer">
+                <div className="flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-validation-orange-500 mr-2"></span>
+                  Solution Hypothesis
+                </div>
+              </SelectItem>
+              <SelectItem value="customer" className="cursor-pointer">
+                <div className="flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-validation-yellow-500 mr-2"></span>
+                  Customer Hypothesis
+                </div>
+              </SelectItem>
+              <SelectItem value="market" className="cursor-pointer">
+                <div className="flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-validation-purple-500 mr-2"></span>
+                  Market Hypothesis
+                </div>
+              </SelectItem>
+              <SelectItem value="business-model" className="cursor-pointer">
+                <div className="flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-validation-pink-500 mr-2"></span>
+                  Business Model Hypothesis
+                </div>
+              </SelectItem>
               <SelectItem value="value" className="cursor-pointer">
                 <div className="flex items-center">
                   <span className="h-2 w-2 rounded-full bg-validation-green-500 mr-2"></span>

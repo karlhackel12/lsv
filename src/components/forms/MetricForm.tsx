@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -137,7 +136,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     }
   }, [metric, isEditing, form]);
 
-  // Update preview status whenever relevant form values change
   useEffect(() => {
     if (autoCalculateStatus && watchedValues.current && watchedValues.target) {
       const warningThreshold = watchedValues.warning || watchedValues.target;
@@ -159,7 +157,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     }
   }, [watchedValues, metricDirection, autoCalculateStatus, form]);
 
-  // Automatically calculate status based on current value and thresholds
   const calculateStatus = (
     current: string | null, 
     target: string, 
@@ -169,7 +166,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
   ): 'success' | 'warning' | 'error' | 'not-started' => {
     if (!current) return 'not-started';
     
-    // Handle percentage values
     const normalizeValue = (val: string): number => {
       if (val.includes('%')) {
         return parseFloat(val.replace('%', ''));
@@ -183,7 +179,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
       const warningNum = normalizeValue(warningThreshold || target);
       const errorNum = normalizeValue(errorThreshold || target);
       
-      // Different logic based on if higher or lower numbers are better
       const isHigherBetter = direction === 'higher';
       
       if (isHigherBetter) {
@@ -221,19 +216,19 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     const { warning_threshold, error_threshold, pivotTrigger, ...metricData } = data;
     
     try {
-      // Calculate status if thresholds and current value are provided
       if (data.current && autoCalculateStatus && warning_threshold && error_threshold) {
-        metricData.status = calculateStatus(
+        const calculatedStatus = calculateStatus(
           data.current, 
           data.target, 
           warning_threshold, 
           error_threshold,
           metricDirection
         );
+        
+        metricData.status = calculatedStatus as "not-started" | "success" | "warning" | "error";
       }
       
       if (isEditing && metric) {
-        // Update existing metric
         const { data: updatedMetric, error } = await supabase
           .from('metrics')
           .update({
@@ -246,10 +241,8 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
 
         if (error) throw error;
         
-        // Save metric history
         await saveMetricHistory(metric.id, metricData.current, metricData.status);
         
-        // Update or create thresholds
         if (warning_threshold && error_threshold) {
           if (thresholds) {
             await supabase
@@ -271,9 +264,7 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
           }
         }
 
-        // Handle pivot trigger setting
         if (pivotTrigger && metricData.status === 'error') {
-          // Check if there's already a pivot option for this metric
           const { data: existingTrigger } = await supabase
             .from('pivot_metric_triggers')
             .select('*')
@@ -281,7 +272,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
             .single();
             
           if (!existingTrigger) {
-            // Create a basic pivot option if it doesn't exist
             const { data: newPivotOption } = await supabase
               .from('pivot_options')
               .insert({
@@ -295,7 +285,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
               .single();
               
             if (newPivotOption) {
-              // Link the metric to the pivot option
               await supabase
                 .from('pivot_metric_triggers')
                 .insert({
@@ -312,22 +301,24 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
           description: 'The metric has been successfully updated.',
         });
       } else {
-        // Create new metric
         const { data: newMetric, error } = await supabase
           .from('metrics')
           .insert({
-            ...metricData,
+            category: metricData.category || 'acquisition',
+            name: metricData.name || '',
+            target: metricData.target || '',
+            current: metricData.current,
+            status: metricData.status || 'not-started',
             project_id: projectId,
+            description: metricData.description
           })
           .select()
           .single();
 
         if (error) throw error;
         
-        // Save metric history
         await saveMetricHistory(newMetric.id, metricData.current, metricData.status);
         
-        // Create thresholds if provided
         if (warning_threshold && error_threshold) {
           await supabase
             .from('metric_thresholds')
@@ -338,9 +329,7 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
             });
         }
         
-        // Handle pivot trigger setting for new metric
         if (pivotTrigger && metricData.status === 'error') {
-          // Create a basic pivot option
           const { data: newPivotOption } = await supabase
             .from('pivot_options')
             .insert({
@@ -354,7 +343,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
             .single();
             
           if (newPivotOption) {
-            // Link the metric to the pivot option
             await supabase
               .from('pivot_metric_triggers')
               .insert({
@@ -391,7 +379,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     }
   };
 
-  // Helper function to suggest thresholds based on target value
   const suggestThresholds = () => {
     const targetValue = form.getValues('target');
     
@@ -404,26 +391,21 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     }
     
     try {
-      // Handle percentage values
       let targetNum = parseFloat(targetValue.replace('%', ''));
       const isPercentage = targetValue.includes('%');
       
-      // Determine if higher or lower is better based on metric direction
       const isHigherBetter = metricDirection === 'higher';
       
       let warningValue, errorValue;
       
       if (isHigherBetter) {
-        // If higher is better, warning/error should be lower than target
         warningValue = Math.round(targetNum * 0.8);
         errorValue = Math.round(targetNum * 0.6);
       } else {
-        // If lower is better, warning/error should be higher than target
         warningValue = Math.round(targetNum * 1.2);
         errorValue = Math.round(targetNum * 1.4);
       }
       
-      // Add percentage sign if original value was a percentage
       const warningThreshold = isPercentage ? `${warningValue}%` : `${warningValue}`;
       const errorThreshold = isPercentage ? `${errorValue}%` : `${errorValue}`;
       

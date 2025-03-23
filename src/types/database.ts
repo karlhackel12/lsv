@@ -18,7 +18,7 @@ export interface Hypothesis {
   created_at: string;
   updated_at: string;
   project_id: string;
-  category: 'problem' | 'solution' | 'customer' | 'market' | 'business-model' | 'value' | 'growth';
+  category: string;
   evidence?: string;
   result?: string;
   originalId?: string; // Added for data mapping from Supabase
