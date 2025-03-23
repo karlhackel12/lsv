@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -43,7 +44,9 @@ const MetricForm = ({
   const [category, setCategory] = useState(metric?.category || '');
   const [current, setCurrent] = useState(metric?.current || '');
   const [target, setTarget] = useState(metric?.target || '');
-  const [status, setStatus] = useState(metric?.status || 'not-started');
+  const [status, setStatus] = useState<"success" | "warning" | "error" | "not-started">(
+    metric?.status || 'not-started'
+  );
   const [warningThreshold, setWarningThreshold] = useState('0');
   const [errorThreshold, setErrorThreshold] = useState('0');
   const [isSaving, setIsSaving] = useState(false);
@@ -152,6 +155,10 @@ const MetricForm = ({
     }
   };
 
+  const handleStatusChange = (value: string) => {
+    setStatus(value as "success" | "warning" | "error" | "not-started");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -223,7 +230,7 @@ const MetricForm = ({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={handleStatusChange}>
               <SelectTrigger id="status">
                 <SelectValue placeholder="Select a status" />
               </SelectTrigger>
@@ -240,7 +247,7 @@ const MetricForm = ({
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save changes'}
           </Button>
         </DialogFooter>

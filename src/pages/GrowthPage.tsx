@@ -84,7 +84,7 @@ const GrowthPage = () => {
             activeModel={activeModel}
             projectId={currentProject.id}
             refreshData={fetchGrowthModels}
-            onModelChange={setActiveModel}
+            onModelChange={(model) => setActiveModel(model.id)}
           />
           
           {activeModel && (
