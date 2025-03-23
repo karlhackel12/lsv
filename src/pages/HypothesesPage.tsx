@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,7 +62,6 @@ const HypothesesPage = () => {
   const handleSaveHypothesis = async (formData: Hypothesis) => {
     try {
       if (selectedHypothesis) {
-        // Update existing hypothesis
         const { error } = await supabase
           .from('hypotheses')
           .update({
@@ -85,7 +83,6 @@ const HypothesesPage = () => {
           description: 'Hypothesis updated successfully',
         });
       } else {
-        // Create new hypothesis
         const { error } = await supabase
           .from('hypotheses')
           .insert({
@@ -146,6 +143,34 @@ const HypothesesPage = () => {
   const handleFormClose = () => {
     setIsFormOpen(false);
     setSelectedHypothesis(null);
+  };
+
+  const updateHypothesisStatus = async (hypothesis: Hypothesis, newStatus: 'validated' | 'validating' | 'not-started' | 'invalid') => {
+    try {
+      const { error } = await supabase
+        .from('hypotheses')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', hypothesis.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Status updated',
+        description: `Hypothesis status changed to ${newStatus}.`,
+      });
+      
+      await fetchHypotheses();
+    } catch (err) {
+      console.error('Error updating hypothesis status:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update hypothesis status',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {
@@ -222,6 +247,7 @@ const HypothesesPage = () => {
             onDelete={handleDeleteHypothesis}
             onCreateNew={handleCreateHypothesis}
             isLoading={isLoadingHypotheses}
+            onStatusChange={updateHypothesisStatus}
           />
         </TabsContent>
         <TabsContent value="create" className="mt-6">
