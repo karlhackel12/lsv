@@ -13,7 +13,6 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
-import OverviewSection from '@/components/OverviewSection';
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -36,7 +35,6 @@ const Dashboard = () => {
         setLoading(true);
         const projectId = currentProject.id;
 
-        // Fetch hypotheses
         const { data: hypothesesData, error: hypothesesError } = await supabase
           .from('hypotheses')
           .select('*')
@@ -46,7 +44,6 @@ const Dashboard = () => {
 
         if (hypothesesError) throw hypothesesError;
 
-        // Fetch experiments
         const { data: experimentsData, error: experimentsError } = await supabase
           .from('experiments')
           .select('*')
@@ -56,7 +53,6 @@ const Dashboard = () => {
 
         if (experimentsError) throw experimentsError;
 
-        // Fetch MVP features
         const { data: mvpFeaturesData, error: mvpFeaturesError } = await supabase
           .from('mvp_features')
           .select('*')
@@ -66,7 +62,6 @@ const Dashboard = () => {
 
         if (mvpFeaturesError) throw mvpFeaturesError;
 
-        // Fetch metrics
         const { data: metricsData, error: metricsError } = await supabase
           .from('metrics')
           .select('*')
@@ -76,7 +71,6 @@ const Dashboard = () => {
 
         if (metricsError) throw metricsError;
 
-        // Fetch pivot options
         const { data: pivotOptionsData, error: pivotOptionsError } = await supabase
           .from('pivot_options')
           .select('*')
@@ -86,14 +80,12 @@ const Dashboard = () => {
 
         if (pivotOptionsError) throw pivotOptionsError;
 
-        // Transform the data to include originalId for all records
         const transformedHypotheses: Hypothesis[] = hypothesesData.map(item => ({
           ...item,
           originalId: item.id,
-          id: item.id // Keep id as string
+          id: item.id
         }));
 
-        // Ensure we cast the status to the correct type
         const transformedExperiments: Experiment[] = experimentsData.map(item => ({
           ...item,
           originalId: item.id,
@@ -106,10 +98,9 @@ const Dashboard = () => {
           ...item,
           originalId: item.id,
           id: item.id,
-          // Add required fields to match MVPFeature interface
           name: item.feature,
           description: item.notes || '',
-          effort: 'medium', // Default value
+          effort: 'medium',
           impact: item.priority
         }));
 
@@ -126,11 +117,10 @@ const Dashboard = () => {
           name: item.type,
           pivot_type: item.type,
           potential_impact: item.likelihood,
-          implementation_effort: 'medium', // Default value
+          implementation_effort: 'medium',
           evidence: ''
         }));
 
-        // Set the state with transformed data
         setHypotheses(transformedHypotheses);
         setExperiments(transformedExperiments);
         setMvpFeatures(transformedMvpFeatures);
@@ -182,10 +172,6 @@ const Dashboard = () => {
 
   return (
     <div className="grid gap-6">
-      <div className="col-span-2">
-        <OverviewSection />
-      </div>
-
       <Accordion type="multiple" className="w-full space-y-4" defaultValue={["hypotheses", "experiments"]}>
         <AccordionItem value="hypotheses" className="border rounded-lg overflow-hidden shadow-md bg-white">
           <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
@@ -324,3 +310,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
