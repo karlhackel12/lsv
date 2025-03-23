@@ -15,6 +15,71 @@ import { useGrowthModels } from '@/hooks/use-growth-models';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StepJourney, { Step } from '@/components/StepJourney';
+import ValidationStageCard from '@/components/growth/ValidationStageCard';
+
+// Define the validation stages according to the Lean Startup Growth Model
+const VALIDATION_STAGES = [
+  {
+    id: 'channel',
+    title: 'Channel Validation',
+    description: 'Test acquisition channels for your specific market, validate CAC targets, and measure conversion rates.',
+    criteria: [
+      'At least 3 channels tested',
+      'CAC below target for at least 1 channel',
+      'Conversion rates above minimum threshold'
+    ]
+  },
+  {
+    id: 'activation',
+    title: 'Activation Optimization',
+    description: 'Improve user onboarding completion rates, reduce time to first value, and increase early engagement.',
+    criteria: [
+      'Onboarding completion rate > 70%',
+      'Time to value < industry benchmark',
+      'Initial engagement metrics meet targets'
+    ]
+  },
+  {
+    id: 'monetization',
+    title: 'Monetization Testing',
+    description: 'Validate price points and willingness to pay, test various revenue models, and measure conversion rates.',
+    criteria: [
+      'Price sensitivity determined',
+      'Revenue model validated',
+      'Conversion rate at optimal price point validated'
+    ]
+  },
+  {
+    id: 'retention',
+    title: 'Retention Engineering',
+    description: 'Identify key retention drivers, test engagement loops, and measure cohort retention curves.',
+    criteria: [
+      'Core retention drivers identified',
+      'Engagement loops implemented',
+      'Cohort retention meets industry benchmarks'
+    ]
+  },
+  {
+    id: 'referral',
+    title: 'Referral Engine Development',
+    description: 'Implement user referral mechanisms, test viral loops, and measure viral coefficient.',
+    criteria: [
+      'Referral mechanism implemented',
+      'Viral loop tested',
+      'Viral coefficient measured'
+    ]
+  },
+  {
+    id: 'scaling',
+    title: 'Scaling Readiness Assessment',
+    description: 'Validate unit economics, verify retention metrics meet targets, and confirm multiple reliable acquisition channels.',
+    criteria: [
+      'LTV:CAC > 3:1',
+      'Retention metrics meet targets',
+      'Multiple reliable acquisition channels confirmed'
+    ]
+  }
+];
 
 // Define the steps in the growth journey
 const GROWTH_JOURNEY_STEPS: Step[] = [
@@ -44,6 +109,7 @@ const GrowthPage = () => {
   const { currentProject, isLoading, error } = useProject();
   const [currentStep, setCurrentStep] = useState('setup');
   const [setupTab, setSetupTab] = useState('metrics');
+  const [validationTab, setValidationTab] = useState('stages');
   const { toast } = useToast();
   const {
     growthModels,
@@ -90,7 +156,7 @@ const GrowthPage = () => {
         toast({
           title: "Can't proceed yet",
           description: "You need to complete the current step first.",
-          variant: "destructive" // Fixed the type error by using a valid variant
+          variant: "destructive"
         });
       }
     }
@@ -240,11 +306,11 @@ const GrowthPage = () => {
                 </div>
               )}
 
-              {/* Step 3: Scaling Checklist */}
+              {/* Step 3: Validation Stages & Scaling Checklist */}
               {currentStep === 'validation' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">3. Scaling Readiness Checklist</h2>
+                    <h2 className="text-xl font-semibold">3. Growth Validation & Scaling Readiness</h2>
                     <Button 
                       onClick={goToNextStep} 
                       className="ml-auto"
@@ -253,16 +319,43 @@ const GrowthPage = () => {
                     </Button>
                   </div>
                   
-                  <p className="text-gray-600">
-                    Review your scaling readiness to determine if your growth model is validated and ready for scaling.
-                  </p>
-                  
-                  <ScalingReadinessSection 
-                    growthModel={activeModel}
-                    projectId={currentProject.id}
-                    metrics={growthMetrics}
-                    channels={growthChannels}
-                  />
+                  <Tabs defaultValue={validationTab} value={validationTab} onValueChange={setValidationTab} className="w-full">
+                    <TabsList className="grid w-full max-w-md grid-cols-2">
+                      <TabsTrigger value="stages">Validation Stages</TabsTrigger>
+                      <TabsTrigger value="checklist">Scaling Checklist</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="stages" className="mt-6">
+                      <p className="text-gray-600 mb-4">
+                        Track your progress through the key validation stages of the Lean Startup Growth Model.
+                        Each stage must be validated before moving to the next.
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {VALIDATION_STAGES.map((stage) => (
+                          <ValidationStageCard 
+                            key={stage.id}
+                            stage={stage}
+                            model={activeModel}
+                            projectId={currentProject.id}
+                          />
+                        ))}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="checklist" className="mt-6">
+                      <p className="text-gray-600 mb-4">
+                        Review your scaling readiness to determine if your growth model is validated and ready for scaling.
+                      </p>
+                      
+                      <ScalingReadinessSection 
+                        growthModel={activeModel}
+                        projectId={currentProject.id}
+                        metrics={growthMetrics}
+                        channels={growthChannels}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </div>
               )}
 
