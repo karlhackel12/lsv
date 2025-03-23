@@ -12,7 +12,8 @@ import TextFieldGroup from './experiment/TextFieldGroup';
 import ResultsFields from './experiment/ResultsFields';
 import { supabase } from '@/integrations/supabase/client';
 
-export type FormData = Omit<Experiment, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'typeform_id' | 'typeform_url' | 'typeform_workspace_id' | 'typeform_responses_count' | 'originalId'>;
+// Update FormData to match Experiment type exactly to avoid type mismatches
+export type FormData = Experiment;
 
 interface ExperimentFormProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ interface ExperimentFormProps {
   experiment?: Experiment | null;
   projectId: string;
   hypothesisId?: string;
-  experimentType?: 'problem' | 'solution' | 'business-model'; // Add experimentType prop
+  experimentType?: 'problem' | 'solution' | 'business-model';
 }
 
 const ExperimentForm = ({ 
@@ -31,7 +32,7 @@ const ExperimentForm = ({
   experiment, 
   projectId, 
   hypothesisId,
-  experimentType = 'problem' // Set default value
+  experimentType = 'problem'
 }: ExperimentFormProps) => {
   const { form, isEditing, handleSubmit } = useExperimentForm({
     experiment,
@@ -39,7 +40,7 @@ const ExperimentForm = ({
     hypothesisId,
     onSave,
     onClose,
-    experimentType // Pass to the hook
+    experimentType
   });
 
   // If we have a hypothesis ID but no experiment, let's fetch the hypothesis details

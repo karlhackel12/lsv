@@ -3,10 +3,10 @@ import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { UseFormReturn } from 'react-hook-form';
-import { FormData } from '../ExperimentForm';
+import { Experiment } from '@/types/database';
 
 interface StatusRadioGroupProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<Experiment>;
 }
 
 const StatusRadioGroup = ({ form }: StatusRadioGroupProps) => {

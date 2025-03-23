@@ -10,6 +10,7 @@ interface UseExperimentFormProps {
   hypothesisId?: string;
   onSave: () => void;
   onClose: () => void;
+  experimentType?: 'problem' | 'solution' | 'business-model';
 }
 
 export function useExperimentForm({
@@ -17,7 +18,8 @@ export function useExperimentForm({
   projectId,
   hypothesisId,
   onSave,
-  onClose
+  onClose,
+  experimentType = 'problem'
 }: UseExperimentFormProps) {
   const { toast } = useToast();
   const isEditing = !!experiment;
@@ -29,7 +31,7 @@ export function useExperimentForm({
       method: '',
       metrics: '',
       status: 'planned',
-      category: 'problem',
+      category: experimentType || 'problem',
       results: '',
       insights: '',
       decisions: '',
@@ -72,7 +74,7 @@ export function useExperimentForm({
             method: data.method,
             metrics: data.metrics,
             status: data.status || 'planned',
-            category: data.category || 'problem',
+            category: data.category || experimentType || 'problem',
             project_id: projectId,
             hypothesis_id: hypothesisId || null,
           });

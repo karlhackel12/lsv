@@ -3,10 +3,10 @@ import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { UseFormReturn } from 'react-hook-form';
-import { FormData } from '../ExperimentForm';
+import { Experiment } from '@/types/database';
 
 interface ResultsFieldsProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<Experiment>;
 }
 
 const ResultsFields = ({ form }: ResultsFieldsProps) => {

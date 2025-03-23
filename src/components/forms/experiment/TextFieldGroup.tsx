@@ -4,10 +4,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { UseFormReturn } from 'react-hook-form';
-import { FormData } from '../ExperimentForm';
+import { Experiment } from '@/types/database';
 
 interface TextFieldGroupProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<Experiment>;
 }
 
 const TextFieldGroup = ({ form }: TextFieldGroupProps) => {

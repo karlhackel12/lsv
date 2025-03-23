@@ -11,12 +11,16 @@ import { useProject } from '@/hooks/use-project';
 import PhaseNavigation from '@/components/PhaseNavigation';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
+// Define a type for phase to avoid excessive type instantiation
+type PhaseType = 'problem' | 'solution';
+
 const HypothesesPage = () => {
   const { currentProject } = useProject();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentPhase = searchParams.get('phase') || 'problem';
+  // Set a default value and use type assertion to avoid type instantiation errors
+  const currentPhase = (searchParams.get('phase') || 'problem') as PhaseType;
   
   const fetchHypotheses = async () => {
     try {
