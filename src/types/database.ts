@@ -255,7 +255,8 @@ export type Database = {
           id: string
           notes: string | null
           priority: Database["public"]["Enums"]["feature_priority"]
-          project_id: string | null
+          effort: Database["public"]["Enums"]["feature_effort"]
+          impact: Database["public"]["Enums"]["feature_impact"]
           status: Database["public"]["Enums"]["feature_status"]
           updated_at: string
         }
@@ -265,7 +266,8 @@ export type Database = {
           id?: string
           notes?: string | null
           priority?: Database["public"]["Enums"]["feature_priority"]
-          project_id?: string | null
+          effort?: Database["public"]["Enums"]["feature_effort"]
+          impact?: Database["public"]["Enums"]["feature_impact"]
           status?: Database["public"]["Enums"]["feature_status"]
           updated_at?: string
         }
@@ -275,7 +277,8 @@ export type Database = {
           id?: string
           notes?: string | null
           priority?: Database["public"]["Enums"]["feature_priority"]
-          project_id?: string | null
+          effort?: Database["public"]["Enums"]["feature_effort"]
+          impact?: Database["public"]["Enums"]["feature_impact"]
           status?: Database["public"]["Enums"]["feature_status"]
           updated_at?: string
         }
@@ -555,6 +558,8 @@ export type Database = {
     Enums: {
       experiment_status: "completed" | "in-progress" | "planned"
       feature_priority: "high" | "medium" | "low"
+      feature_effort: "high" | "medium" | "low"
+      feature_impact: "high" | "medium" | "low"
       feature_status: "in-progress" | "planned" | "completed" | "post-mvp"
       hypothesis_status: "validated" | "validating" | "not-started" | "invalid"
       metric_status: "success" | "warning" | "error" | "not-started"
@@ -732,6 +737,8 @@ export interface MVPFeature {
   originalId?: string;
   feature: string;
   priority: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  impact: 'high' | 'medium' | 'low';
   status: 'in-progress' | 'planned' | 'completed' | 'post-mvp';
   notes?: string;
   project_id: string;

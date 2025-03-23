@@ -124,6 +124,12 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
 
   const progress = calculateProgress();
 
+  // Helper function to safely capitalize a string with null checks
+  const safeCapitalize = (str: string | undefined | null): string => {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
   return (
     <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
@@ -253,7 +259,7 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
                             ? 'bg-validation-yellow-100 text-validation-yellow-700'
                             : 'bg-validation-green-100 text-validation-green-700'
                       }`}>
-                        {feature.priority ? feature.priority.charAt(0).toUpperCase() + feature.priority.slice(1) : 'Not set'}
+                        {safeCapitalize(feature.priority) || 'Not set'}
                       </span>
                     </div>
                     
@@ -268,7 +274,7 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
                               ? 'bg-validation-green-100 text-validation-green-700'
                               : 'bg-gray-100 text-gray-700'
                       }`}>
-                        {feature.effort ? feature.effort.charAt(0).toUpperCase() + feature.effort.slice(1) : 'Not set'}
+                        {safeCapitalize(feature.effort) || 'Not set'}
                       </span>
                     </div>
                     
@@ -283,7 +289,7 @@ const MVPSection = ({ mvpFeatures, refreshData, projectId }: MVPSectionProps) =>
                               ? 'bg-validation-red-100 text-validation-red-700'
                               : 'bg-gray-100 text-gray-700'
                       }`}>
-                        {feature.impact ? feature.impact.charAt(0).toUpperCase() + feature.impact.slice(1) : 'Not set'}
+                        {safeCapitalize(feature.impact) || 'Not set'}
                       </span>
                     </div>
                   </div>
