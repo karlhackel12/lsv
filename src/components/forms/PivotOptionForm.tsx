@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ interface ExtendedMetric extends Metric {
 }
 
 interface PivotOptionFormProps {
+  isOpen?: boolean; // Add isOpen prop to match usage in PivotSection
   pivotOption?: ExtendedPivotOption;
   projectId: string;
   metrics: ExtendedMetric[];
@@ -35,6 +35,7 @@ interface PivotOptionFormProps {
 }
 
 const PivotOptionForm = ({
+  isOpen,
   pivotOption,
   projectId,
   metrics,

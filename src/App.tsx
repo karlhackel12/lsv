@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from '@/contexts/AuthContext';
+import React from "react"; // Ensure React is imported
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -17,7 +18,6 @@ import MVPPage from "./pages/MVPPage";
 import MetricsPage from "./pages/MetricsPage";
 import PivotPage from "./pages/PivotPage";
 import GrowthPage from "./pages/GrowthPage";
-import React from "react"; // Make sure React is imported
 
 // Create a client
 const queryClient = new QueryClient();
