@@ -134,9 +134,9 @@ const PivotTriggerForm = ({ isOpen, onClose, onSave, pivotTrigger, projectId, me
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No specific metric</SelectItem>
+                      <SelectItem value="none">No specific metric</SelectItem>
                       {metrics.map(metric => (
-                        <SelectItem key={metric.id} value={metric.id as string}>
+                        <SelectItem key={metric.id} value={metric.id || ''}>
                           {metric.name} ({metric.category})
                         </SelectItem>
                       ))}

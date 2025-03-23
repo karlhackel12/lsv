@@ -44,7 +44,7 @@ const PivotOptionForm = ({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [selectedMetricId, setSelectedMetricId] = useState<string>('');
+  const [selectedMetricId, setSelectedMetricId] = useState<string>('none');
 
   // Initialize form with existing or default values
   const [formData, setFormData] = useState<ExtendedPivotOption>({
@@ -52,7 +52,7 @@ const PivotOptionForm = ({
     type: pivotOption?.type || pivotOption?.pivot_type || '',
     description: pivotOption?.description || '',
     trigger: pivotOption?.trigger || '',
-    likelihood: (pivotOption?.likelihood as "high" | "medium" | "low") || (pivotOption?.potential_impact as "high" | "medium" | "low") || "medium",
+    likelihood: (pivotOption?.likelihood as "high" | "medium" | "low") || "medium",
     project_id: projectId,
     created_at: pivotOption?.created_at || new Date().toISOString(),
     updated_at: pivotOption?.updated_at || new Date().toISOString(),
@@ -73,7 +73,7 @@ const PivotOptionForm = ({
         type: pivotOption?.type || pivotOption?.pivot_type || '',
         description: pivotOption?.description || '',
         trigger: pivotOption?.trigger || '',
-        likelihood: (pivotOption?.likelihood as "high" | "medium" | "low") || (pivotOption?.potential_impact as "high" | "medium" | "low") || "medium",
+        likelihood: (pivotOption?.likelihood as "high" | "medium" | "low") || "medium",
         project_id: projectId,
         created_at: pivotOption?.created_at || new Date().toISOString(),
         updated_at: pivotOption?.updated_at || new Date().toISOString(),
@@ -245,9 +245,9 @@ const PivotOptionForm = ({
                   <SelectValue placeholder="Select a metric" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {metrics.map((metric) => (
-                    <SelectItem key={metric.id} value={metric.id}>
+                    <SelectItem key={metric.id} value={metric.id || ''}>
                       {metric.name} - {metric.description || 'No description'}
                     </SelectItem>
                   ))}
