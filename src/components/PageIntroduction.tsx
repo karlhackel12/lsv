@@ -19,16 +19,19 @@ const PageIntroduction = ({
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <Card className={`mb-6 border-blue-100 bg-blue-50 ${className}`}>
+    <Card className={`mb-6 border-blue-100 bg-gradient-to-r from-blue-50 to-blue-50/50 ${className}`}>
       <CardContent className="pt-6">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
-            {icon}
+            <div className="bg-white p-2 rounded-full shadow-sm">
+              {icon}
+            </div>
             <h2 className="text-lg font-semibold text-blue-800">{title}</h2>
           </div>
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-blue-600 hover:text-blue-800 p-1 rounded-md hover:bg-blue-100"
+            className="text-blue-600 hover:text-blue-800 p-1 rounded-md hover:bg-blue-100 transition-colors"
+            aria-label={isExpanded ? "Collapse description" : "Expand description"}
           >
             {isExpanded ? (
               <ChevronUp className="h-5 w-5" />
@@ -39,7 +42,7 @@ const PageIntroduction = ({
         </div>
         
         {isExpanded && (
-          <div className="mt-3 text-blue-700 space-y-2 text-sm">
+          <div className="mt-4 text-blue-700 space-y-2 text-sm animate-fadeIn">
             {description}
           </div>
         )}
