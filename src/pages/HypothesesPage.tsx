@@ -60,7 +60,9 @@ const HypothesesPage = () => {
   
   // Change tab handler
   const handleTabChange = (value: string) => {
-    setSearchParams({ phase: value });
+    // Use a type guard to ensure value is one of the valid phase types
+    const validPhase = value === 'problem' || value === 'solution' ? value : 'problem';
+    setSearchParams({ phase: validPhase });
   };
   
   if (!currentProject) {

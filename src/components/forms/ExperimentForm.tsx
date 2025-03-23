@@ -21,6 +21,7 @@ interface ExperimentFormProps {
   experiment?: Experiment | null;
   projectId: string;
   hypothesisId?: string;
+  experimentType?: 'problem' | 'solution' | 'business-model'; // Add experimentType prop
 }
 
 const ExperimentForm = ({ 
@@ -29,14 +30,16 @@ const ExperimentForm = ({
   onSave, 
   experiment, 
   projectId, 
-  hypothesisId 
+  hypothesisId,
+  experimentType = 'problem' // Set default value
 }: ExperimentFormProps) => {
   const { form, isEditing, handleSubmit } = useExperimentForm({
     experiment,
     projectId,
     hypothesisId,
     onSave,
-    onClose
+    onClose,
+    experimentType // Pass to the hook
   });
 
   // If we have a hypothesis ID but no experiment, let's fetch the hypothesis details

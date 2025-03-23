@@ -100,7 +100,7 @@ const HypothesesSection = ({
         selectedHypothesis && (
           <HypothesisDetailView
             hypothesis={selectedHypothesis}
-            onEdit={handleEdit}
+            onEdit={() => handleEdit(selectedHypothesis)}
             onClose={() => setViewMode('list')}
             onRefresh={refreshData}
             projectId={projectId}

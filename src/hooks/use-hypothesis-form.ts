@@ -18,17 +18,20 @@ export const useHypothesisForm = (
   const { toast } = useToast();
   const isEditing = !!hypothesis;
 
+  // Create default values object with appropriate typing
+  const defaultValues: Partial<Hypothesis> = hypothesis || {
+    statement: '',
+    category: phaseType === 'problem' ? 'problem' : 'solution',
+    criteria: '',
+    experiment: '',
+    status: 'not-started',
+    evidence: '',
+    result: '',
+    phase: phaseType,
+  };
+
   const form = useForm<Hypothesis>({
-    defaultValues: hypothesis || {
-      statement: '',
-      category: phaseType === 'problem' ? 'problem' : 'solution',
-      criteria: '',
-      experiment: '',
-      status: 'not-started',
-      evidence: '',
-      result: '',
-      phase: phaseType,
-    },
+    defaultValues,
     mode: 'onChange',
   });
 

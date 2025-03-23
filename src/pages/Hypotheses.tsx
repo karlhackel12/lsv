@@ -59,6 +59,11 @@ const Hypotheses = () => {
     setIsFormOpen(true);
   };
 
+  const handleViewDetail = (hypothesis: Hypothesis) => {
+    // Just a placeholder for the interface requirement
+    console.log("View detail for hypothesis:", hypothesis.id);
+  };
+
   const handleSaveHypothesis = async (formData: Hypothesis) => {
     try {
       if (selectedHypothesis) {
@@ -175,6 +180,7 @@ const Hypotheses = () => {
           onClose={handleFormClose}
           onSave={handleSaveHypothesis}
           hypothesis={selectedHypothesis || undefined}
+          projectId={currentProject?.id || ''}
         />
       )}
       
@@ -190,6 +196,8 @@ const Hypotheses = () => {
             onEdit={handleEditHypothesis}
             onDelete={handleDeleteHypothesis}
             onCreateNew={handleCreateHypothesis}
+            onViewDetail={handleViewDetail}
+            onStatusChange={() => {}}
             isLoading={isLoadingHypotheses}
           />
         </TabsContent>
