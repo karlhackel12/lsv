@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -24,12 +27,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info } from 'lucide-react';
+import { Info, HelpCircle, AlertTriangle, BarChart3, Target } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
-type FormData = Omit<Metric, 'id' | 'created_at' | 'updated_at' | 'project_id'> & {
-  warning_threshold?: string;
-  error_threshold?: string;
-};
+const metricSchema = z.object({
+  category: z.string().min(1, 'Category is required'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  target: z.string().min(1, 'Target value is required'),
+  current: z.string().nullable(),
+  status: z.string(),
+  warning_threshold: z.string().optional(),
+  error_threshold: z.string().optional(),
+  description: z.string().optional(),
+  pivotTrigger: z.boolean().default(false),
+});
+
+type FormData = z.infer<typeof metricSchema>;
 
 interface MetricFormProps {
   isOpen: boolean;
@@ -44,8 +62,12 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
   const isEditing = !!metric;
   const [thresholds, setThresholds] = useState<MetricThreshold | null>(null);
   const [isLoadingThresholds, setIsLoadingThresholds] = useState(false);
+  const [previewStatus, setPreviewStatus] = useState<'not-started' | 'success' | 'warning' | 'error'>('not-started');
+  const [autoCalculateStatus, setAutoCalculateStatus] = useState(true);
+  const [metricDirection, setMetricDirection] = useState<'higher' | 'lower'>('higher');
 
   const form = useForm<FormData>({
+    resolver: zodResolver(metricSchema),
     defaultValues: metric ? {
       category: metric.category,
       name: metric.name,
@@ -54,6 +76,8 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
       status: metric.status,
       warning_threshold: '',
       error_threshold: '',
+      description: metric.description || '',
+      pivotTrigger: false,
     } : {
       category: 'acquisition',
       name: '',
@@ -62,8 +86,17 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
       status: 'not-started',
       warning_threshold: '',
       error_threshold: '',
+      description: '',
+      pivotTrigger: false,
     }
   });
+
+  const watchedValues = {
+    current: form.watch('current'),
+    target: form.watch('target'),
+    warning: form.watch('warning_threshold'),
+    error: form.watch('error_threshold'),
+  };
 
   const fetchThresholds = async (metricId: string) => {
     setIsLoadingThresholds(true);
@@ -91,6 +124,12 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
   useEffect(() => {
     if (isEditing && metric?.id) {
       fetchThresholds(metric.id);
+      
+      // Determine metric direction from existing values
+      if (metric.target && metric.target.includes('%')) {
+        const targetNum = parseFloat(metric.target.replace('%', ''));
+        setMetricDirection(targetNum >= 0 ? 'higher' : 'lower');
+      }
     } else {
       setThresholds(null);
       form.setValue('warning_threshold', '');
@@ -98,8 +137,36 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     }
   }, [metric, isEditing, form]);
 
+  // Update preview status whenever relevant form values change
+  useEffect(() => {
+    if (autoCalculateStatus && watchedValues.current && watchedValues.target) {
+      const warningThreshold = watchedValues.warning || watchedValues.target;
+      const errorThreshold = watchedValues.error || watchedValues.target;
+      
+      const calculatedStatus = calculateStatus(
+        watchedValues.current, 
+        watchedValues.target, 
+        warningThreshold, 
+        errorThreshold,
+        metricDirection
+      );
+      
+      setPreviewStatus(calculatedStatus);
+      
+      if (calculatedStatus !== form.getValues('status')) {
+        form.setValue('status', calculatedStatus);
+      }
+    }
+  }, [watchedValues, metricDirection, autoCalculateStatus, form]);
+
   // Automatically calculate status based on current value and thresholds
-  const calculateStatus = (current: string | null, target: string, warningThreshold: string, errorThreshold: string): 'success' | 'warning' | 'error' | 'not-started' => {
+  const calculateStatus = (
+    current: string | null, 
+    target: string, 
+    warningThreshold: string, 
+    errorThreshold: string,
+    direction: 'higher' | 'lower' = 'higher'
+  ): 'success' | 'warning' | 'error' | 'not-started' => {
     if (!current) return 'not-started';
     
     // Handle percentage values
@@ -117,7 +184,7 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
       const errorNum = normalizeValue(errorThreshold || target);
       
       // Different logic based on if higher or lower numbers are better
-      const isHigherBetter = targetNum > 0;
+      const isHigherBetter = direction === 'higher';
       
       if (isHigherBetter) {
         if (currentNum >= targetNum) return 'success';
@@ -151,16 +218,17 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
   };
 
   const handleSubmit = async (data: FormData) => {
-    const { warning_threshold, error_threshold, ...metricData } = data;
+    const { warning_threshold, error_threshold, pivotTrigger, ...metricData } = data;
     
     try {
       // Calculate status if thresholds and current value are provided
-      if (data.current && warning_threshold && error_threshold) {
+      if (data.current && autoCalculateStatus && warning_threshold && error_threshold) {
         metricData.status = calculateStatus(
           data.current, 
           data.target, 
           warning_threshold, 
-          error_threshold
+          error_threshold,
+          metricDirection
         );
       }
       
@@ -203,6 +271,42 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
           }
         }
 
+        // Handle pivot trigger setting
+        if (pivotTrigger && metricData.status === 'error') {
+          // Check if there's already a pivot option for this metric
+          const { data: existingTrigger } = await supabase
+            .from('pivot_metric_triggers')
+            .select('*')
+            .eq('metric_id', metric.id)
+            .single();
+            
+          if (!existingTrigger) {
+            // Create a basic pivot option if it doesn't exist
+            const { data: newPivotOption } = await supabase
+              .from('pivot_options')
+              .insert({
+                type: 'customer-need',
+                description: `Pivot option triggered by metric: ${metricData.name}`,
+                trigger: `Metric "${metricData.name}" is in error state`,
+                likelihood: 'medium',
+                project_id: projectId,
+              })
+              .select()
+              .single();
+              
+            if (newPivotOption) {
+              // Link the metric to the pivot option
+              await supabase
+                .from('pivot_metric_triggers')
+                .insert({
+                  pivot_option_id: newPivotOption.id,
+                  metric_id: metric.id,
+                  threshold_type: 'error'
+                });
+            }
+          }
+        }
+
         toast({
           title: 'Metric updated',
           description: 'The metric has been successfully updated.',
@@ -233,6 +337,33 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
               error_threshold,
             });
         }
+        
+        // Handle pivot trigger setting for new metric
+        if (pivotTrigger && metricData.status === 'error') {
+          // Create a basic pivot option
+          const { data: newPivotOption } = await supabase
+            .from('pivot_options')
+            .insert({
+              type: 'customer-need',
+              description: `Pivot option triggered by metric: ${metricData.name}`,
+              trigger: `Metric "${metricData.name}" is in error state`,
+              likelihood: 'medium',
+              project_id: projectId,
+            })
+            .select()
+            .single();
+            
+          if (newPivotOption) {
+            // Link the metric to the pivot option
+            await supabase
+              .from('pivot_metric_triggers')
+              .insert({
+                pivot_option_id: newPivotOption.id,
+                metric_id: newMetric.id,
+                threshold_type: 'error'
+              });
+          }
+        }
 
         toast({
           title: 'Metric created',
@@ -251,184 +382,473 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     }
   };
 
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'success': return 'bg-green-100 text-green-800 border-green-200';
+      case 'warning': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'error': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // Helper function to suggest thresholds based on target value
+  const suggestThresholds = () => {
+    const targetValue = form.getValues('target');
+    
+    if (!targetValue) {
+      toast({
+        title: 'Enter target first',
+        description: 'Please enter a target value before generating thresholds.',
+      });
+      return;
+    }
+    
+    try {
+      // Handle percentage values
+      let targetNum = parseFloat(targetValue.replace('%', ''));
+      const isPercentage = targetValue.includes('%');
+      
+      // Determine if higher or lower is better based on metric direction
+      const isHigherBetter = metricDirection === 'higher';
+      
+      let warningValue, errorValue;
+      
+      if (isHigherBetter) {
+        // If higher is better, warning/error should be lower than target
+        warningValue = Math.round(targetNum * 0.8);
+        errorValue = Math.round(targetNum * 0.6);
+      } else {
+        // If lower is better, warning/error should be higher than target
+        warningValue = Math.round(targetNum * 1.2);
+        errorValue = Math.round(targetNum * 1.4);
+      }
+      
+      // Add percentage sign if original value was a percentage
+      const warningThreshold = isPercentage ? `${warningValue}%` : `${warningValue}`;
+      const errorThreshold = isPercentage ? `${errorValue}%` : `${errorValue}`;
+      
+      form.setValue('warning_threshold', warningThreshold);
+      form.setValue('error_threshold', errorThreshold);
+      
+      toast({
+        title: 'Thresholds suggested',
+        description: `Warning: ${warningThreshold}, Error: ${errorThreshold}`,
+      });
+    } catch (e) {
+      toast({
+        title: 'Error generating thresholds',
+        description: 'Please enter a valid numeric target value.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Metric' : 'Create New Metric'}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            {isEditing ? 'Edit Metric' : 'Create New Metric'}
+          </DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="thresholds">Thresholds</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="basic" className="flex items-center gap-1">
+                  <Target className="h-4 w-4" />
+                  <span>Basic Info</span>
+                </TabsTrigger>
+                <TabsTrigger value="thresholds" className="flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Thresholds</span>
+                </TabsTrigger>
+                <TabsTrigger value="advanced" className="flex items-center gap-1">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Preview</span>
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="basic" className="space-y-4 pt-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="acquisition">Acquisition</SelectItem>
-                          <SelectItem value="activation">Activation</SelectItem>
-                          <SelectItem value="retention">Retention</SelectItem>
-                          <SelectItem value="revenue">Revenue</SelectItem>
-                          <SelectItem value="referral">Referral</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Metric Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Metric name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="target"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Value</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. >20%" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="current"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Value</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g. 18%" 
-                          value={field.value || ''} 
-                          onChange={e => field.onChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <div className="flex items-center gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          Category
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <p>Choose from the AARRR framework categories</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="not-started">Not Started</SelectItem>
-                            <SelectItem value="success">Success</SelectItem>
-                            <SelectItem value="warning">Warning</SelectItem>
-                            <SelectItem value="error">Error</SelectItem>
+                            <SelectItem value="acquisition">Acquisition</SelectItem>
+                            <SelectItem value="activation">Activation</SelectItem>
+                            <SelectItem value="retention">Retention</SelectItem>
+                            <SelectItem value="revenue">Revenue</SelectItem>
+                            <SelectItem value="referral">Referral</SelectItem>
                           </SelectContent>
                         </Select>
-                        <div className="text-xs text-gray-500 flex items-center">
-                          <Info className="h-3.5 w-3.5 mr-1" />
-                          <span>Will be auto-calculated if thresholds are set</span>
-                        </div>
-                      </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Metric Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Conversion Rate" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        Description
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>Describe what this metric measures and why it's important</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe what this metric measures and why it's important"
+                          {...field} 
+                          className="min-h-[80px]"
+                        />
+                      </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="target"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Target Value</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., 20%" {...field} />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          What value do you want to achieve?
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="current"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Value</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., 18%" 
+                            value={field.value || ''} 
+                            onChange={e => field.onChange(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Leave blank if not yet measured
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="flex items-center gap-3 bg-muted p-3 rounded-md">
+                  <div className="flex-grow">
+                    <Label htmlFor="metric-direction" className="text-sm font-medium mb-1 block">
+                      Metric Direction
+                    </Label>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Is a higher or lower value better for this metric?
+                    </div>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <Button
+                      type="button"
+                      variant={metricDirection === 'higher' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setMetricDirection('higher')}
+                    >
+                      Higher is better
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={metricDirection === 'lower' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setMetricDirection('lower')}
+                    >
+                      Lower is better
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="thresholds" className="space-y-4 pt-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium">Threshold Settings</h3>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={suggestThresholds}
+                      >
+                        Suggest Thresholds
+                      </Button>
+                    </div>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                      <p className="text-sm text-blue-800 flex items-start gap-2">
+                        <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                        <span>
+                          Set threshold values that will automatically determine the status of your metric. 
+                          The status will be calculated based on the current value relative to these thresholds.
+                        </span>
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <Label htmlFor="auto-calculate" className="flex items-center gap-2 cursor-pointer">
+                        <span>Auto-calculate status</span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              <p>When enabled, the status will be automatically determined based on the current value and thresholds</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </Label>
+                      <Switch
+                        id="auto-calculate"
+                        checked={autoCalculateStatus}
+                        onCheckedChange={setAutoCalculateStatus}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="warning_threshold"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span>Warning Threshold</span>
+                              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200 text-xs">
+                                Warning
+                              </Badge>
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder={metricDirection === 'higher' ? "e.g., 15% (lower than target)" : "e.g., 25% (higher than target)"} 
+                                {...field} 
+                                value={field.value || ''}
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              {metricDirection === 'higher' 
+                                ? "When current value falls to this level" 
+                                : "When current value rises to this level"}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="error_threshold"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span>Error Threshold</span>
+                              <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 text-xs">
+                                Error
+                              </Badge>
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder={metricDirection === 'higher' ? "e.g., 10% (lower than warning)" : "e.g., 30% (higher than warning)"} 
+                                {...field}
+                                value={field.value || ''}
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              {metricDirection === 'higher' 
+                                ? "When current value falls below warning level" 
+                                : "When current value rises above warning level"}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <FormField
+                  control={form.control}
+                  name="pivotTrigger"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Create pivot trigger</FormLabel>
+                        <FormDescription>
+                          When this metric reaches error status, automatically suggest a pivot option
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />
               </TabsContent>
               
-              <TabsContent value="thresholds" className="space-y-4 pt-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-                  <p className="text-sm text-blue-800">
-                    Set threshold values that will automatically determine the status of your metric. 
-                    The status will be calculated based on the current value relative to these thresholds.
-                  </p>
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="warning_threshold"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Warning Threshold</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g. 15%" 
-                          {...field} 
-                          value={field.value || ''}
+              <TabsContent value="advanced" className="space-y-4 pt-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="text-lg font-medium mb-4">Metric Preview</h3>
+                    
+                    <div className="rounded-md bg-gray-50 p-4 mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-900">
+                          {form.watch('name') || 'Untitled Metric'}
+                        </h4>
+                        <Badge className={getStatusBadgeColor(previewStatus)}>
+                          {previewStatus === 'not-started' ? 'Not Started' : 
+                           previewStatus === 'success' ? 'Success' : 
+                           previewStatus === 'warning' ? 'Warning' : 'Error'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {form.watch('category')?.charAt(0).toUpperCase() + form.watch('category')?.slice(1) || 'Category'}
+                        </Badge>
+                        {form.watch('pivotTrigger') && previewStatus === 'error' && (
+                          <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 text-xs">
+                            Pivot Trigger
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="mt-3 space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-500">Current:</span>
+                          <span className="font-medium">{form.watch('current') || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-500">Target:</span>
+                          <span className="font-medium">{form.watch('target') || 'N/A'}</span>
+                        </div>
+                        {form.watch('warning_threshold') && (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500">Warning at:</span>
+                            <span className="font-medium text-yellow-600">{form.watch('warning_threshold')}</span>
+                          </div>
+                        )}
+                        {form.watch('error_threshold') && (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500">Error at:</span>
+                            <span className="font-medium text-red-600">{form.watch('error_threshold')}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {form.watch('description') && (
+                        <div className="mt-3 text-sm text-gray-500">
+                          {form.watch('description')}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Status Override</h4>
+                      {autoCalculateStatus ? (
+                        <div className="text-sm text-muted-foreground">
+                          Status is being automatically calculated. Disable auto-calculation in the Thresholds tab to manually set the status.
+                        </div>
+                      ) : (
+                        <FormField
+                          control={form.control}
+                          name="status"
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="not-started">Not Started</SelectItem>
+                                  <SelectItem value="success">Success</SelectItem>
+                                  <SelectItem value="warning">Warning</SelectItem>
+                                  <SelectItem value="error">Error</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="error_threshold"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Error Threshold</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g. 10%" 
-                          {...field}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="mt-2 text-sm text-gray-500">
-                  <p>For values like conversion rates or retention rates:</p>
-                  <ul className="list-disc pl-5 mt-1">
-                    <li>If target is 20%, warning might be 15%, error might be 10%</li>
-                  </ul>
-                  <p className="mt-2">For cost metrics (where lower is better):</p>
-                  <ul className="list-disc pl-5 mt-1">
-                    <li>If target is $20, warning might be $25, error might be $30</li>
-                  </ul>
-                </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
             
