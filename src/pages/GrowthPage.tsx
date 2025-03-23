@@ -92,14 +92,14 @@ const GrowthPage = () => {
           
           {activeModel && (
             <div className="mt-8">
-              <Tabs value={activePanelTab} onValueChange={setActivePanelTab} className="w-full">
+              <Tabs defaultValue={activePanelTab} value={activePanelTab} onValueChange={setActivePanelTab} className="w-full">
                 <TabsList className="grid w-full max-w-md grid-cols-2">
                   <TabsTrigger value="detail-view">Detail View</TabsTrigger>
                   <TabsTrigger value="growth-types">Growth Types</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="detail-view" className="mt-6">
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full max-w-md grid-cols-3">
                       <TabsTrigger value="metrics">Metrics</TabsTrigger>
                       <TabsTrigger value="channels">Channels</TabsTrigger>
