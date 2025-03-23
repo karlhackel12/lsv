@@ -217,6 +217,67 @@ export type Database = {
           },
         ]
       }
+      growth_hypotheses: {
+        Row: {
+          action: string
+          created_at: string
+          growth_model_id: string
+          id: string
+          metric_id: string | null
+          outcome: string
+          project_id: string
+          stage: string
+          success_criteria: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          growth_model_id: string
+          id?: string
+          metric_id?: string | null
+          outcome: string
+          project_id: string
+          stage: string
+          success_criteria?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          growth_model_id?: string
+          id?: string
+          metric_id?: string | null
+          outcome?: string
+          project_id?: string
+          stage?: string
+          success_criteria?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_hypotheses_growth_model_id_fkey"
+            columns: ["growth_model_id"]
+            isOneToOne: false
+            referencedRelation: "growth_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_hypotheses_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "growth_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_hypotheses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       growth_metrics: {
         Row: {
           category: string

@@ -69,10 +69,9 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
 
   const handleSubmit = async (data: HypothesisFormValues) => {
     try {
-      // In a full implementation, this would save to the database
       if (isEditing && hypothesis?.id) {
         await supabase
-          .from('growth_hypotheses')
+          .from('hypotheses')
           .update({
             action: data.action,
             outcome: data.outcome,
@@ -84,14 +83,14 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
           .eq('id', hypothesis.id);
       } else {
         await supabase
-          .from('growth_hypotheses')
+          .from('hypotheses')
           .insert({
-            action: data.action,
-            outcome: data.outcome,
-            success_criteria: data.success_criteria,
-            metric_id: data.metric_id,
-            stage: data.stage,
-            growth_model_id: growthModel.id,
+            statement: `We believe that ${data.action} will result in ${data.outcome}.`,
+            category: 'growth',
+            criteria: data.success_criteria || `We'll know we're right when we see improvement.`,
+            experiment: 'To be defined',
+            status: 'not-started',
+            phase: 'solution',
             project_id: projectId
           });
       }
