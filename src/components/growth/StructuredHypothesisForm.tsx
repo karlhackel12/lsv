@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useNavigate } from 'react-router-dom';
 
 interface StructuredHypothesisFormProps {
   growthModel: GrowthModel;
@@ -53,6 +54,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
   hypothesis
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const isEditing = !!hypothesis;
 
   const form = useForm<HypothesisFormValues>({
@@ -71,7 +73,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
     try {
       if (isEditing && hypothesis?.id) {
         await supabase
-          .from('hypotheses')
+          .from('growth_hypotheses')
           .update({
             action: data.action,
             outcome: data.outcome,
@@ -81,8 +83,31 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             updated_at: new Date().toISOString()
           })
           .eq('id', hypothesis.id);
+          
+        toast({
+          title: 'Hypothesis updated',
+          description: 'Your growth hypothesis has been updated.',
+        });
       } else {
-        await supabase
+        // First, create the growth hypothesis
+        const { data: growthHypothesis, error: growthError } = await supabase
+          .from('growth_hypotheses')
+          .insert({
+            action: data.action,
+            outcome: data.outcome,
+            success_criteria: data.success_criteria || 'We\'ll know we\'re right when we see improvement.',
+            metric_id: data.metric_id,
+            stage: data.stage,
+            growth_model_id: growthModel.id,
+            project_id: projectId
+          })
+          .select()
+          .single();
+          
+        if (growthError) throw growthError;
+        
+        // Then, create a corresponding hypothesis in the main hypotheses table for cross-system compatibility
+        const { error: hypothesisError } = await supabase
           .from('hypotheses')
           .insert({
             statement: `We believe that ${data.action} will result in ${data.outcome}.`,
@@ -93,12 +118,14 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             phase: 'solution',
             project_id: projectId
           });
+          
+        if (hypothesisError) throw hypothesisError;
+        
+        toast({
+          title: 'Hypothesis created',
+          description: 'Your growth hypothesis has been saved.',
+        });
       }
-      
-      toast({
-        title: isEditing ? 'Hypothesis updated' : 'Hypothesis created',
-        description: 'Your growth hypothesis has been saved.',
-      });
       
       await onSave();
       onClose();
@@ -108,6 +135,24 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
         title: 'Error',
         description: 'Failed to save hypothesis. Please try again.',
         variant: 'destructive'
+      });
+    }
+  };
+
+  // Navigate to experiments page to create an experiment for this hypothesis
+  const handleCreateExperiment = () => {
+    if (isEditing && hypothesis?.id) {
+      navigate('/experiments', { 
+        state: { 
+          createExperiment: true, 
+          hypothesisId: hypothesis.id,
+          hypothesisType: 'growth'
+        } 
+      });
+    } else {
+      toast({
+        title: 'Save hypothesis first',
+        description: 'Please save your hypothesis before creating an experiment.',
       });
     }
   };
@@ -270,6 +315,16 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
+              {isEditing && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
+                  onClick={handleCreateExperiment}
+                >
+                  Create Experiment
+                </Button>
+              )}
               <Button type="submit">
                 {isEditing ? 'Update Hypothesis' : 'Create Hypothesis'}
               </Button>

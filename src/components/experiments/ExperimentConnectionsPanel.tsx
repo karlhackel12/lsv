@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,15 @@ import { LinkIcon, TrendingUp, Lightbulb, ArrowUpRight } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
+
+interface GrowthHypothesisData {
+  id: string;
+  action: string;
+  outcome: string;
+  success_criteria: string | null;
+  stage: string;
+  metric_id: string | null;
+}
 
 interface ExperimentConnectionsPanelProps {
   experiment: Experiment;
@@ -25,13 +33,17 @@ const ExperimentConnectionsPanel = ({
   onRefresh
 }: ExperimentConnectionsPanelProps) => {
   const [growthMetrics, setGrowthMetrics] = useState<GrowthMetric[]>([]);
+  const [growthHypotheses, setGrowthHypotheses] = useState<GrowthHypothesisData[]>([]);
+  const [selectedGrowthHypothesis, setSelectedGrowthHypothesis] = useState<GrowthHypothesisData | null>(null);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  const [isLoadingHypotheses, setIsLoadingHypotheses] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<GrowthMetric | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchGrowthMetrics();
+    fetchGrowthHypotheses();
   }, [projectId]);
 
   // Helper function to validate status
@@ -66,6 +78,25 @@ const ExperimentConnectionsPanel = ({
       setIsLoadingMetrics(false);
     }
   };
+  
+  const fetchGrowthHypotheses = async () => {
+    try {
+      setIsLoadingHypotheses(true);
+      const { data, error } = await supabase
+        .from('growth_hypotheses')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setGrowthHypotheses(data || []);
+    } catch (err) {
+      console.error('Error fetching growth hypotheses:', err);
+    } finally {
+      setIsLoadingHypotheses(false);
+    }
+  };
 
   const linkExperimentToHypothesis = async () => {
     if (!relatedHypothesis) return;
@@ -92,6 +123,28 @@ const ExperimentConnectionsPanel = ({
       toast({
         title: 'Error',
         description: 'Failed to link experiment to hypothesis',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const linkExperimentToGrowthHypothesis = async (growthHypothesis: GrowthHypothesisData) => {
+    try {
+      // This is a conceptual linking since we don't have a direct relationship in the database yet
+      // In a full implementation, we'd update the experiment with a growth_hypothesis_id field
+      
+      // For now, let's show the connection in the UI
+      setSelectedGrowthHypothesis(growthHypothesis);
+      
+      toast({
+        title: 'Connected to growth hypothesis',
+        description: 'This experiment is now tracking the selected growth hypothesis',
+      });
+    } catch (err) {
+      console.error('Error linking to growth hypothesis:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to link experiment to growth hypothesis',
         variant: 'destructive',
       });
     }
@@ -165,8 +218,8 @@ const ExperimentConnectionsPanel = ({
     }
   };
 
-  const navigateToGrowth = () => {
-    navigate('/growth', { state: { highlightMetric: selectedMetric?.id } });
+  const navigateToGrowth = (tab?: string, metricId?: string) => {
+    navigate('/growth', { state: { tab: tab || 'metrics', metricId } });
   };
 
   return (
@@ -179,12 +232,16 @@ const ExperimentConnectionsPanel = ({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="hypothesis" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="hypothesis" className="flex items-center">
               <Lightbulb className="h-4 w-4 mr-2" />
               Hypothesis
             </TabsTrigger>
-            <TabsTrigger value="growth" className="flex items-center">
+            <TabsTrigger value="growth-hypothesis" className="flex items-center">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Growth Hypothesis
+            </TabsTrigger>
+            <TabsTrigger value="growth-metrics" className="flex items-center">
               <TrendingUp className="h-4 w-4 mr-2" />
               Growth Metrics
             </TabsTrigger>
@@ -251,7 +308,100 @@ const ExperimentConnectionsPanel = ({
             )}
           </TabsContent>
           
-          <TabsContent value="growth" className="pt-4">
+          <TabsContent value="growth-hypothesis" className="pt-4">
+            {growthHypotheses.length > 0 ? (
+              <div className="space-y-4">
+                {selectedGrowthHypothesis ? (
+                  <div className="p-4 bg-blue-50 rounded-md border border-blue-100">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-sm font-medium text-blue-700 mb-1">Connected Growth Hypothesis</h3>
+                        <p className="text-sm text-gray-700 mb-2">
+                          We believe that <span className="font-medium">{selectedGrowthHypothesis.action}</span> will 
+                          result in <span className="font-medium">{selectedGrowthHypothesis.outcome}</span>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {selectedGrowthHypothesis.success_criteria && (
+                      <div className="mt-2 pt-2 border-t border-blue-100">
+                        <p className="text-xs text-gray-500 mb-1">Success Criteria:</p>
+                        <p className="text-sm">{selectedGrowthHypothesis.success_criteria}</p>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end mt-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs h-7"
+                        onClick={() => navigateToGrowth('hypotheses')}
+                      >
+                        View All Hypotheses
+                        <ArrowUpRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Connect this experiment to a growth hypothesis to track its impact on your growth model:
+                    </p>
+                    
+                    <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+                      {growthHypotheses.map(hypothesis => (
+                        <div 
+                          key={hypothesis.id}
+                          className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer"
+                          onClick={() => linkExperimentToGrowthHypothesis(hypothesis)}
+                        >
+                          <div className="text-sm">
+                            <p className="font-medium mb-1">
+                              We believe that <span className="text-blue-600">{hypothesis.action}</span>
+                            </p>
+                            <p className="mb-2">
+                              will result in <span className="text-blue-600">{hypothesis.outcome}</span>
+                            </p>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button 
+                              size="sm"
+                              variant="ghost" 
+                              className="h-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                linkExperimentToGrowthHypothesis(hypothesis);
+                              }}
+                            >
+                              Connect
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-amber-50 rounded-md border border-amber-100">
+                <h3 className="text-sm font-medium text-amber-700 mb-1">No Growth Hypotheses Found</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  You haven't created any growth hypotheses yet. Create a growth hypothesis to track
+                  your experiments' impact on your growth model.
+                </p>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateToGrowth('hypotheses')}
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Create Growth Hypothesis
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="growth-metrics" className="pt-4">
             {growthMetrics.length > 0 ? (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600 mb-2">

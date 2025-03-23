@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +8,7 @@ import GrowthModelSection from '@/components/growth/GrowthModelSection';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
+import GrowthHypothesesSection from '@/components/growth/GrowthHypothesesSection';
 import GrowthTypesPanel from '@/components/growth/GrowthTypesPanel';
 import ScalingReadinessSection from '@/components/growth/ScalingReadinessSection';
 import { useGrowthModels } from '@/hooks/use-growth-models';
@@ -16,8 +16,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StepJourney, { Step } from '@/components/StepJourney';
 import ValidationStageCard from '@/components/growth/ValidationStageCard';
+import { useLocation } from 'react-router-dom';
+import PhaseNavigation from '@/components/PhaseNavigation';
 
-// Define the validation stages according to the Lean Startup Growth Model
 const VALIDATION_STAGES = [
   {
     id: 'channel',
@@ -81,7 +82,6 @@ const VALIDATION_STAGES = [
   }
 ];
 
-// Define the steps in the growth journey
 const GROWTH_JOURNEY_STEPS: Step[] = [
   { 
     id: 'setup', 
@@ -89,8 +89,13 @@ const GROWTH_JOURNEY_STEPS: Step[] = [
     description: 'Set up your growth metrics and acquisition channels'
   },
   { 
+    id: 'hypotheses', 
+    label: 'Create Hypotheses',
+    description: 'Define and structure your growth hypotheses'
+  },
+  { 
     id: 'experiments', 
-    label: 'Define Experiments',
+    label: 'Run Experiments',
     description: 'Design experiments to test your growth hypotheses'
   },
   { 
@@ -111,6 +116,8 @@ const GrowthPage = () => {
   const [setupTab, setSetupTab] = useState('metrics');
   const [validationTab, setValidationTab] = useState('stages');
   const { toast } = useToast();
+  const location = useLocation();
+  
   const {
     growthModels,
     growthMetrics,
@@ -131,23 +138,39 @@ const GrowthPage = () => {
       fetchGrowthModels();
     }
   }, [currentProject]);
+  
+  useEffect(() => {
+    const state = location.state as { tab?: string; metricId?: string } | null;
+    
+    if (state) {
+      if (state.tab === 'metrics') {
+        setCurrentStep('setup');
+        setSetupTab('metrics');
+      } else if (state.tab === 'channels') {
+        setCurrentStep('setup');
+        setSetupTab('channels');
+      } else if (state.tab === 'hypotheses') {
+        setCurrentStep('hypotheses');
+      } else if (state.tab === 'experiments') {
+        setCurrentStep('experiments');
+      }
+    }
+  }, [location.state]);
 
-  // Helper to check if a step can be accessed
   const canAccessStep = (stepId: string) => {
     if (stepId === 'setup') return true;
+    if (stepId === 'hypotheses') return growthMetrics.length > 0 && growthChannels.length > 0;
     if (stepId === 'experiments') return growthMetrics.length > 0 && growthChannels.length > 0;
     if (stepId === 'validation') return growthExperiments.length > 0;
-    if (stepId === 'followup') return true; // Always allow follow-up
+    if (stepId === 'followup') return completedSteps.includes('validation');
     return false;
   };
 
-  // Navigate to next step if possible
   const goToNextStep = () => {
     const currentIndex = GROWTH_JOURNEY_STEPS.findIndex(step => step.id === currentStep);
     if (currentIndex < GROWTH_JOURNEY_STEPS.length - 1) {
       const nextStep = GROWTH_JOURNEY_STEPS[currentIndex + 1].id;
       if (canAccessStep(nextStep)) {
-        // Mark the current step as completed
         if (!completedSteps.includes(currentStep)) {
           setCompletedSteps([...completedSteps, currentStep]);
         }
@@ -162,10 +185,15 @@ const GrowthPage = () => {
     }
   };
 
-  // Handle step change from the StepJourney component
   const handleStepChange = (stepId: string) => {
     if (canAccessStep(stepId)) {
       setCurrentStep(stepId);
+    } else {
+      toast({
+        title: "Can't access this step yet",
+        description: "Complete the previous steps first.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -202,6 +230,8 @@ const GrowthPage = () => {
           </>
         }
       />
+      
+      <PhaseNavigation />
 
       {currentProject && !isLoadingModels && (
         <>
@@ -226,14 +256,13 @@ const GrowthPage = () => {
                 </CardContent>
               </Card>
 
-              {/* Step 1: Setup - Define Channels & Metrics */}
               {currentStep === 'setup' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl font-semibold">1. Define Your Channels & Metrics</h2>
                     <Button 
                       onClick={goToNextStep} 
-                      disabled={!canAccessStep('experiments')}
+                      disabled={!canAccessStep('hypotheses')}
                       className="ml-auto"
                     >
                       Next Step
@@ -267,11 +296,36 @@ const GrowthPage = () => {
                 </div>
               )}
 
-              {/* Step 2: Define Experiments */}
+              {currentStep === 'hypotheses' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">2. Create Growth Hypotheses</h2>
+                    <Button 
+                      onClick={goToNextStep} 
+                      className="ml-auto"
+                    >
+                      Next Step
+                    </Button>
+                  </div>
+
+                  <p className="text-gray-600">
+                    Create structured hypotheses about how to grow your product. Each hypothesis should target a specific growth stage
+                    and have a clear expected outcome that can be measured.
+                  </p>
+                  
+                  <GrowthHypothesesSection
+                    growthModel={activeModel}
+                    projectId={currentProject.id}
+                    metrics={growthMetrics}
+                    refreshData={() => fetchGrowthModelData(activeModel.id)}
+                  />
+                </div>
+              )}
+
               {currentStep === 'experiments' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">2. Define Experiments</h2>
+                    <h2 className="text-xl font-semibold">3. Run Growth Experiments</h2>
                     <Button 
                       onClick={goToNextStep} 
                       disabled={!canAccessStep('validation')}
@@ -306,11 +360,10 @@ const GrowthPage = () => {
                 </div>
               )}
 
-              {/* Step 3: Validation Stages & Scaling Checklist */}
               {currentStep === 'validation' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">3. Growth Validation & Scaling Readiness</h2>
+                    <h2 className="text-xl font-semibold">4. Growth Validation & Scaling Readiness</h2>
                     <Button 
                       onClick={goToNextStep} 
                       className="ml-auto"
@@ -359,11 +412,10 @@ const GrowthPage = () => {
                 </div>
               )}
 
-              {/* Step 4: Follow Up Actions */}
               {currentStep === 'followup' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">4. Follow Up Actions</h2>
+                    <h2 className="text-xl font-semibold">5. Follow Up Actions</h2>
                   </div>
                   
                   <p className="text-gray-600">
