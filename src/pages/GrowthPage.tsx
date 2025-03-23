@@ -1,0 +1,240 @@
+
+import React, { useState, useEffect } from 'react';
+import { useProject } from '@/hooks/use-project';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, TrendingUp } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PageIntroduction from '@/components/PageIntroduction';
+import GrowthModelSection from '@/components/growth/GrowthModelSection';
+import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
+import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
+import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
+import { GrowthModel, GrowthMetric, GrowthChannel, GrowthExperiment } from '@/types/database';
+
+const GrowthPage = () => {
+  const { currentProject, isLoading, error } = useProject();
+  const [growthModels, setGrowthModels] = useState<GrowthModel[]>([]);
+  const [activeModel, setActiveModel] = useState<GrowthModel | null>(null);
+  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetric[]>([]);
+  const [growthChannels, setGrowthChannels] = useState<GrowthChannel[]>([]);
+  const [growthExperiments, setGrowthExperiments] = useState<GrowthExperiment[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const { toast } = useToast();
+
+  const fetchGrowthModels = async () => {
+    if (!currentProject) return;
+    
+    try {
+      setIsLoadingModels(true);
+      const { data, error } = await supabase
+        .from('growth_models')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .order('updated_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      const transformedData: GrowthModel[] = data.map((item) => ({
+        ...item,
+        id: item.id,
+        originalId: item.id,
+      }));
+      
+      setGrowthModels(transformedData);
+      
+      // Set active model to first model if available
+      if (transformedData.length > 0 && !activeModel) {
+        setActiveModel(transformedData[0]);
+        await fetchGrowthModelData(transformedData[0].id);
+      }
+    } catch (err) {
+      console.error('Error fetching growth models:', err);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load growth models',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  const fetchGrowthModelData = async (modelId: string) => {
+    if (!currentProject || !modelId) return;
+    
+    try {
+      // Fetch metrics
+      const { data: metricsData, error: metricsError } = await supabase
+        .from('growth_metrics')
+        .select('*')
+        .eq('growth_model_id', modelId)
+        .order('category', { ascending: true });
+        
+      if (metricsError) throw metricsError;
+      
+      const transformedMetrics: GrowthMetric[] = metricsData.map((item) => ({
+        ...item,
+        id: item.id,
+        originalId: item.id,
+      }));
+      
+      setGrowthMetrics(transformedMetrics);
+      
+      // Fetch channels
+      const { data: channelsData, error: channelsError } = await supabase
+        .from('growth_channels')
+        .select('*')
+        .eq('growth_model_id', modelId)
+        .order('name', { ascending: true });
+        
+      if (channelsError) throw channelsError;
+      
+      const transformedChannels: GrowthChannel[] = channelsData.map((item) => ({
+        ...item,
+        id: item.id,
+        originalId: item.id,
+      }));
+      
+      setGrowthChannels(transformedChannels);
+      
+      // Fetch experiments
+      const { data: experimentsData, error: experimentsError } = await supabase
+        .from('growth_experiments')
+        .select('*')
+        .eq('growth_model_id', modelId)
+        .order('created_at', { ascending: false });
+        
+      if (experimentsError) throw experimentsError;
+      
+      const transformedExperiments: GrowthExperiment[] = experimentsData.map((item) => ({
+        ...item,
+        id: item.id,
+        originalId: item.id,
+      }));
+      
+      setGrowthExperiments(transformedExperiments);
+    } catch (err) {
+      console.error('Error fetching growth model data:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to load growth model data',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleModelChange = async (model: GrowthModel) => {
+    setActiveModel(model);
+    await fetchGrowthModelData(model.id);
+  };
+
+  useEffect(() => {
+    if (currentProject) {
+      fetchGrowthModels();
+    }
+  }, [currentProject]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading project...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <p>Error: {error instanceof Error ? error.message : 'Failed to load project'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <PageIntroduction
+        title="Growth Model & Scale Validation"
+        icon={<TrendingUp className="h-5 w-5 text-blue-500" />}
+        description={
+          <>
+            <p>
+              Develop and validate your growth model to scale your startup effectively. Track key metrics, experiment with channels, and optimize your growth strategy.
+            </p>
+            <ul className="list-disc pl-5 mt-2">
+              <li><strong>Growth Framework:</strong> Structure your approach using proven models like AARRR (Pirate Metrics) or create your own</li>
+              <li><strong>Growth Metrics:</strong> Define and track the key metrics that matter for your business's growth</li>
+              <li><strong>Channels:</strong> Experiment with different acquisition channels and track their performance</li>
+              <li><strong>Growth Experiments:</strong> Run and document experiments to improve key metrics</li>
+            </ul>
+            <p className="mt-2">
+              As you validate your growth model, you'll identify the most effective channels, optimize your conversion funnel, and build a scalable approach to acquiring and retaining customers.
+            </p>
+          </>
+        }
+      />
+
+      {currentProject && !isLoadingModels && (
+        <>
+          <GrowthModelSection 
+            growthModels={growthModels}
+            activeModel={activeModel}
+            projectId={currentProject.id}
+            refreshData={fetchGrowthModels}
+            onModelChange={handleModelChange}
+          />
+          
+          {activeModel && (
+            <Tabs defaultValue="metrics" className="w-full mt-8">
+              <TabsList className="grid w-full max-w-md grid-cols-3">
+                <TabsTrigger value="metrics">Metrics</TabsTrigger>
+                <TabsTrigger value="channels">Channels</TabsTrigger>
+                <TabsTrigger value="experiments">Experiments</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="metrics" className="mt-6">
+                <GrowthMetricsSection
+                  metrics={growthMetrics}
+                  growthModel={activeModel}
+                  projectId={currentProject.id}
+                  refreshData={() => fetchGrowthModelData(activeModel.id)}
+                />
+              </TabsContent>
+              
+              <TabsContent value="channels" className="mt-6">
+                <GrowthChannelsSection
+                  channels={growthChannels}
+                  growthModel={activeModel}
+                  projectId={currentProject.id}
+                  refreshData={() => fetchGrowthModelData(activeModel.id)}
+                />
+              </TabsContent>
+              
+              <TabsContent value="experiments" className="mt-6">
+                <GrowthExperimentsSection
+                  experiments={growthExperiments}
+                  metrics={growthMetrics}
+                  growthModel={activeModel}
+                  projectId={currentProject.id}
+                  refreshData={() => fetchGrowthModelData(activeModel.id)}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
+        </>
+      )}
+      
+      {isLoadingModels && (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading growth models...</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GrowthPage;

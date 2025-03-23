@@ -8,6 +8,7 @@ import {
   Layers,
   LineChart,
   GitFork,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +37,11 @@ const mainNavItems = [
     title: 'Metrics',
     href: '/metrics',
     icon: <LineChart className="h-5 w-5 mr-2" />,
+  },
+  {
+    title: 'Growth',
+    href: '/growth',
+    icon: <TrendingUp className="h-5 w-5 mr-2" />,
   },
   {
     title: 'Pivot',
