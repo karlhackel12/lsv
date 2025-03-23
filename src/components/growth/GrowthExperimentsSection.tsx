@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Beaker, Calendar, TrendingUp, Target, CheckCircle, Clock } from 'lucide-react';
+import { PlusCircle, Beaker, Calendar, TrendingUp, Target, CheckCircle, Clock, Trash2 } from 'lucide-react';
 import { GrowthExperiment, GrowthMetric, GrowthModel } from '@/types/database';
 import GrowthExperimentForm from '@/components/forms/GrowthExperimentForm';
 import StructuredHypothesisForm from '@/components/growth/StructuredHypothesisForm';
+import DeleteGrowthExperimentDialog from '@/components/growth/DeleteGrowthExperimentDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -32,6 +33,8 @@ const GrowthExperimentsSection = ({
   const [showHypothesisForm, setShowHypothesisForm] = useState(false);
   const [editingExperiment, setEditingExperiment] = useState<GrowthExperiment | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [experimentToDelete, setExperimentToDelete] = useState<GrowthExperiment | null>(null);
   const { toast } = useToast();
 
   const handleOpenForm = (experiment?: GrowthExperiment) => {
@@ -50,6 +53,11 @@ const GrowthExperimentsSection = ({
 
   const handleCloseHypothesisForm = () => {
     setShowHypothesisForm(false);
+  };
+
+  const handleDelete = (experiment: GrowthExperiment) => {
+    setExperimentToDelete(experiment);
+    setIsDeleteDialogOpen(true);
   };
 
   // Get the metric name for an experiment
@@ -159,16 +167,26 @@ const GrowthExperimentsSection = ({
                               <Badge className={getStatusColor()}>
                                 {experiment.status.charAt(0).toUpperCase() + experiment.status.slice(1)}
                               </Badge>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0" 
-                                onClick={() => handleOpenForm(experiment)}
-                              >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                              </Button>
+                              <div className="flex space-x-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0" 
+                                  onClick={() => handleDelete(experiment)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0" 
+                                  onClick={() => handleOpenForm(experiment)}
+                                >
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                  </svg>
+                                </Button>
+                              </div>
                             </div>
                             <CardTitle className="text-base mt-1">{experiment.title}</CardTitle>
                             <CardDescription className="text-xs line-clamp-2">
@@ -239,6 +257,13 @@ const GrowthExperimentsSection = ({
           </div>
         </>
       )}
+
+      <DeleteGrowthExperimentDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        experimentToDelete={experimentToDelete}
+        refreshData={refreshData}
+      />
     </div>
   );
 };

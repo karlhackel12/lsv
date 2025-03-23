@@ -46,12 +46,10 @@ const ExperimentConnectionsPanel = ({
     fetchGrowthHypotheses();
   }, [projectId]);
 
-  // Helper function to validate status
   const validateGrowthMetricStatus = (status: string): 'on-track' | 'at-risk' | 'off-track' => {
     if (status === 'on-track' || status === 'at-risk' || status === 'off-track') {
       return status as 'on-track' | 'at-risk' | 'off-track';
     }
-    // Default to 'off-track' if the status is not valid
     return 'off-track';
   };
 
@@ -65,7 +63,6 @@ const ExperimentConnectionsPanel = ({
         
       if (error) throw error;
       
-      // Transform the data to ensure status is of the correct type
       const transformedData: GrowthMetric[] = (data || []).map(item => ({
         ...item,
         status: validateGrowthMetricStatus(item.status)
@@ -130,10 +127,6 @@ const ExperimentConnectionsPanel = ({
   
   const linkExperimentToGrowthHypothesis = async (growthHypothesis: GrowthHypothesisData) => {
     try {
-      // This is a conceptual linking since we don't have a direct relationship in the database yet
-      // In a full implementation, we'd update the experiment with a growth_hypothesis_id field
-      
-      // For now, let's show the connection in the UI
       setSelectedGrowthHypothesis(growthHypothesis);
       
       toast({
@@ -152,7 +145,6 @@ const ExperimentConnectionsPanel = ({
 
   const createGrowthExperiment = async (metric: GrowthMetric) => {
     try {
-      // Get the first growth model for this project
       const { data: models, error: modelsError } = await supabase
         .from('growth_models')
         .select('*')
@@ -172,10 +164,9 @@ const ExperimentConnectionsPanel = ({
       
       const growthModelId = models[0].id;
       
-      // Create a growth experiment based on this experiment
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 14); // 2 weeks experiment by default
+      endDate.setDate(endDate.getDate() + 14);
       
       const { error } = await supabase
         .from('growth_experiments')
@@ -183,7 +174,7 @@ const ExperimentConnectionsPanel = ({
           title: `From exp: ${experiment.title}`,
           hypothesis: experiment.hypothesis,
           metric_id: metric.id,
-          expected_lift: 10, // Default expected lift
+          expected_lift: 10,
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
           status: 'planned',
@@ -220,6 +211,16 @@ const ExperimentConnectionsPanel = ({
 
   const navigateToGrowth = (tab?: string, metricId?: string) => {
     navigate('/growth', { state: { tab: tab || 'metrics', metricId } });
+  };
+
+  const handleNavigateToGrowth = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    navigateToGrowth();
+  };
+
+  const handleNavigateToGrowthTab = (tab: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    navigateToGrowth(tab);
   };
 
   return (
@@ -335,7 +336,7 @@ const ExperimentConnectionsPanel = ({
                         variant="outline" 
                         size="sm" 
                         className="text-xs h-7"
-                        onClick={() => navigateToGrowth('hypotheses')}
+                        onClick={handleNavigateToGrowthTab('hypotheses')}
                       >
                         View All Hypotheses
                         <ArrowUpRight className="h-3 w-3 ml-1" />
@@ -392,7 +393,7 @@ const ExperimentConnectionsPanel = ({
                 <Button 
                   variant="outline"
                   size="sm"
-                  onClick={() => navigateToGrowth('hypotheses')}
+                  onClick={handleNavigateToGrowthTab('hypotheses')}
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Create Growth Hypothesis
@@ -441,7 +442,7 @@ const ExperimentConnectionsPanel = ({
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={navigateToGrowth}
+                      onClick={handleNavigateToGrowth}
                     >
                       Go to Growth Page
                       <ArrowUpRight className="h-3 w-3 ml-1" />
@@ -458,7 +459,7 @@ const ExperimentConnectionsPanel = ({
                 <Button 
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate('/growth')}
+                  onClick={handleNavigateToGrowth}
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Go to Growth Section
