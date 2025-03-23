@@ -1,7 +1,5 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +10,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -26,54 +23,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-const experimentSchema = z.object({
-  title: z.string().min(2, 'Title must be at least 2 characters'),
-  hypothesis: z.string().min(2, 'Hypothesis must be at least 2 characters'),
-  method: z.string().min(2, 'Method must be at least 2 characters'),
-  metrics: z.string().min(2, 'Metrics must be at least 2 characters'),
-  status: z.string(),
-  category: z.string().nullable(),
-  results: z.string().optional(),
-  decisions: z.string().optional(),
-  insights: z.string().optional(),
-});
+type FormData = Omit<Experiment, 'id' | 'created_at' | 'updated_at' | 'project_id' | 'typeform_id' | 'typeform_url' | 'typeform_workspace_id' | 'typeform_responses_count' | 'originalId'>;
 
-type FormData = z.infer<typeof experimentSchema>;
-
-export interface ExperimentFormProps {
+interface ExperimentFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void | Promise<void>;
-  experiment?: Experiment;
+  onSave: () => void;
+  experiment?: Experiment | null;
   projectId: string;
+  hypothesisId?: string;
 }
 
-const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: ExperimentFormProps) => {
+const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId, hypothesisId }: ExperimentFormProps) => {
   const { toast } = useToast();
   const isEditing = !!experiment;
 
   const form = useForm<FormData>({
-    resolver: zodResolver(experimentSchema),
     defaultValues: experiment ? {
       title: experiment.title,
       hypothesis: experiment.hypothesis,
       method: experiment.method,
       metrics: experiment.metrics,
-      status: experiment.status,
-      category: experiment.category || null,
+      category: experiment.category || '',
       results: experiment.results || '',
       decisions: experiment.decisions || '',
       insights: experiment.insights || '',
+      status: experiment.status,
     } : {
       title: '',
       hypothesis: '',
       method: '',
       metrics: '',
-      status: 'planned',
-      category: null,
+      category: '',
       results: '',
       decisions: '',
       insights: '',
+      status: 'planned',
     }
   });
 
@@ -88,16 +73,24 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
             hypothesis: data.hypothesis,
             method: data.method,
             metrics: data.metrics,
-            status: data.status,
             category: data.category,
             results: data.results,
             decisions: data.decisions,
             insights: data.insights,
+            status: data.status as 'planned' | 'in-progress' | 'completed', // Fix the type cast
             updated_at: new Date().toISOString(),
           })
-          .eq('id', experiment.originalId || experiment.id);
+          .eq('id', experiment.id);
 
-        if (error) throw error;
+        if (error) {
+          toast({
+            title: 'Error',
+            description: 'Failed to update experiment. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         toast({
           title: 'Experiment updated',
           description: 'The experiment has been successfully updated.',
@@ -111,15 +104,21 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
             hypothesis: data.hypothesis,
             method: data.method,
             metrics: data.metrics,
-            status: data.status,
             category: data.category,
+            hypothesis_id: hypothesisId,
             project_id: projectId,
-            results: data.results,
-            decisions: data.decisions,
-            insights: data.insights,
+            status: data.status as 'planned' | 'in-progress' | 'completed', // Fix the type cast
           });
 
-        if (error) throw error;
+        if (error) {
+          toast({
+            title: 'Error',
+            description: 'Failed to create experiment. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         toast({
           title: 'Experiment created',
           description: 'A new experiment has been created successfully.',
@@ -167,7 +166,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Hypothesis</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment hypothesis" {...field} className="min-h-[80px]" />
+                    <Textarea placeholder="Experiment hypothesis" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,7 +180,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Method</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment method" {...field} className="min-h-[80px]" />
+                    <Textarea placeholder="Experiment method" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -195,13 +194,27 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Metrics</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment metrics" {...field} className="min-h-[80px]" />
+                    <Textarea placeholder="Experiment metrics" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Experiment category" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <FormField
               control={form.control}
               name="results"
@@ -209,13 +222,13 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Results</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment results" {...field} className="min-h-[80px]" />
+                    <Textarea placeholder="Experiment results" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="decisions"
@@ -223,13 +236,13 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Decisions</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment decisions" {...field} className="min-h-[80px]" />
+                    <Textarea placeholder="Experiment decisions" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="insights"
@@ -237,7 +250,7 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                 <FormItem>
                   <FormLabel>Insights</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Experiment insights" {...field} className="min-h-[80px]" />
+                    <Textarea placeholder="Experiment insights" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -265,20 +278,6 @@ const ExperimentForm = ({ isOpen, onClose, onSave, experiment, projectId }: Expe
                       <SelectItem value="completed">Completed</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Experiment category" {...field} />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

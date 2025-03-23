@@ -124,7 +124,6 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
     if (isEditing && metric?.id) {
       fetchThresholds(metric.id);
       
-      // Determine metric direction from existing values
       if (metric.target && metric.target.includes('%')) {
         const targetNum = parseFloat(metric.target.replace('%', ''));
         setMetricDirection(targetNum >= 0 ? 'higher' : 'lower');
@@ -213,26 +212,17 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
   };
 
   const handleSubmit = async (data: FormData) => {
-    const { warning_threshold, error_threshold, pivotTrigger, ...metricData } = data;
-    
     try {
-      if (data.current && autoCalculateStatus && warning_threshold && error_threshold) {
-        const calculatedStatus = calculateStatus(
-          data.current, 
-          data.target, 
-          warning_threshold, 
-          error_threshold,
-          metricDirection
-        );
-        
-        metricData.status = calculatedStatus as "not-started" | "success" | "warning" | "error";
-      }
-      
       if (isEditing && metric) {
-        const { data: updatedMetric, error } = await supabase
+        const { error } = await supabase
           .from('metrics')
           .update({
-            ...metricData,
+            name: data.name,
+            target: data.target,
+            current: data.current,
+            description: data.description,
+            category: data.category,
+            status: data.status as 'not-started' | 'success' | 'warning' | 'error',
             updated_at: new Date().toISOString(),
           })
           .eq('id', metric.id)
@@ -241,15 +231,15 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
 
         if (error) throw error;
         
-        await saveMetricHistory(metric.id, metricData.current, metricData.status);
+        await saveMetricHistory(metric.id, data.current, data.status);
         
-        if (warning_threshold && error_threshold) {
+        if (data.warning_threshold && data.error_threshold) {
           if (thresholds) {
             await supabase
               .from('metric_thresholds')
               .update({
-                warning_threshold,
-                error_threshold,
+                warning_threshold: data.warning_threshold,
+                error_threshold: data.error_threshold,
                 updated_at: new Date().toISOString(),
               })
               .eq('id', thresholds.id);
@@ -258,13 +248,13 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
               .from('metric_thresholds')
               .insert({
                 metric_id: metric.id,
-                warning_threshold,
-                error_threshold,
+                warning_threshold: data.warning_threshold,
+                error_threshold: data.error_threshold,
               });
           }
         }
 
-        if (pivotTrigger && metricData.status === 'error') {
+        if (data.pivotTrigger && data.status === 'error') {
           const { data: existingTrigger } = await supabase
             .from('pivot_metric_triggers')
             .select('*')
@@ -276,8 +266,8 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
               .from('pivot_options')
               .insert({
                 type: 'customer-need',
-                description: `Pivot option triggered by metric: ${metricData.name}`,
-                trigger: `Metric "${metricData.name}" is in error state`,
+                description: `Pivot option triggered by metric: ${data.name}`,
+                trigger: `Metric "${data.name}" is in error state`,
                 likelihood: 'medium',
                 project_id: projectId,
               })
@@ -301,41 +291,41 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
           description: 'The metric has been successfully updated.',
         });
       } else {
-        const { data: newMetric, error } = await supabase
+        const { error } = await supabase
           .from('metrics')
           .insert({
-            category: metricData.category || 'acquisition',
-            name: metricData.name || '',
-            target: metricData.target || '',
-            current: metricData.current,
-            status: metricData.status || 'not-started',
+            name: data.name,
+            target: data.target,
+            current: data.current,
+            description: data.description,
+            category: data.category,
             project_id: projectId,
-            description: metricData.description
+            status: data.status as 'not-started' | 'success' | 'warning' | 'error',
           })
           .select()
           .single();
 
         if (error) throw error;
         
-        await saveMetricHistory(newMetric.id, metricData.current, metricData.status);
+        await saveMetricHistory(newMetric.id, data.current, data.status);
         
-        if (warning_threshold && error_threshold) {
+        if (data.warning_threshold && data.error_threshold) {
           await supabase
             .from('metric_thresholds')
             .insert({
               metric_id: newMetric.id,
-              warning_threshold,
-              error_threshold,
+              warning_threshold: data.warning_threshold,
+              error_threshold: data.error_threshold,
             });
         }
         
-        if (pivotTrigger && metricData.status === 'error') {
+        if (data.pivotTrigger && data.status === 'error') {
           const { data: newPivotOption } = await supabase
             .from('pivot_options')
             .insert({
               type: 'customer-need',
-              description: `Pivot option triggered by metric: ${metricData.name}`,
-              trigger: `Metric "${metricData.name}" is in error state`,
+              description: `Pivot option triggered by metric: ${data.name}`,
+              trigger: `Metric "${data.name}" is in error state`,
               likelihood: 'medium',
               project_id: projectId,
             })
@@ -846,3 +836,4 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId }: MetricFormPr
 };
 
 export default MetricForm;
+

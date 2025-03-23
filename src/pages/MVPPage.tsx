@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,10 +13,10 @@ import PageIntroduction from '@/components/PageIntroduction';
 
 const MVPPage = () => {
   const { currentProject, isLoading, error } = useProject();
-  const [mvpFeatures, setMvpFeatures] = useState<MvpFeature[]>([]);
+  const [mvpFeatures, setMvpFeatures] = useState<MVPFeature[]>([]);
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedFeature, setSelectedFeature] = useState<MvpFeature | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<MVPFeature | null>(null);
   const { toast } = useToast();
 
   const fetchMvpFeatures = async () => {
@@ -55,7 +56,7 @@ const MVPPage = () => {
     setIsFormOpen(true);
   };
 
-  const handleEditFeature = (feature: MvpFeature) => {
+  const handleEditFeature = (feature: MVPFeature) => {
     setSelectedFeature(feature);
     setIsFormOpen(true);
   };
@@ -71,7 +72,7 @@ const MVPPage = () => {
     setSelectedFeature(null);
   };
 
-  const handleDeleteFeature = async (feature: MvpFeature) => {
+  const handleDeleteFeature = async (feature: MVPFeature) => {
     try {
       const { error } = await supabase
         .from('mvp_features')
