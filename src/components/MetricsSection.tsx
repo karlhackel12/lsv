@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import Card from './Card';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
-import { Gauge, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Gauge, Plus, Edit, Trash2, AlertCircle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import MetricForm from './forms/MetricForm';
+import { MetricData } from '@/types/metrics';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,19 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Metric {
-  id: number;
-  originalId?: string;
-  category: string;
-  name: string;
-  target: string;
-  current: string | null;
-  status: string;
-}
+import { Badge } from '@/components/ui/badge';
 
 interface MetricsSectionProps {
-  metrics: Metric[];
+  metrics: MetricData[];
   refreshData: () => void;
   projectId: string;
 }
@@ -38,41 +30,42 @@ interface MetricsSectionProps {
 const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps) => {
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<any>(null);
+  const [selectedMetric, setSelectedMetric] = useState<MetricData | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [metricToDelete, setMetricToDelete] = useState<any>(null);
+  const [metricToDelete, setMetricToDelete] = useState<MetricData | null>(null);
 
   const handleCreateNew = () => {
     setSelectedMetric(null);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (metric: Metric) => {
-    // Find original metric with string ID for database operations
-    const originalMetric = {
-      ...metric,
-      id: metric.originalId // Ensure we're using the original string ID
-    };
-    setSelectedMetric(originalMetric);
+  const handleEdit = (metric: MetricData) => {
+    // Ensure we're using the original string ID for database operations
+    setSelectedMetric(metric);
     setIsFormOpen(true);
   };
 
-  const handleDelete = (metric: Metric) => {
-    setMetricToDelete({
-      ...metric,
-      id: metric.originalId // Ensure we're using the original string ID
-    });
+  const handleDelete = (metric: MetricData) => {
+    setMetricToDelete(metric);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleCardUpdate = (metric: MetricData) => {
+    setSelectedMetric(metric);
+    setIsFormOpen(true);
   };
 
   const confirmDelete = async () => {
     if (!metricToDelete) return;
     
     try {
+      // Use originalId if available
+      const metricId = metricToDelete.originalId || metricToDelete.id;
+      
       const { error } = await supabase
         .from('metrics')
         .delete()
-        .eq('id', metricToDelete.id);
+        .eq('id', metricId);
       
       if (error) throw error;
       
@@ -100,9 +93,10 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
   const retentionMetrics = metrics.filter(m => m.category === 'retention');
   const revenueMetrics = metrics.filter(m => m.category === 'revenue');
   const referralMetrics = metrics.filter(m => m.category === 'referral');
+  const customMetrics = metrics.filter(m => m.category === 'custom');
 
   // Helper function to get display values for a category
-  const getCategoryDisplayValues = (categoryMetrics: Metric[], categoryName: string) => {
+  const getCategoryDisplayValues = (categoryMetrics: MetricData[], categoryName: string) => {
     if (categoryMetrics.length === 0) {
       return {
         value: '-',
@@ -132,6 +126,41 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
   const revenue = getCategoryDisplayValues(revenueMetrics, 'Revenue');
   const referral = getCategoryDisplayValues(referralMetrics, 'Referral');
 
+  // Render a metric card with proper editing capabilities
+  const renderMetricCard = (categoryName: string, displayValues: any, metrics: MetricData[]) => (
+    <Card className="p-5 flex flex-col items-center text-center animate-slideUpFade animate-delay-200" hover={true}>
+      <h3 className="font-semibold mb-2 text-validation-gray-900">{categoryName}</h3>
+      <p className="text-3xl font-bold text-validation-blue-600 mb-1">{displayValues.value}</p>
+      <p className="text-sm text-validation-gray-600 mb-1">{displayValues.description}</p>
+      <p className="text-xs text-validation-gray-500 mb-3">{displayValues.targetDescription}</p>
+      <ProgressBar 
+        value={displayValues.progress} 
+        variant={displayValues.status as any} 
+        size="sm" 
+        className="w-full mt-auto" 
+      />
+      {metrics.length > 0 ? (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-3"
+          onClick={() => handleCardUpdate(metrics[0])}
+        >
+          Update
+        </Button>
+      ) : (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-3"
+          onClick={handleCreateNew}
+        >
+          Add Metric
+        </Button>
+      )}
+    </Card>
+  );
+
   return (
     <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
@@ -152,120 +181,11 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-        <Card className="p-5 flex flex-col items-center text-center animate-slideUpFade animate-delay-200" hover={true}>
-          <h3 className="font-semibold mb-2 text-validation-gray-900">Acquisition</h3>
-          <p className="text-3xl font-bold text-validation-blue-600 mb-1">{acquisition.value}</p>
-          <p className="text-sm text-validation-gray-600 mb-1">{acquisition.description}</p>
-          <p className="text-xs text-validation-gray-500 mb-3">{acquisition.targetDescription}</p>
-          <ProgressBar 
-            value={acquisition.progress} 
-            variant={acquisition.status as any} 
-            size="sm" 
-            className="w-full mt-auto" 
-          />
-          {acquisitionMetrics.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3"
-              onClick={() => handleEdit(acquisitionMetrics[0])}
-            >
-              Update
-            </Button>
-          )}
-        </Card>
-        
-        <Card className="p-5 flex flex-col items-center text-center animate-slideUpFade animate-delay-300" hover={true}>
-          <h3 className="font-semibold mb-2 text-validation-gray-900">Activation</h3>
-          <p className="text-3xl font-bold text-validation-blue-600 mb-1">{activation.value}</p>
-          <p className="text-sm text-validation-gray-600 mb-1">{activation.description}</p>
-          <p className="text-xs text-validation-gray-500 mb-3">{activation.targetDescription}</p>
-          <ProgressBar 
-            value={activation.progress} 
-            variant={activation.status as any} 
-            size="sm" 
-            className="w-full mt-auto" 
-          />
-          {activationMetrics.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3"
-              onClick={() => handleEdit(activationMetrics[0])}
-            >
-              Update
-            </Button>
-          )}
-        </Card>
-        
-        <Card className="p-5 flex flex-col items-center text-center animate-slideUpFade animate-delay-400" hover={true}>
-          <h3 className="font-semibold mb-2 text-validation-gray-900">Retention</h3>
-          <p className="text-3xl font-bold text-validation-blue-600 mb-1">{retention.value}</p>
-          <p className="text-sm text-validation-gray-600 mb-1">{retention.description}</p>
-          <p className="text-xs text-validation-gray-500 mb-3">{retention.targetDescription}</p>
-          <ProgressBar 
-            value={retention.progress} 
-            variant={retention.status as any} 
-            size="sm" 
-            className="w-full mt-auto" 
-          />
-          {retentionMetrics.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3"
-              onClick={() => handleEdit(retentionMetrics[0])}
-            >
-              Update
-            </Button>
-          )}
-        </Card>
-        
-        <Card className="p-5 flex flex-col items-center text-center animate-slideUpFade animate-delay-500" hover={true}>
-          <h3 className="font-semibold mb-2 text-validation-gray-900">Revenue</h3>
-          <p className="text-3xl font-bold text-validation-blue-600 mb-1">{revenue.value}</p>
-          <p className="text-sm text-validation-gray-600 mb-1">{revenue.description}</p>
-          <p className="text-xs text-validation-gray-500 mb-3">{revenue.targetDescription}</p>
-          <ProgressBar 
-            value={revenue.progress} 
-            variant={revenue.status as any} 
-            size="sm" 
-            className="w-full mt-auto" 
-          />
-          {revenueMetrics.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3"
-              onClick={() => handleEdit(revenueMetrics[0])}
-            >
-              Update
-            </Button>
-          )}
-        </Card>
-        
-        <Card className="p-5 flex flex-col items-center text-center animate-slideUpFade animate-delay-500" hover={true}>
-          <h3 className="font-semibold mb-2 text-validation-gray-900">Referral</h3>
-          <p className="text-3xl font-bold text-validation-blue-600 mb-1">{referral.value}</p>
-          <p className="text-sm text-validation-gray-600 mb-1">{referral.description}</p>
-          <p className="text-xs text-validation-gray-500 mb-3">{referral.targetDescription}</p>
-          <ProgressBar 
-            value={referral.progress} 
-            variant={referral.status as any} 
-            size="sm" 
-            className="w-full mt-auto" 
-          />
-          {referralMetrics.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3"
-              onClick={() => handleEdit(referralMetrics[0])}
-            >
-              Update
-            </Button>
-          )}
-        </Card>
+        {renderMetricCard('Acquisition', acquisition, acquisitionMetrics)}
+        {renderMetricCard('Activation', activation, activationMetrics)}
+        {renderMetricCard('Retention', retention, retentionMetrics)}
+        {renderMetricCard('Revenue', revenue, revenueMetrics)}
+        {renderMetricCard('Referral', referral, referralMetrics)}
       </div>
       
       <h3 className="text-xl font-bold mb-6 text-validation-gray-900">All Metrics</h3>
@@ -293,6 +213,7 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Target</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Current</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">History</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-validation-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -302,11 +223,24 @@ const MetricsSection = ({ metrics, refreshData, projectId }: MetricsSectionProps
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-validation-gray-900">
                       {metric.category.charAt(0).toUpperCase() + metric.category.slice(1)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">{metric.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">
+                      <div>
+                        <div>{metric.name}</div>
+                        {metric.description && (
+                          <div className="text-xs text-gray-500 mt-1">{metric.description}</div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">{metric.target}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-validation-gray-600">{metric.current || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <StatusBadge status={metric.status as any} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <Badge variant="outline" className="flex items-center gap-1 cursor-pointer">
+                        <TrendingUp className="h-3 w-3" />
+                        View Trend
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex space-x-2">

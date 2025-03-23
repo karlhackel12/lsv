@@ -15,20 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { MetricData } from '@/types/metrics';
 
 interface MetricFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  metric?: {
-    id: string;
-    name: string;
-    description?: string;
-    category: string;
-    current: string | null;
-    target: string;
-    status: "success" | "warning" | "error" | "not-started";
-  };
+  metric?: MetricData;
   projectId: string;
 }
 
@@ -39,6 +32,7 @@ const MetricForm = ({
   metric, 
   projectId 
 }: MetricFormProps) => {
+  // Form state
   const [name, setName] = useState(metric?.name || '');
   const [description, setDescription] = useState(metric?.description || '');
   const [category, setCategory] = useState(metric?.category || '');
@@ -49,11 +43,14 @@ const MetricForm = ({
   );
   const [warningThreshold, setWarningThreshold] = useState('0');
   const [errorThreshold, setErrorThreshold] = useState('0');
+  const [notes, setNotes] = useState('');
+  
+  // UI state
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch thresholds if editing an existing metric
+  // Load thresholds when editing an existing metric
   useEffect(() => {
     const fetchThresholds = async () => {
       if (metric?.id) {
@@ -76,9 +73,12 @@ const MetricForm = ({
       }
     };
     
-    fetchThresholds();
-  }, [metric]);
+    if (isOpen) {
+      fetchThresholds();
+    }
+  }, [metric, isOpen]);
 
+  // Reset form when opened or metric changes
   useEffect(() => {
     if (isOpen) {
       if (metric) {
@@ -88,6 +88,7 @@ const MetricForm = ({
         setCurrent(metric.current || '');
         setTarget(metric.target || '');
         setStatus(metric.status || 'not-started');
+        setNotes('');
       } else {
         // Reset form when creating a new metric
         setName('');
@@ -98,6 +99,7 @@ const MetricForm = ({
         setStatus('not-started');
         setWarningThreshold('0');
         setErrorThreshold('0');
+        setNotes('');
       }
     }
   }, [metric, isOpen]);
@@ -136,11 +138,14 @@ const MetricForm = ({
       const calculatedStatus = status === 'not-started' && current && current !== '0' 
         ? calculateStatus(current, target, warningThreshold, errorThreshold)
         : status;
+      
+      const timestamp = new Date().toISOString();
+      const contextInfo = metric ? `Updated from ${metric.current || '0'} to ${current}` : 'Initial value';
         
       if (metric) {
         // Update existing metric
         const updates = {
-          updated_at: new Date().toISOString(),
+          updated_at: timestamp,
           current: current,
           name: name,
           target: target,
@@ -152,7 +157,7 @@ const MetricForm = ({
         const { error: metricError } = await supabase
           .from('metrics')
           .update(updates)
-          .eq('id', metric.id);
+          .eq('id', metric.originalId || metric.id);
           
         if (metricError) throw metricError;
         
@@ -160,26 +165,30 @@ const MetricForm = ({
         const { error: thresholdError } = await supabase
           .from('metric_thresholds')
           .upsert({
-            metric_id: metric.id,
+            metric_id: metric.originalId || metric.id,
             warning_threshold: warningThreshold,
             error_threshold: errorThreshold,
-            updated_at: new Date().toISOString()
+            updated_at: timestamp
           });
           
         if (thresholdError) throw thresholdError;
         
-        // Add to metric history
-        await supabase
-          .from('metric_history')
-          .insert({
-            metric_id: metric.id,
-            value: current,
-            status: calculatedStatus,
-            recorded_at: new Date().toISOString()
-          });
+        // Add to metric history with notes (if value has changed)
+        if (metric.current !== current) {
+          await supabase
+            .from('metric_history')
+            .insert({
+              metric_id: metric.originalId || metric.id,
+              value: current,
+              status: calculatedStatus,
+              recorded_at: timestamp,
+              notes: notes || null,
+              context: contextInfo
+            });
+        }
           
         // Check for active pivot triggers
-        checkPivotTriggers(metric.id, current, calculatedStatus);
+        checkPivotTriggers(metric.originalId || metric.id, current, calculatedStatus);
         
         toast({
           title: 'Success',
@@ -194,8 +203,8 @@ const MetricForm = ({
           current: current || "0",
           status: calculatedStatus,
           project_id: projectId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: timestamp,
+          updated_at: timestamp
         };
         
         const { data, error } = await supabase
@@ -215,8 +224,8 @@ const MetricForm = ({
               metric_id: metricId,
               warning_threshold: warningThreshold || "0",
               error_threshold: errorThreshold || "0",
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              created_at: timestamp,
+              updated_at: timestamp
             });
             
           // Also add to metric history
@@ -226,7 +235,9 @@ const MetricForm = ({
               metric_id: metricId,
               value: current || "0",
               status: calculatedStatus,
-              recorded_at: new Date().toISOString()
+              recorded_at: timestamp,
+              notes: notes || null,
+              context: 'Initial value'
             });
         }
         
@@ -389,6 +400,18 @@ const MetricForm = ({
               </SelectContent>
             </Select>
           </div>
+
+          {metric && (
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Update Notes (optional)</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add notes about this update"
+              />
+            </div>
+          )}
         </form>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={onClose}>

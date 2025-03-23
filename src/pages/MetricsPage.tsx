@@ -11,10 +11,11 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import PageIntroduction from '@/components/PageIntroduction';
+import { MetricData } from '@/types/metrics';
 
 const MetricsPage = () => {
   const { currentProject, isLoading, error } = useProject();
-  const [metrics, setMetrics] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<MetricData[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [pivotTriggers, setPivotTriggers] = useState<any[]>([]);
   const { toast } = useToast();
@@ -36,7 +37,7 @@ const MetricsPage = () => {
       // Transform the data to include numeric ID for easier handling in UI
       const transformedData = data.map((item, index) => ({
         ...item,
-        id: index + 1,
+        id: item.id,
         originalId: item.id,
       }));
       
