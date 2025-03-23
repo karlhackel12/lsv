@@ -52,14 +52,14 @@ export interface Experiment {
   updated_at: string;
   name?: string;
   description?: string;
-  hypothesis_id?: string;
-  category?: 'problem' | 'solution' | 'business-model';
+  hypothesis_id?: string | null;
+  category?: 'problem' | 'solution' | 'business-model' | string | null;
   success_criteria?: string;
   // Typeform integration fields
-  typeform_id?: string;
-  typeform_url?: string;
-  typeform_workspace_id?: string;
-  typeform_responses_count?: number;
+  typeform_id?: string | null;
+  typeform_url?: string | null;
+  typeform_workspace_id?: string | null;
+  typeform_responses_count?: number | null;
 }
 
 export interface MvpFeature {

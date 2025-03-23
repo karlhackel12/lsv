@@ -100,7 +100,8 @@ const Dashboard = () => {
           ...item,
           originalId: item.id,
           id: item.id,
-          status: item.status as 'planned' | 'in-progress' | 'completed'
+          status: item.status as 'planned' | 'in-progress' | 'completed',
+          category: item.category as 'problem' | 'solution' | 'business-model' | string | null
         }));
 
         const transformedMvpFeatures: MvpFeature[] = mvpFeaturesData.map(item => ({

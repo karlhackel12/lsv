@@ -34,12 +34,13 @@ const ExperimentsPage = () => {
         
       if (error) throw error;
       
-      // Ensure we cast the status to the correct type defined in the interface
+      // Ensure we cast the status and category to the correct types
       const transformedData: Experiment[] = data.map(item => ({
         ...item,
         originalId: item.id,
         id: item.id,
-        status: item.status as 'planned' | 'in-progress' | 'completed'
+        status: item.status as 'planned' | 'in-progress' | 'completed',
+        category: item.category as 'problem' | 'solution' | 'business-model' | string | null
       }));
       
       setExperiments(transformedData);

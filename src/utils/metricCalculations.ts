@@ -89,3 +89,28 @@ export const formatMetricValue = (value: string | null, includeSymbol = true): s
     return value;
   }
 };
+
+/**
+ * Map category string to specific experiment categories
+ * 
+ * @param category Raw category string from database
+ * @returns Typed category or original string if not matching
+ */
+export const normalizeExperimentCategory = (
+  category: string | null
+): 'problem' | 'solution' | 'business-model' | string | null => {
+  if (!category) return null;
+  
+  switch (category.toLowerCase()) {
+    case 'problem':
+      return 'problem';
+    case 'solution':
+      return 'solution';
+    case 'business-model':
+    case 'business model':
+    case 'businessmodel':
+      return 'business-model';
+    default:
+      return category;
+  }
+};
