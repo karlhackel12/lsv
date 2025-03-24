@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MVPFeature } from '@/types/database';
+import { MVPFeature, GrowthMetric } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -25,6 +25,7 @@ import {
 // Update the MVPFeature interface to include originalId if it's being used
 interface ExtendedMVPFeature extends MVPFeature {
   originalId?: string;
+  growth_metric_id?: string | null;
 }
 
 interface MVPFeatureFormProps {
@@ -50,9 +51,37 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
     (feature?.status as "planned" | "in-progress" | "completed" | "post-mvp") || "planned"
   );
   const [notes, setNotes] = useState(feature?.notes || "");
+  const [growthMetricId, setGrowthMetricId] = useState<string | null>(feature?.growth_metric_id || null);
+  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetric[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (isOpen && projectId) {
+      fetchGrowthMetrics();
+    }
+  }, [isOpen, projectId]);
+  
+  const fetchGrowthMetrics = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('growth_metrics')
+        .select('*')
+        .eq('project_id', projectId);
+        
+      if (error) throw error;
+      
+      setGrowthMetrics(data || []);
+    } catch (err) {
+      console.error("Error fetching growth metrics:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,11 +105,29 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
             impact,
             status,
             notes,
+            growth_metric_id: growthMetricId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', feature.originalId || feature.id);
           
         if (error) throw error;
+        
+        // Create or update entity dependency
+        if (growthMetricId) {
+          await supabase
+            .from('entity_dependencies')
+            .upsert({
+              project_id: projectId,
+              source_type: 'mvp_feature',
+              source_id: feature.originalId || feature.id,
+              target_type: 'growth_metric',
+              target_id: growthMetricId,
+              relationship_type: 'impacts',
+              strength: impact === 'high' ? 3.0 : impact === 'medium' ? 2.0 : 1.0,
+            }, {
+              onConflict: 'source_id, target_id, relationship_type'
+            });
+        }
         
         toast({
           title: "Success",
@@ -88,7 +135,7 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
         });
       } else {
         // Create new feature
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('mvp_features')
           .insert({
             feature: featureText,
@@ -98,9 +145,26 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
             status,
             notes,
             project_id: projectId,
-          });
+            growth_metric_id: growthMetricId,
+          })
+          .select();
           
         if (error) throw error;
+        
+        // Create entity dependency if growth metric is selected
+        if (growthMetricId && data && data.length > 0) {
+          await supabase
+            .from('entity_dependencies')
+            .insert({
+              project_id: projectId,
+              source_type: 'mvp_feature',
+              source_id: data[0].id,
+              target_type: 'growth_metric',
+              target_id: growthMetricId,
+              relationship_type: 'impacts',
+              strength: impact === 'high' ? 3.0 : impact === 'medium' ? 2.0 : 1.0,
+            });
+        }
         
         toast({
           title: "Success",
@@ -201,6 +265,28 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
                   <SelectItem value="post-mvp">Post MVP</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="growthMetric">Growth Metric (Impact)</Label>
+              <Select 
+                value={growthMetricId || ''} 
+                onValueChange={(value) => setGrowthMetricId(value || null)}
+              >
+                <SelectTrigger id="growthMetric">
+                  <SelectValue placeholder="Select a growth metric" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {growthMetrics.map(metric => (
+                    <SelectItem key={metric.id} value={metric.id}>
+                      {metric.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Connecting features to growth metrics helps track their impact on scaling readiness
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes</Label>

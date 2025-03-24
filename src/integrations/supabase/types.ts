@@ -50,6 +50,53 @@ export type Database = {
           },
         ]
       }
+      entity_dependencies: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          relationship_type: string
+          source_id: string
+          source_type: string
+          strength: number | null
+          target_id: string
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          relationship_type: string
+          source_id: string
+          source_type: string
+          strength?: number | null
+          target_id: string
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          relationship_type?: string
+          source_id?: string
+          source_type?: string
+          strength?: number | null
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_dependencies_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiment_logs: {
         Row: {
           content: string
@@ -251,6 +298,7 @@ export type Database = {
           metric_id: string | null
           notes: string | null
           project_id: string | null
+          scaling_metric_id: string | null
           start_date: string
           status: string
           title: string
@@ -267,6 +315,7 @@ export type Database = {
           metric_id?: string | null
           notes?: string | null
           project_id?: string | null
+          scaling_metric_id?: string | null
           start_date: string
           status?: string
           title: string
@@ -283,6 +332,7 @@ export type Database = {
           metric_id?: string | null
           notes?: string | null
           project_id?: string | null
+          scaling_metric_id?: string | null
           start_date?: string
           status?: string
           title?: string
@@ -308,6 +358,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_experiments_scaling_metric_id_fkey"
+            columns: ["scaling_metric_id"]
+            isOneToOne: false
+            referencedRelation: "scaling_readiness_metrics"
             referencedColumns: ["id"]
           },
         ]
@@ -662,6 +719,7 @@ export type Database = {
           created_at: string
           effort: Database["public"]["Enums"]["feature_effort"] | null
           feature: string
+          growth_metric_id: string | null
           id: string
           impact: Database["public"]["Enums"]["feature_impact"] | null
           notes: string | null
@@ -674,6 +732,7 @@ export type Database = {
           created_at?: string
           effort?: Database["public"]["Enums"]["feature_effort"] | null
           feature: string
+          growth_metric_id?: string | null
           id?: string
           impact?: Database["public"]["Enums"]["feature_impact"] | null
           notes?: string | null
@@ -686,6 +745,7 @@ export type Database = {
           created_at?: string
           effort?: Database["public"]["Enums"]["feature_effort"] | null
           feature?: string
+          growth_metric_id?: string | null
           id?: string
           impact?: Database["public"]["Enums"]["feature_impact"] | null
           notes?: string | null
@@ -695,6 +755,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "mvp_features_growth_metric_id_fkey"
+            columns: ["growth_metric_id"]
+            isOneToOne: false
+            referencedRelation: "growth_metrics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mvp_features_project_id_fkey"
             columns: ["project_id"]
@@ -1075,6 +1142,56 @@ export type Database = {
           },
           {
             foreignKeyName: "scaling_readiness_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scaling_recommendations: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          project_id: string
+          source_id: string | null
+          status: string
+          target_id: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          priority: string
+          project_id: string
+          source_id?: string | null
+          status?: string
+          target_id?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          project_id?: string
+          source_id?: string | null
+          status?: string
+          target_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scaling_recommendations_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

@@ -6,11 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import ScalingMetricForm from './ScalingMetricForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Loader2, TrendingUp, Info } from 'lucide-react';
+import { PlusCircle, Loader2, TrendingUp, Info, ArrowRight } from 'lucide-react';
 import ScalingReadinessTable from './ScalingReadinessTable';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGrowthModelsState } from '@/hooks/growth/use-growth-models-state';
 import ScalingReadinessSection from './ScalingReadinessSection';
+import ScalingRecommendationsPanel from './ScalingRecommendationsPanel';
 
 interface ScalingReadinessMetricsProps {
   projectId: string;
@@ -32,11 +33,13 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
   const [linkedMetrics, setLinkedMetrics] = useState<Record<string, GrowthMetric[]>>({});
   const [growthModel, setGrowthModel] = useState<any>(null);
   const [growthChannels, setGrowthChannels] = useState<any[]>([]);
+  const [entityDependencies, setEntityDependencies] = useState<any[]>([]);
 
   useEffect(() => {
     fetchScalingMetrics();
     fetchGrowthModel();
     fetchGrowthChannels();
+    fetchEntityDependencies();
   }, [projectId]);
 
   useEffect(() => {
@@ -89,6 +92,21 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
     }
   };
 
+  const fetchEntityDependencies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('entity_dependencies')
+        .select('*')
+        .eq('project_id', projectId);
+        
+      if (error) throw error;
+      
+      setEntityDependencies(data || []);
+    } catch (error) {
+      console.error('Error fetching entity dependencies:', error);
+    }
+  };
+
   const fetchScalingMetrics = async () => {
     try {
       setIsLoading(true);
@@ -136,6 +154,12 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
         title: 'Metric deleted',
         description: 'The scaling readiness metric has been deleted',
       });
+      
+      // Also delete dependencies
+      await supabase
+        .from('entity_dependencies')
+        .delete()
+        .or(`source_id.eq.${metricId},target_id.eq.${metricId}`);
       
       await fetchScalingMetrics();
       refreshData();
@@ -206,6 +230,12 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
         </CardContent>
       </Card>
       
+      {/* Recommendations Panel */}
+      <ScalingRecommendationsPanel 
+        projectId={projectId}
+        refreshData={refreshData}
+      />
+      
       {showLearnStartupView ? (
         <ScalingReadinessSection 
           growthModel={growthModel}
@@ -254,6 +284,33 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
               onSave={handleSaveMetric}
               onClose={() => setIsAddingMetric(false)}
             />
+          )}
+
+          {/* Display connected entities */}
+          {entityDependencies.length > 0 && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Connected Entities</CardTitle>
+                <CardDescription>
+                  Relationships between MVP features, growth metrics, and scaling metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {entityDependencies.map((dep) => (
+                    <div key={dep.id} className="flex items-center p-2 border rounded-md bg-gray-50">
+                      <div className="font-medium">{dep.source_type}</div>
+                      <ArrowRight className="h-4 w-4 mx-2 text-gray-500" />
+                      <div className="font-medium">{dep.target_type}</div>
+                      <Badge className="ml-2">{dep.relationship_type}</Badge>
+                      <div className="ml-auto text-sm text-gray-500">
+                        Strength: {dep.strength}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
         </>
       )}

@@ -1,416 +1,382 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage,
-  FormDescription 
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useForm } from 'react-hook-form';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { GrowthMetric, ScalingReadinessMetric } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
-import { GrowthMetric, GrowthModel, GROWTH_METRIC_TEMPLATES, ScalingReadinessMetric, SCALING_METRIC_CATEGORIES } from '@/types/database';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { ChevronDown, HelpCircle, Link2 } from 'lucide-react';
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 
 interface GrowthMetricFormProps {
-  growthModel?: GrowthModel; // Make growthModel optional
   projectId: string;
-  metric?: GrowthMetric | null;
   onSave: () => Promise<void>;
-  onClose: () => void;
+  onClose?: () => void;
+  metric?: GrowthMetric | null;
+  growthModelId?: string;
 }
 
-const GrowthMetricForm = ({ 
-  growthModel, 
-  projectId, 
-  metric, 
-  onSave, 
-  onClose 
-}: GrowthMetricFormProps) => {
-  const { toast } = useToast();
-  const isEditing = !!metric;
-  const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
-  const [isLoadingScalingMetrics, setIsLoadingScalingMetrics] = useState(false);
+// The categories we support for growth metrics
+const METRIC_CATEGORIES = [
+  'acquisition',
+  'activation',
+  'retention',
+  'revenue',
+  'referral',
+  'custom'
+];
 
-  // Define core metric types for better categorization
-  const CORE_METRIC_CATEGORIES = [
-    { value: 'acquisition', label: 'Acquisition' },
-    { value: 'activation', label: 'Activation' },
-    { value: 'retention', label: 'Retention' },
-    { value: 'referral', label: 'Referral' },
-    { value: 'revenue', label: 'Revenue' },
-    { value: 'custom', label: 'Custom' }
-  ];
+// The unit options we support
+const UNIT_OPTIONS = [
+  'percentage',
+  'number',
+  'currency',
+  'users',
+  'days',
+  'ratio',
+  'custom'
+];
+
+// Status options for metrics
+const STATUS_OPTIONS = [
+  'on-track',
+  'at-risk',
+  'off-track'
+];
+
+const GrowthMetricForm = ({ 
+  projectId, 
+  onSave, 
+  onClose,
+  metric,
+  growthModelId 
+}: GrowthMetricFormProps) => {
+  const [name, setName] = useState(metric?.name || '');
+  const [description, setDescription] = useState(metric?.description || '');
+  const [category, setCategory] = useState(metric?.category || 'acquisition');
+  const [currentValue, setCurrentValue] = useState(metric?.current_value?.toString() || '0');
+  const [targetValue, setTargetValue] = useState(metric?.target_value?.toString() || '0');
+  const [unit, setUnit] = useState(metric?.unit || 'percentage');
+  const [status, setStatus] = useState<'on-track' | 'at-risk' | 'off-track'>(
+    (metric?.status as any) || 'on-track'
+  );
+  const [scalingMetricId, setScalingMetricId] = useState<string | null>(
+    metric?.scaling_metric_id || null
+  );
+  const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingScalingMetrics, setIsLoadingScalingMetrics] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchScalingMetrics = async () => {
-      try {
-        setIsLoadingScalingMetrics(true);
-        const { data, error } = await supabase
-          .from('scaling_readiness_metrics')
-          .select('*')
-          .eq('project_id', projectId);
-          
-        if (error) throw error;
-        
-        setScalingMetrics(data || []);
-      } catch (error) {
-        console.error('Error fetching scaling metrics:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load scaling metrics',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoadingScalingMetrics(false);
-      }
-    };
-
     if (projectId) {
       fetchScalingMetrics();
     }
-  }, [projectId, toast]);
+  }, [projectId]);
 
-  const form = useForm<GrowthMetric>({
-    defaultValues: metric || {
-      name: '',
-      description: '',
-      category: 'acquisition',
-      current_value: 0,
-      target_value: 0,
-      unit: 'count',
-      growth_model_id: growthModel?.id,
-      project_id: projectId,
-      status: 'on-track',
-      scaling_metric_id: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as GrowthMetric,
-  });
-
-  const handleSubmit = async (data: GrowthMetric) => {
+  const fetchScalingMetrics = async () => {
     try {
-      if (isEditing && metric) {
+      setIsLoadingScalingMetrics(true);
+      const { data, error } = await supabase
+        .from('scaling_readiness_metrics')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('importance', { ascending: false });
+        
+      if (error) throw error;
+      
+      setScalingMetrics(data || []);
+    } catch (error) {
+      console.error('Error fetching scaling metrics:', error);
+    } finally {
+      setIsLoadingScalingMetrics(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name || !category || currentValue === '' || targetValue === '' || !unit) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const metricData = {
+        name,
+        description,
+        category,
+        current_value: parseFloat(currentValue),
+        target_value: parseFloat(targetValue),
+        unit,
+        status,
+        growth_model_id: growthModelId,
+        project_id: projectId,
+        scaling_metric_id: scalingMetricId
+      };
+      
+      if (metric) {
+        // Update existing metric
         const { error } = await supabase
           .from('growth_metrics')
-          .update({
-            name: data.name,
-            description: data.description,
-            category: data.category,
-            current_value: data.current_value,
-            target_value: data.target_value,
-            unit: data.unit,
-            scaling_metric_id: data.scaling_metric_id || null,
-            status: determineStatus(data.current_value, data.target_value),
-            updated_at: new Date().toISOString(),
-          })
+          .update(metricData)
           .eq('id', metric.originalId || metric.id);
           
         if (error) throw error;
         
+        // Create or update dependency
+        if (scalingMetricId) {
+          await supabase
+            .from('entity_dependencies')
+            .upsert({
+              project_id: projectId,
+              source_type: 'growth_metric',
+              source_id: metric.originalId || metric.id,
+              target_type: 'scaling_metric',
+              target_id: scalingMetricId,
+              relationship_type: 'contributes_to',
+              strength: 2.5,
+            }, {
+              onConflict: 'source_id, target_id, relationship_type'
+            });
+        }
+        
         toast({
-          title: 'Metric updated',
-          description: 'Your metric has been successfully updated',
+          title: "Success",
+          description: "Metric updated successfully",
         });
       } else {
-        const { error } = await supabase
+        // Create new metric
+        const { data, error } = await supabase
           .from('growth_metrics')
-          .insert({
-            name: data.name,
-            description: data.description,
-            category: data.category,
-            current_value: data.current_value,
-            target_value: data.target_value,
-            unit: data.unit,
-            scaling_metric_id: data.scaling_metric_id || null,
-            project_id: projectId,
-            status: determineStatus(data.current_value, data.target_value),
-          });
+          .insert(metricData)
+          .select();
           
         if (error) throw error;
         
+        // Create dependency if scaling metric is selected
+        if (scalingMetricId && data && data.length > 0) {
+          await supabase
+            .from('entity_dependencies')
+            .insert({
+              project_id: projectId,
+              source_type: 'growth_metric',
+              source_id: data[0].id,
+              target_type: 'scaling_metric',
+              target_id: scalingMetricId,
+              relationship_type: 'contributes_to',
+              strength: 2.5,
+            });
+        }
+        
         toast({
-          title: 'Metric created',
-          description: 'Your new metric has been created',
+          title: "Success",
+          description: "Metric created successfully",
         });
       }
       
-      await onSave();
-      onClose();
-    } catch (error) {
+      onSave();
+      if (onClose) onClose();
+    } catch (error: any) {
       console.error('Error saving metric:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save metric. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to save metric",
+        variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const determineStatus = (current: number, target: number): 'on-track' | 'at-risk' | 'off-track' => {
-    const progress = (current / target) * 100;
-    
-    if (progress >= 80) {
-      return 'on-track';
-    } else if (progress >= 50) {
-      return 'at-risk';
-    } else {
-      return 'off-track';
-    }
-  };
-
-  const handleTemplateSelect = (template: { name: string; unit: string; description?: string }) => {
-    form.setValue('name', template.name);
-    form.setValue('unit', template.unit as any);
-    if (template.description) {
-      form.setValue('description', template.description);
-    }
-  };
-
-  const formatScalingMetricLabel = (metric: ScalingReadinessMetric) => {
-    const category = SCALING_METRIC_CATEGORIES[metric.category as keyof typeof SCALING_METRIC_CATEGORIES] || metric.category;
-    return `${metric.name} (${category})`;
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem className="flex-1 mr-2">
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                        }}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {CORE_METRIC_CATEGORIES.map((category) => (
-                            <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+    <Card className="border-2 border-blue-100">
+      <CardHeader>
+        <CardTitle>{metric ? 'Edit Metric' : 'Create Growth Metric'}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Tabs defaultValue="basic">
+            <TabsList className="mb-4">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="targets">Targets & Status</TabsTrigger>
+              <TabsTrigger value="links">Dependencies</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="basic" className="space-y-4">
+              <div>
+                <Label htmlFor="name">Metric Name</Label>
+                <Input 
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="E.g., Conversion Rate"
+                  required
                 />
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="mt-7 whitespace-nowrap">
-                      Templates <ChevronDown className="ml-1 h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0" align="end">
-                    <div className="p-4 border-b">
-                      <h4 className="text-sm font-semibold mb-1">Metric Templates</h4>
-                      <p className="text-xs text-gray-500">
-                        Choose from common metrics for your selected category
-                      </p>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {GROWTH_METRIC_TEMPLATES && 
-                       GROWTH_METRIC_TEMPLATES[form.watch('category') as keyof typeof GROWTH_METRIC_TEMPLATES]?.map((template, index) => (
-                        <div 
-                          key={index} 
-                          className="p-2.5 hover:bg-gray-50 cursor-pointer border-b"
-                          onClick={() => handleTemplateSelect(template)}
-                        >
-                          <h5 className="text-sm font-medium">{template.name}</h5>
-                          <p className="text-xs text-gray-500 mt-1">{template.description || ''}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
               </div>
-
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Metric Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Conversion Rate"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what this metric measures and why it's important"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select 
+                  value={category} 
+                  onValueChange={(value) => setCategory(value)}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select metric category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {METRIC_CATEGORIES.map(cat => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="targets" className="space-y-4">
+              <div>
+                <Label htmlFor="unit">Unit</Label>
+                <Select value={unit} onValueChange={(value) => setUnit(value)}>
+                  <SelectTrigger id="unit">
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIT_OPTIONS.map(unitOption => (
+                      <SelectItem key={unitOption} value={unitOption}>
+                        {unitOption.charAt(0).toUpperCase() + unitOption.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="current_value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Value</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="any"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                          value={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="target_value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Value</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="any"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                          value={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <Label htmlFor="currentValue">Current Value</Label>
+                  <Input 
+                    id="currentValue"
+                    type="number"
+                    value={currentValue}
+                    onChange={(e) => setCurrentValue(e.target.value)}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="targetValue">Target Value</Label>
+                  <Input 
+                    id="targetValue"
+                    type="number"
+                    value={targetValue}
+                    onChange={(e) => setTargetValue(e.target.value)}
+                    placeholder="100"
+                    required
+                  />
+                </div>
               </div>
-
-              <FormField
-                control={form.control}
-                name="unit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unit</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a unit" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="percentage">Percentage (%)</SelectItem>
-                        <SelectItem value="count">Count (#)</SelectItem>
-                        <SelectItem value="currency">Currency ($)</SelectItem>
-                        <SelectItem value="ratio">Ratio</SelectItem>
-                        <SelectItem value="time">Time (days)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+              
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={status} 
+                  onValueChange={(value: 'on-track' | 'at-risk' | 'off-track') => setStatus(value)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select metric status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(statusOption => (
+                      <SelectItem key={statusOption} value={statusOption}>
+                        {statusOption
+                          .split('-')
+                          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="links" className="space-y-4">
+              <div>
+                <Label htmlFor="scalingMetricId">Contributes to Scaling Metric</Label>
+                {isLoadingScalingMetrics ? (
+                  <div className="flex items-center mt-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Loading scaling metrics...</span>
+                  </div>
+                ) : (
+                  <Select 
+                    value={scalingMetricId || ''} 
+                    onValueChange={(value) => setScalingMetricId(value || null)}
+                  >
+                    <SelectTrigger id="scalingMetricId">
+                      <SelectValue placeholder="Select a scaling metric this growth metric contributes to" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {scalingMetrics.map(metric => (
+                        <SelectItem key={metric.id} value={metric.id}>
+                          {metric.name} ({metric.category})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
-              />
-
-              <FormField
-                control={form.control}
-                name="scaling_metric_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      Link to Scaling Readiness Metric
-                      <Link2 className="ml-1 h-4 w-4 text-gray-400" />
-                      <span className="text-xs text-gray-500 ml-1">(optional)</span>
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || "none"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a scaling metric to link" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {scalingMetrics.map((metric) => (
-                          <SelectItem key={metric.id} value={metric.id}>
-                            {formatScalingMetricLabel(metric)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Linking to a scaling readiness metric helps track how this growth metric contributes to scaling.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      Description
-                      <span className="text-xs text-gray-500 ml-1">(optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Details about how this metric is calculated..."
-                        className="resize-none min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2">
+                <p className="text-xs text-gray-500 mt-1">
+                  Connecting growth metrics to scaling metrics helps track progress toward scaling readiness
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="flex justify-end gap-3 pt-4">
+            {onClose && (
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit">
-                {isEditing ? 'Update Metric' : 'Add Metric'}
-              </Button>
-            </div>
-          </form>
-        </Form>
+            )}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {metric ? 'Update Metric' : 'Create Metric'}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );
