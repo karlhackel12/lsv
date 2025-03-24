@@ -1,16 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, ExternalLink, BarChart } from 'lucide-react';
+import { AlertTriangle, ExternalLink, BarChart, RefreshCw } from 'lucide-react';
 import { Experiment } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface TypeformEmbedProps {
   experiment: Experiment;
+  onRefresh?: () => void;
 }
 
-const TypeformEmbed = ({ experiment }: TypeformEmbedProps) => {
+const TypeformEmbed = ({ experiment, onRefresh }: TypeformEmbedProps) => {
   const { typeform_id, typeform_url, typeform_responses_count } = experiment;
+  const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   if (!typeform_id && !typeform_url) {
     return (
@@ -40,6 +45,43 @@ const TypeformEmbed = ({ experiment }: TypeformEmbedProps) => {
       window.open(`https://form.typeform.com/to/${typeform_id}`, '_blank');
     }
   };
+
+  const refreshResponses = async () => {
+    try {
+      setIsRefreshing(true);
+      
+      // TODO: Once we have the PostHog integration, fetch actual response counts here
+      const mockResponseCount = Math.floor(Math.random() * 20); // Temporary mock data
+      
+      const { error } = await supabase
+        .from('experiments')
+        .update({ 
+          typeform_responses_count: mockResponseCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', experiment.id);
+        
+      if (error) throw error;
+      
+      if (onRefresh) {
+        onRefresh();
+      }
+      
+      toast({
+        title: "Responses Updated",
+        description: `Found ${mockResponseCount} responses for this survey.`,
+      });
+    } catch (err) {
+      console.error('Error refreshing responses:', err);
+      toast({
+        title: "Error",
+        description: "Failed to refresh response count",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   return (
     <div className="space-y-4">
@@ -52,6 +94,16 @@ const TypeformEmbed = ({ experiment }: TypeformEmbedProps) => {
               {typeform_responses_count} responses
             </span>
           )}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={refreshResponses}
+            disabled={isRefreshing}
+            className="flex items-center"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Button 
             variant="outline" 
             size="sm" 

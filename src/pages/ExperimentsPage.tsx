@@ -10,13 +10,19 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/hooks/use-project';
 import PhaseNavigation from '@/components/PhaseNavigation';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
+import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  
   const currentPhase = searchParams.get('phase') || 'problem';
+  const experimentId = searchParams.get('id');
+  const createNew = searchParams.get('create') === 'true';
+  const statusFilter = searchParams.get('status');
+  const showSummary = !experimentId && !createNew;
   
   const fetchExperiments = async () => {
     try {
@@ -24,13 +30,23 @@ const ExperimentsPage = () => {
       
       if (!currentProject) return;
       
-      // Fetch experiments with the current phase filter
-      const { data, error } = await supabase
+      // Create base query
+      let query = supabase
         .from('experiments')
         .select('*')
         .eq('project_id', currentProject.id)
-        .eq('category', currentPhase)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
+      
+      // Apply filters if needed
+      if (statusFilter) {
+        query = query.eq('status', statusFilter);
+      }
+      
+      if (currentPhase && !statusFilter) {
+        query = query.eq('category', currentPhase);
+      }
+      
+      const { data, error } = await query;
         
       if (error) {
         console.error('Error fetching experiments:', error);
@@ -51,16 +67,25 @@ const ExperimentsPage = () => {
     }
   };
   
-  // Refetch when project or phase changes
+  // Refetch when project, phase, or status filter changes
   useEffect(() => {
     if (currentProject) {
       fetchExperiments();
     }
-  }, [currentProject, currentPhase]);
+  }, [currentProject, currentPhase, statusFilter]);
   
   // Change tab handler
   const handleTabChange = (value: string) => {
-    setSearchParams({ phase: value });
+    const params = new URLSearchParams(searchParams);
+    params.set('phase', value);
+    
+    // If we're viewing a specific experiment but changing the phase,
+    // clear the experiment ID to show the list for that phase
+    if (experimentId && !statusFilter) {
+      params.delete('id');
+    }
+    
+    setSearchParams(params);
   };
   
   if (!currentProject) {
@@ -84,50 +109,61 @@ const ExperimentsPage = () => {
           <TabsTrigger value="business-model">Business Model Experiments</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="problem">
-          <ValidationPhaseIntro 
-            phase="problem" 
-            onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-            createButtonText="Create Problem Experiment"
-          />
-          <ExperimentsSection 
+        {showSummary && !statusFilter && (
+          <ExperimentsSummarySection
             experiments={experiments}
-            refreshData={fetchExperiments}
             projectId={currentProject.id}
-            isLoading={isLoading}
-            experimentType="problem"
           />
-        </TabsContent>
+        )}
         
-        <TabsContent value="solution">
-          <ValidationPhaseIntro 
-            phase="solution" 
-            onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-            createButtonText="Create Solution Experiment"
-          />
-          <ExperimentsSection 
-            experiments={experiments}
-            refreshData={fetchExperiments}
-            projectId={currentProject.id}
-            isLoading={isLoading}
-            experimentType="solution"
-          />
-        </TabsContent>
-        
-        <TabsContent value="business-model">
-          <ValidationPhaseIntro 
-            phase="growth" 
-            onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-            createButtonText="Create Business Model Experiment"
-          />
-          <ExperimentsSection 
-            experiments={experiments}
-            refreshData={fetchExperiments}
-            projectId={currentProject.id}
-            isLoading={isLoading}
-            experimentType="business-model"
-          />
-        </TabsContent>
+        {(!showSummary || statusFilter) && (
+          <>
+            <TabsContent value="problem">
+              <ValidationPhaseIntro 
+                phase="problem" 
+                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
+                createButtonText="Create Problem Experiment"
+              />
+              <ExperimentsSection 
+                experiments={experiments}
+                refreshData={fetchExperiments}
+                projectId={currentProject.id}
+                isLoading={isLoading}
+                experimentType="problem"
+              />
+            </TabsContent>
+            
+            <TabsContent value="solution">
+              <ValidationPhaseIntro 
+                phase="solution" 
+                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
+                createButtonText="Create Solution Experiment"
+              />
+              <ExperimentsSection 
+                experiments={experiments}
+                refreshData={fetchExperiments}
+                projectId={currentProject.id}
+                isLoading={isLoading}
+                experimentType="solution"
+              />
+            </TabsContent>
+            
+            <TabsContent value="business-model">
+              <ValidationPhaseIntro 
+                phase="growth" 
+                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
+                createButtonText="Create Business Model Experiment"
+              />
+              <ExperimentsSection 
+                experiments={experiments}
+                refreshData={fetchExperiments}
+                projectId={currentProject.id}
+                isLoading={isLoading}
+                experimentType="business-model"
+              />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );
