@@ -30,9 +30,11 @@ export const useGrowthModels = (projectId: string) => {
       const models = data.map(model => ({
         ...model,
         originalId: model.id,
+        // Explicitly cast string status to the appropriate type
+        status: model.status as 'draft' | 'active' | 'archived'
       }));
 
-      setGrowthModels(models);
+      setGrowthModels(models as GrowthModel[]);
 
       // Set the active model if there are models and none is currently active
       if (models.length > 0 && !activeModelId) {
@@ -79,7 +81,9 @@ export const useGrowthModels = (projectId: string) => {
       setGrowthMetrics(metricData.map(metric => ({
         ...metric,
         originalId: metric.id,
-      })));
+        // Explicitly cast string status to the appropriate type
+        status: metric.status as 'on-track' | 'at-risk' | 'off-track'
+      })) as GrowthMetric[]);
       
       // Fetch channels
       const { data: channelData, error: channelError } = await supabase
@@ -93,7 +97,9 @@ export const useGrowthModels = (projectId: string) => {
       setGrowthChannels(channelData.map(channel => ({
         ...channel,
         originalId: channel.id,
-      })));
+        // Explicitly cast string status to the appropriate type
+        status: channel.status as 'active' | 'testing' | 'inactive'
+      })) as GrowthChannel[]);
       
       // Fetch experiments
       const { data: experimentData, error: experimentError } = await supabase
@@ -107,7 +113,9 @@ export const useGrowthModels = (projectId: string) => {
       setGrowthExperiments(experimentData.map(experiment => ({
         ...experiment,
         originalId: experiment.id,
-      })));
+        // Explicitly cast string status to the appropriate type
+        status: experiment.status as 'planned' | 'running' | 'completed' | 'failed'
+      })) as GrowthExperiment[]);
       
       // Fetch scaling metrics
       const { data: scalingMetricsData, error: scalingMetricsError } = await supabase

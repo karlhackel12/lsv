@@ -1056,3 +1056,23 @@ export interface ScalingPlanAction {
   created_at: string;
   updated_at: string;
 }
+
+// Add these missing constants
+export const SCALING_METRIC_CATEGORIES = {
+  'unit_economics': 'Unit Economics',
+  'retention': 'Retention',
+  'acquisition': 'Acquisition',
+  'team': 'Team',
+  'infrastructure': 'Infrastructure',
+  'product': 'Product',
+  'finance': 'Finance',
+  'operations': 'Operations'
+};
+
+export const SCALING_METRIC_UNITS = [
+  { value: 'percentage', label: 'Percentage (%)' },
+  { value: 'currency', label: 'Currency ($)' },
+  { value: 'ratio', label: 'Ratio (x:1)' },
+  { value: 'count', label: 'Count (#)' },
+  { value: 'time', label: 'Time (days)' }
+];

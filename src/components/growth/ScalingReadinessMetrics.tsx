@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -207,12 +206,10 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
     }
   };
 
-  // Filter metrics based on the active tab
   const filteredMetrics = activeTab === 'all' 
     ? metrics 
     : metrics.filter(m => m.category === activeTab);
   
-  // Calculate overall readiness
   const calculateReadiness = () => {
     if (metrics.length === 0) return 0;
     
@@ -459,7 +456,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
         </>
       )}
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent>
           <DialogHeader>
