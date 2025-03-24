@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -48,9 +47,8 @@ import {
   ChevronUp,
   Edit2,
   Trash2,
-  Calendar
+  Calendar as CalendarIcon
 } from 'lucide-react';
-import { CalendarIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -825,6 +823,7 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
                                   selected={field.value ? new Date(field.value) : undefined}
                                   onSelect={(date) => field.onChange(date ? date.toISOString() : undefined)}
                                   initialFocus
+                                  className="p-3 pointer-events-auto"
                                 />
                               </PopoverContent>
                             </Popover>
@@ -900,7 +899,7 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
                               
                               {action.due_date && (
                                 <Badge variant="outline" className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
+                                  <CalendarIcon className="h-3 w-3" />
                                   Due: {format(new Date(action.due_date), "MMM d, yyyy")}
                                 </Badge>
                               )}
@@ -1030,34 +1029,4 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
               </CardContent>
               
               <CardFooter className="border-t pt-4 block">
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Scaling Readiness</h4>
-                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${
-                        currentPlan.overall_readiness >= 80 ? 'bg-green-500' : 
-                        currentPlan.overall_readiness >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                      } transition-all duration-300`}
-                      style={{ width: `${currentPlan.overall_readiness}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-2xl font-bold">
-                      {currentPlan.overall_readiness}%
-                    </span>
-                    <p className="text-xs text-gray-500">
-                      {currentPlan.overall_readiness >= 80 ? 'Ready to Scale' : 
-                       currentPlan.overall_readiness >= 50 ? 'Getting There' : 'Not Ready Yet'}
-                    </p>
-                  </div>
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-export default ScalingPlanManager;
+                <
