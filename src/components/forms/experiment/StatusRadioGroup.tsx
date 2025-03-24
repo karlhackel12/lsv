@@ -10,6 +10,8 @@ interface StatusRadioGroupProps {
 }
 
 const StatusRadioGroup = ({ form }: StatusRadioGroupProps) => {
+  console.log("StatusRadioGroup rendering with value:", form.watch('status'));
+  
   return (
     <FormField
       control={form.control}
@@ -21,6 +23,7 @@ const StatusRadioGroup = ({ form }: StatusRadioGroupProps) => {
             <RadioGroup
               onValueChange={field.onChange}
               value={field.value || 'planned'}
+              defaultValue={field.value || 'planned'}
               className="flex flex-col space-y-1"
             >
               <div className="flex items-center space-x-2">

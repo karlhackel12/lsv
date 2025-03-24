@@ -34,6 +34,8 @@ const ExperimentForm = ({
   hypothesisId,
   experimentType = 'problem'
 }: ExperimentFormProps) => {
+  console.log("ExperimentForm rendering with experiment:", experiment?.id || "new", "isOpen:", isOpen);
+  
   const { form, isEditing, handleSubmit } = useExperimentForm({
     experiment,
     projectId,
@@ -43,36 +45,64 @@ const ExperimentForm = ({
     experimentType
   });
 
-  // Reset form with experiment data when it changes
+  // Reset form with experiment data when it changes or when isOpen changes
   useEffect(() => {
-    if (experiment) {
-      // Explicitly set all form fields to ensure proper data binding
-      form.reset({
-        id: experiment.id,
-        title: experiment.title || '',
-        hypothesis: experiment.hypothesis || '',
-        method: experiment.method || '',
-        metrics: experiment.metrics || '',
-        status: experiment.status || 'planned',
-        category: experiment.category || experimentType || 'problem',
-        results: experiment.results || '',
-        insights: experiment.insights || '',
-        decisions: experiment.decisions || '',
-        project_id: experiment.project_id || projectId,
-        hypothesis_id: experiment.hypothesis_id || hypothesisId,
-        created_at: experiment.created_at,
-        updated_at: experiment.updated_at,
-      });
+    console.log("ExperimentForm useEffect triggered:", { 
+      isOpen, 
+      isEditing: !!experiment, 
+      experimentId: experiment?.id,
+      experimentType 
+    });
+    
+    if (isOpen) {
+      if (experiment) {
+        console.log("Resetting form with existing experiment data:", experiment);
+        // Explicitly set all form fields to ensure proper data binding
+        form.reset({
+          id: experiment.id,
+          title: experiment.title || '',
+          hypothesis: experiment.hypothesis || '',
+          method: experiment.method || '',
+          metrics: experiment.metrics || '',
+          status: experiment.status || 'planned',
+          category: experiment.category || experimentType || 'problem',
+          results: experiment.results || '',
+          insights: experiment.insights || '',
+          decisions: experiment.decisions || '',
+          project_id: experiment.project_id || projectId,
+          hypothesis_id: experiment.hypothesis_id || hypothesisId,
+          created_at: experiment.created_at,
+          updated_at: experiment.updated_at,
+        });
+      } else {
+        console.log("Resetting form with default values for a new experiment");
+        // Clear form for new experiment
+        form.reset({
+          title: '',
+          hypothesis: '',
+          method: '',
+          metrics: '',
+          status: 'planned',
+          category: experimentType || 'problem',
+          results: '',
+          insights: '',
+          decisions: '',
+          project_id: projectId,
+          hypothesis_id: hypothesisId || null,
+        });
+      }
     }
-  }, [experiment, form, experimentType, projectId, hypothesisId]);
+  }, [experiment, form, isOpen, projectId, hypothesisId, experimentType]);
 
   // If we have a hypothesis ID but no experiment, let's fetch the hypothesis details
   // to pre-populate the form
   useEffect(() => {
     const fetchHypothesis = async () => {
+      // Only fetch hypothesis if we're creating a new experiment (not editing) and have a hypothesis ID
       if (!hypothesisId || experiment) return;
       
       try {
+        console.log("Fetching hypothesis details for ID:", hypothesisId);
         const { data, error } = await supabase
           .from('hypotheses')
           .select('*')
@@ -82,6 +112,7 @@ const ExperimentForm = ({
         if (error) throw error;
         
         if (data) {
+          console.log("Pre-populating form with hypothesis data:", data);
           // Pre-populate the form with hypothesis data
           form.setValue('hypothesis', data.statement);
           form.setValue('title', `Experiment: ${data.statement.substring(0, 50)}${data.statement.length > 50 ? '...' : ''}`);
@@ -98,7 +129,7 @@ const ExperimentForm = ({
     };
     
     fetchHypothesis();
-  }, [hypothesisId, form, experiment]);
+  }, [hypothesisId, form, experiment, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>

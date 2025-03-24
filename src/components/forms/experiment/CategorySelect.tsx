@@ -18,6 +18,8 @@ const EXPERIMENT_CATEGORIES = [
 ];
 
 const CategorySelect = ({ form }: CategorySelectProps) => {
+  console.log("CategorySelect rendering with value:", form.watch('category'));
+  
   return (
     <FormField
       control={form.control}
@@ -28,6 +30,7 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
           <Select 
             onValueChange={field.onChange} 
             value={field.value || 'problem'}
+            defaultValue={field.value || 'problem'}
           >
             <FormControl>
               <SelectTrigger>

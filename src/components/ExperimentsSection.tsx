@@ -47,7 +47,8 @@ const ExperimentsSection = ({
   }, [searchParams, experiments]);
 
   const handleCreateNew = () => {
-    console.log("Creating new experiment");
+    console.log("Creating new experiment - resetting form state");
+    // Explicitly set selectedExperiment to null to ensure a clean form
     setSelectedExperiment(null);
     setIsFormOpen(true);
   };
@@ -83,6 +84,7 @@ const ExperimentsSection = ({
 
   const handleFormClose = () => {
     setIsFormOpen(false);
+    // Ensure we clear the selected experiment when the form is closed
     setSelectedExperiment(null);
   };
 
@@ -154,6 +156,7 @@ const ExperimentsSection = ({
         experiment={selectedExperiment}
         projectId={projectId}
         experimentType={experimentType}
+        key={selectedExperiment ? selectedExperiment.id : 'new-experiment'} 
       />
 
       <DeleteExperimentDialog
