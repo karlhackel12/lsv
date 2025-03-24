@@ -42,7 +42,7 @@ const ExperimentJournal = ({ experiment, refreshExperiment }: ExperimentJournalP
         
       if (error) throw error;
       
-      setLogs(data || []);
+      setLogs(data as ExperimentLog[] || []);
     } catch (err) {
       console.error('Error fetching experiment logs:', err);
       toast({

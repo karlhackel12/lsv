@@ -29,7 +29,7 @@ type LogFormValues = z.infer<typeof logSchema>;
 
 const ExperimentLogForm = ({ experimentId, onSuccess }: ExperimentLogFormProps) => {
   const { toast } = useToast();
-  const { currentProject, currentUser } = useProject();
+  const { currentProject } = useProject();
   
   const form = useForm<LogFormValues>({
     resolver: zodResolver(logSchema),
@@ -52,8 +52,7 @@ const ExperimentLogForm = ({ experimentId, onSuccess }: ExperimentLogFormProps) 
         content: values.content,
         metrics: values.metrics || null,
         project_id: currentProject.id,
-        created_by: currentUser?.id || null,
-        created_by_name: currentUser?.name || 'Team member',
+        created_by_name: 'Team member',
       };
       
       const { error } = await supabase
