@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -50,9 +49,15 @@ const PivotDecisionSection: React.FC = () => {
 
         if (experimentsError) throw experimentsError;
         
+        // Ensure experiments data matches the GrowthExperiment type
+        const typedExperiments: GrowthExperiment[] = (experimentsData || []).map(exp => ({
+          ...exp,
+          status: exp.status as 'planned' | 'running' | 'completed' | 'failed'
+        }));
+        
         setMetricsAtRisk(scalingData || []);
         setRegularMetricsAtRisk(metricsData || []);
-        setExperiments(experimentsData || []);
+        setExperiments(typedExperiments);
       } catch (error) {
         console.error('Error fetching metrics data:', error);
       } finally {

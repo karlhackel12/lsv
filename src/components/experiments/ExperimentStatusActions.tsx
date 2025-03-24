@@ -45,8 +45,11 @@ const ExperimentStatusActions = ({ experiment, refreshData, onEdit }: Experiment
         console.error('Error fetching related growth experiments:', fetchError);
       } else if (growthExperiments && growthExperiments.length > 0) {
         // Map the status to appropriate growth experiment status
-        let growthStatus = newStatus;
+        let growthStatus: 'planned' | 'running' | 'completed' | 'failed' = 'planned';
+        
         if (newStatus === 'in-progress') growthStatus = 'running';
+        else if (newStatus === 'completed') growthStatus = 'completed';
+        else if (newStatus === 'planned') growthStatus = 'planned';
         
         const { error: updateError } = await supabase
           .from('growth_experiments')
