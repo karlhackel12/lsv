@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FlaskConical } from 'lucide-react';
@@ -10,7 +10,7 @@ import CategorySelect from './experiment/CategorySelect';
 import StatusRadioGroup from './experiment/StatusRadioGroup';
 import TextFieldGroup from './experiment/TextFieldGroup';
 import ResultsFields from './experiment/ResultsFields';
-import { supabase } from '@/integrations/supabase/client';
+import HypothesisSelect from './experiment/HypothesisSelect';
 
 // Update FormData to match Experiment type exactly to avoid type mismatches
 export type FormData = Experiment;
@@ -35,6 +35,7 @@ const ExperimentForm = ({
   experimentType = 'problem'
 }: ExperimentFormProps) => {
   console.log("ExperimentForm rendering with experiment:", experiment?.id || "new", "isOpen:", isOpen);
+  const [selectedHypothesis, setSelectedHypothesis] = useState<Hypothesis | null>(null);
   
   const { form, isEditing, handleSubmit } = useExperimentForm({
     experiment,
@@ -94,42 +95,16 @@ const ExperimentForm = ({
     }
   }, [experiment, form, isOpen, projectId, hypothesisId, experimentType]);
 
-  // If we have a hypothesis ID but no experiment, let's fetch the hypothesis details
-  // to pre-populate the form
-  useEffect(() => {
-    const fetchHypothesis = async () => {
-      // Only fetch hypothesis if we're creating a new experiment (not editing) and have a hypothesis ID
-      if (!hypothesisId || experiment) return;
-      
-      try {
-        console.log("Fetching hypothesis details for ID:", hypothesisId);
-        const { data, error } = await supabase
-          .from('hypotheses')
-          .select('*')
-          .eq('id', hypothesisId)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data) {
-          console.log("Pre-populating form with hypothesis data:", data);
-          // Pre-populate the form with hypothesis data
-          form.setValue('hypothesis', data.statement);
-          form.setValue('title', `Experiment: ${data.statement.substring(0, 50)}${data.statement.length > 50 ? '...' : ''}`);
-          if (data.criteria) {
-            form.setValue('metrics', data.criteria);
-          }
-          if (data.experiment) {
-            form.setValue('method', data.experiment);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching hypothesis:', err);
-      }
-    };
+  const handleHypothesisSelected = (hypothesis: Hypothesis | null) => {
+    setSelectedHypothesis(hypothesis);
     
-    fetchHypothesis();
-  }, [hypothesisId, form, experiment, isOpen]);
+    // If a hypothesis is selected and we're creating a new experiment, update the category
+    if (hypothesis && !isEditing) {
+      const category = hypothesis.phase === 'problem' ? 'problem' : 
+                      hypothesis.phase === 'solution' ? 'solution' : 'business-model';
+      form.setValue('category', category);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
@@ -143,6 +118,13 @@ const ExperimentForm = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+            <HypothesisSelect 
+              form={form}
+              projectId={projectId}
+              experimentType={experimentType}
+              onHypothesisSelected={handleHypothesisSelected}
+            />
+            
             <TextFieldGroup form={form} />
             <CategorySelect form={form} />
             <StatusRadioGroup form={form} />

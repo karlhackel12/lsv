@@ -47,6 +47,7 @@ export function useExperimentForm({
           results: experiment.results || '',
           insights: experiment.insights || '',
           decisions: experiment.decisions || '',
+          hypothesis_id: experiment.hypothesis_id || null,
         }
       : {
           title: '',
@@ -81,6 +82,7 @@ export function useExperimentForm({
             results: data.results || null, // Convert empty string to null for DB
             insights: data.insights || null,
             decisions: data.decisions || null,
+            hypothesis_id: data.hypothesis_id || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', experiment.id);
@@ -104,7 +106,7 @@ export function useExperimentForm({
           status: data.status || 'planned',
           category: data.category || experimentType || 'problem',
           project_id: projectId,
-          hypothesis_id: hypothesisId || null,
+          hypothesis_id: data.hypothesis_id || null,
         });
         
         const { error } = await supabase
@@ -117,7 +119,7 @@ export function useExperimentForm({
             status: data.status || 'planned',
             category: data.category || experimentType || 'problem',
             project_id: projectId,
-            hypothesis_id: hypothesisId || null,
+            hypothesis_id: data.hypothesis_id || null,
           });
           
         if (error) {
