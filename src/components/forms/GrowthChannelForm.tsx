@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 
 interface GrowthChannelFormProps {
-  growthModel: GrowthModel;
+  growthModel?: GrowthModel; // Make growthModel optional
   projectId: string;
   channel?: GrowthChannel | null;
   onSave: () => Promise<void>;
@@ -54,7 +55,7 @@ const GrowthChannelForm = ({
       conversion_rate: undefined,
       volume: undefined,
       status: 'testing',
-      growth_model_id: growthModel.id,
+      growth_model_id: growthModel?.id, // Use optional chaining
       project_id: projectId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -93,7 +94,6 @@ const GrowthChannelForm = ({
             conversion_rate: data.conversion_rate,
             volume: data.volume,
             status: data.status,
-            growth_model_id: growthModel.id,
             project_id: projectId,
           });
           

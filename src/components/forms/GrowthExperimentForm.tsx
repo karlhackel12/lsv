@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ import {
 import { cn } from '@/lib/utils';
 
 interface GrowthExperimentFormProps {
-  growthModel: GrowthModel;
+  growthModel?: GrowthModel; // Make growthModel optional
   projectId: string;
   metrics: GrowthMetric[];
   experiment?: GrowthExperiment | null;
@@ -72,7 +71,7 @@ const GrowthExperimentForm = ({
       end_date: defaultEndDate.toISOString(),
       status: 'planned',
       notes: '',
-      growth_model_id: growthModel.id,
+      growth_model_id: growthModel?.id, // Use optional chaining
       project_id: projectId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -119,7 +118,6 @@ const GrowthExperimentForm = ({
             end_date: data.end_date,
             status: data.status,
             notes: data.notes,
-            growth_model_id: growthModel.id,
             project_id: projectId,
           });
           
@@ -416,3 +414,4 @@ const GrowthExperimentForm = ({
 };
 
 export default GrowthExperimentForm;
+

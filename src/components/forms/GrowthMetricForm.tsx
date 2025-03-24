@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ import {
 import { ChevronDown, HelpCircle } from 'lucide-react';
 
 interface GrowthMetricFormProps {
-  growthModel: GrowthModel;
+  growthModel?: GrowthModel; // Make growthModel optional
   projectId: string;
   metric?: GrowthMetric | null;
   onSave: () => Promise<void>;
@@ -55,7 +56,7 @@ const GrowthMetricForm = ({
       current_value: 0,
       target_value: 0,
       unit: 'count',
-      growth_model_id: growthModel.id,
+      growth_model_id: growthModel?.id, // Use optional chaining
       project_id: projectId,
       status: 'on-track',
       created_at: new Date().toISOString(),
