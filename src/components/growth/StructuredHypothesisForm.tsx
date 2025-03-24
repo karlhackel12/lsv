@@ -242,28 +242,27 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                       <SelectContent>
                         <SelectItem value="channel">Channel Validation</SelectItem>
                         <SelectItem value="activation">Activation Optimization</SelectItem>
-                        <SelectItem value="monetization">Monetization Testing</SelectItem>
-                        <SelectItem value="retention">Retention Engineering</SelectItem>
-                        <SelectItem value="referral">Referral Engine</SelectItem>
-                        <SelectItem value="scaling">Scaling Readiness</SelectItem>
+                        <SelectItem value="retention">Retention Improvement</SelectItem>
+                        <SelectItem value="revenue">Revenue Optimization</SelectItem>
+                        <SelectItem value="referral">Referral Growth</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="action"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Specific Action or Feature</FormLabel>
+                    <FormLabel>Action or Feature (We believe that...)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="e.g., implementing a personalized onboarding flow"
-                        className="resize-none min-h-[80px]"
-                        {...field}
+                      <Textarea 
+                        placeholder="E.g., implementing a personalized onboarding flow" 
+                        className="h-20"
+                        {...field} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -276,46 +275,46 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                 name="outcome"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Expected Outcome</FormLabel>
+                    <FormLabel>Expected Outcome (will result in...)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="e.g., increasing user activation rate from 40% to 60%"
-                        className="resize-none min-h-[80px]"
-                        {...field}
+                      <Textarea 
+                        placeholder="E.g., a 15% increase in user activation rate" 
+                        className="h-20"
+                        {...field} 
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="success_criteria"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Success Criteria</FormLabel>
+                    <FormLabel>Success Criteria (We'll know we're right when...)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="e.g., a 50% increase in daily active users within 30 days"
-                        className="resize-none min-h-[80px]"
-                        {...field}
+                      <Textarea 
+                        placeholder="E.g., the 7-day activation rate increases from 40% to 55% within 30 days" 
+                        className="h-20"
+                        {...field} 
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="metric_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Target Metric</FormLabel>
+                    <FormLabel>Related Metric</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value || "none"}
+                      onValueChange={(value) => field.onChange(value || null)}
+                      value={field.value || "null"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -323,7 +322,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="null">None</SelectItem>
                         {metrics.map((metric) => (
                           <SelectItem key={metric.id} value={metric.id}>
                             {metric.name}
@@ -335,12 +334,12 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                   </FormItem>
                 )}
               />
-
-              {/* Preview the formatted hypothesis */}
-              {(form.watch('action') || form.watch('outcome')) && (
-                <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mt-4">
-                  <p className="font-medium text-sm text-blue-900 mb-1">Formatted Hypothesis:</p>
-                  <p className="text-sm whitespace-pre-line text-blue-800">
+              
+              {/* Preview hypothesis */}
+              {(form.watch('action') && form.watch('outcome')) && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
+                  <p className="text-sm font-medium text-blue-800 mb-1">Preview:</p>
+                  <p className="text-sm text-blue-700 whitespace-pre-line">
                     {generateFormattedHypothesis()}
                   </p>
                 </div>
@@ -354,15 +353,14 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
               {isEditing && (
                 <Button 
                   type="button" 
-                  variant="outline" 
-                  className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
+                  variant="outline"
                   onClick={handleCreateExperiment}
                 >
                   Create Experiment
                 </Button>
               )}
               <Button type="submit">
-                {isEditing ? 'Update Hypothesis' : 'Create Hypothesis'}
+                {isEditing ? 'Update' : 'Create'} Hypothesis
               </Button>
             </div>
           </form>

@@ -342,14 +342,14 @@ const GrowthMetricForm = ({
                   </div>
                 ) : (
                   <Select 
-                    value={scalingMetricId || ''} 
-                    onValueChange={(value) => setScalingMetricId(value || null)}
+                    value={scalingMetricId || "none"} 
+                    onValueChange={(value) => setScalingMetricId(value === "none" ? null : value)}
                   >
                     <SelectTrigger id="scalingMetricId">
                       <SelectValue placeholder="Select a scaling metric this growth metric contributes to" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {scalingMetrics.map(metric => (
                         <SelectItem key={metric.id} value={metric.id}>
                           {metric.name} ({metric.category})
