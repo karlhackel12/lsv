@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -693,9 +692,10 @@ export interface GrowthMetric {
   current_value: number;
   target_value: number;
   unit: string;
-  growth_model_id: string;
+  growth_model_id?: string;
   project_id: string;
   status: 'on-track' | 'at-risk' | 'off-track';
+  scaling_metric_id?: string | null;
   created_at: string;
   updated_at: string;
 }

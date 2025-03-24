@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -51,11 +50,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 interface ScalingReadinessMetricsProps {
   projectId: string;
   refreshData: () => Promise<void>;
+  growthMetrics?: GrowthMetric[];
 }
 
 const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ 
   projectId, 
-  refreshData
+  refreshData,
+  growthMetrics = []
 }) => {
   const [metrics, setMetrics] = useState<ScalingReadinessMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -205,6 +206,10 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
     }
   };
 
+  const getLinkedGrowthMetrics = (scalingMetricId: string) => {
+    return growthMetrics.filter(m => m.scaling_metric_id === scalingMetricId);
+  };
+
   const filteredMetrics = activeTab === 'all' 
     ? metrics 
     : metrics.filter(m => m.category === activeTab);
@@ -276,6 +281,7 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
                         <TableHead>Target</TableHead>
                         <TableHead>Progress</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Linked Growth Metrics</TableHead>
                         <TableHead className="w-[60px]"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -298,6 +304,18 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
                             <Progress value={getProgressValue(metric.current_value, metric.target_value)} className="h-2" />
                           </TableCell>
                           <TableCell>{getStatusBadge(metric.status)}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {getLinkedGrowthMetrics(metric.id).map(growthMetric => (
+                                <Badge key={growthMetric.id} variant="outline" className="bg-blue-50">
+                                  {growthMetric.name}
+                                </Badge>
+                              ))}
+                              {getLinkedGrowthMetrics(metric.id).length === 0 && (
+                                <span className="text-gray-400 text-xs">None</span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>

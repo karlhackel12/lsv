@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -8,14 +7,15 @@ import {
   FormField, 
   FormItem, 
   FormLabel, 
-  FormMessage 
+  FormMessage,
+  FormDescription 
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { GrowthMetric, GrowthModel, GROWTH_METRIC_TEMPLATES } from '@/types/database';
+import { GrowthMetric, GrowthModel, GROWTH_METRIC_TEMPLATES, ScalingReadinessMetric, SCALING_METRIC_CATEGORIES } from '@/types/database';
 import { 
   Select,
   SelectContent,
@@ -28,7 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { ChevronDown, HelpCircle, Link2 } from 'lucide-react';
 
 interface GrowthMetricFormProps {
   growthModel?: GrowthModel; // Make growthModel optional
@@ -47,6 +47,37 @@ const GrowthMetricForm = ({
 }: GrowthMetricFormProps) => {
   const { toast } = useToast();
   const isEditing = !!metric;
+  const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
+  const [isLoadingScalingMetrics, setIsLoadingScalingMetrics] = useState(false);
+
+  useEffect(() => {
+    const fetchScalingMetrics = async () => {
+      try {
+        setIsLoadingScalingMetrics(true);
+        const { data, error } = await supabase
+          .from('scaling_readiness_metrics')
+          .select('*')
+          .eq('project_id', projectId);
+          
+        if (error) throw error;
+        
+        setScalingMetrics(data || []);
+      } catch (error) {
+        console.error('Error fetching scaling metrics:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load scaling metrics',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingScalingMetrics(false);
+      }
+    };
+
+    if (projectId) {
+      fetchScalingMetrics();
+    }
+  }, [projectId, toast]);
 
   const form = useForm<GrowthMetric>({
     defaultValues: metric || {
@@ -56,9 +87,10 @@ const GrowthMetricForm = ({
       current_value: 0,
       target_value: 0,
       unit: 'count',
-      growth_model_id: growthModel?.id, // Use optional chaining
+      growth_model_id: growthModel?.id,
       project_id: projectId,
       status: 'on-track',
+      scaling_metric_id: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     } as GrowthMetric,
@@ -76,6 +108,7 @@ const GrowthMetricForm = ({
             current_value: data.current_value,
             target_value: data.target_value,
             unit: data.unit,
+            scaling_metric_id: data.scaling_metric_id || null,
             status: determineStatus(data.current_value, data.target_value),
             updated_at: new Date().toISOString(),
           })
@@ -97,7 +130,7 @@ const GrowthMetricForm = ({
             current_value: data.current_value,
             target_value: data.target_value,
             unit: data.unit,
-            growth_model_id: growthModel.id,
+            scaling_metric_id: data.scaling_metric_id || null,
             project_id: projectId,
             status: determineStatus(data.current_value, data.target_value),
           });
@@ -140,6 +173,11 @@ const GrowthMetricForm = ({
     if (template.description) {
       form.setValue('description', template.description);
     }
+  };
+
+  const formatScalingMetricLabel = (metric: ScalingReadinessMetric) => {
+    const category = SCALING_METRIC_CATEGORIES[metric.category as keyof typeof SCALING_METRIC_CATEGORIES] || metric.category;
+    return `${metric.name} (${category})`;
   };
 
   return (
@@ -292,6 +330,42 @@ const GrowthMetricForm = ({
                         <SelectItem value="time">Time (days)</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="scaling_metric_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      Link to Scaling Readiness Metric
+                      <Link2 className="ml-1 h-4 w-4 text-gray-400" />
+                      <span className="text-xs text-gray-500 ml-1">(optional)</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a scaling metric to link" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {scalingMetrics.map((metric) => (
+                          <SelectItem key={metric.id} value={metric.id}>
+                            {formatScalingMetricLabel(metric)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Linking to a scaling readiness metric helps track how this growth metric contributes to scaling.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { GrowthMetric } from '@/types/database';
+import { GrowthMetric, ScalingReadinessMetric } from '@/types/database';
 import MetricCard from './MetricCard';
 
 interface MetricCategoryGroupProps {
   category: string;
   metrics: GrowthMetric[];
+  scalingMetrics?: ScalingReadinessMetric[];
+  getScalingMetric?: (metric: GrowthMetric) => ScalingReadinessMetric | null;
   onEdit: (metric: GrowthMetric) => void;
   onDelete: (metric: GrowthMetric) => void;
 }
@@ -13,6 +15,8 @@ interface MetricCategoryGroupProps {
 const MetricCategoryGroup = ({ 
   category, 
   metrics, 
+  scalingMetrics,
+  getScalingMetric,
   onEdit, 
   onDelete 
 }: MetricCategoryGroupProps) => {
@@ -36,6 +40,7 @@ const MetricCategoryGroup = ({
           <MetricCard 
             key={metric.id}
             metric={metric}
+            scalingMetric={getScalingMetric ? getScalingMetric(metric) : undefined}
             onEdit={onEdit}
             onDelete={onDelete}
           />

@@ -1,105 +1,109 @@
 
 import React from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription, 
-  CardFooter 
-} from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { GrowthMetric } from '@/types/database';
+import { Badge } from '@/components/ui/badge';
+import { GrowthMetric, ScalingReadinessMetric, SCALING_METRIC_CATEGORIES } from '@/types/database';
+import { Edit2, Trash2, TrendingUp, Link2Off, Link2 } from 'lucide-react';
 
 interface MetricCardProps {
   metric: GrowthMetric;
+  scalingMetric?: ScalingReadinessMetric | null;
   onEdit: (metric: GrowthMetric) => void;
   onDelete: (metric: GrowthMetric) => void;
 }
 
-const MetricCard = ({ metric, onEdit, onDelete }: MetricCardProps) => {
-  const formatValue = (value: number, unit: string) => {
-    switch (unit) {
-      case 'percentage':
-        return `${value}%`;
-      case 'currency':
-        return `$${value.toLocaleString()}`;
-      case 'ratio':
-        return value.toFixed(2);
-      case 'time':
-        return `${value} days`;
-      default:
-        return value.toLocaleString();
+const MetricCard = ({ 
+  metric, 
+  scalingMetric,
+  onEdit, 
+  onDelete 
+}: MetricCardProps) => {
+  // Calculate progress
+  const progress = metric.target_value > 0 
+    ? Math.min(Math.round((metric.current_value / metric.target_value) * 100), 100) 
+    : 0;
+  
+  // Determine status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'on-track': return 'bg-green-100 text-green-800';
+      case 'at-risk': return 'bg-yellow-100 text-yellow-800';
+      case 'off-track': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const calculateProgress = (current: number, target: number) => {
-    if (target === 0) return 0;
-    const progress = (current / target) * 100;
-    return Math.min(Math.max(progress, 0), 100);
-  };
-
-  const STATUS_COLORS = {
-    'on-track': 'bg-green-500',
-    'at-risk': 'bg-yellow-500',
-    'off-track': 'bg-red-500'
+  // Format unit display
+  const formatValue = (value: number) => {
+    switch (metric.unit) {
+      case 'percentage': return `${value}%`;
+      case 'currency': return `$${value}`;
+      case 'count': return value.toLocaleString();
+      case 'ratio': return `${value}:1`;
+      case 'time': return `${value} days`;
+      default: return value.toLocaleString();
+    }
   };
 
   return (
-    <Card key={metric.id} className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-base font-medium">{metric.name}</CardTitle>
-          <div className="flex space-x-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 w-7 p-0" 
-              onClick={() => onEdit(metric)}
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-              <span className="sr-only">Edit</span>
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 w-7 p-0" 
-              onClick={() => onDelete(metric)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span className="sr-only">Delete</span>
-            </Button>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-lg font-medium">{metric.name}</h3>
+            {metric.description && (
+              <p className="text-sm text-gray-500 mt-1">{metric.description}</p>
+            )}
           </div>
+          <Badge className={getStatusColor(metric.status)}>
+            {metric.status.replace('-', ' ')}
+          </Badge>
         </div>
-        {metric.description && (
-          <CardDescription className="text-xs">{metric.description}</CardDescription>
+
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-gray-500">Current</span>
+          <span className="text-sm text-gray-500">Target</span>
+        </div>
+
+        <div className="flex justify-between items-center mb-3">
+          <span className="font-medium">{formatValue(metric.current_value)}</span>
+          <span className="font-medium">{formatValue(metric.target_value)}</span>
+        </div>
+
+        <Progress value={progress} className="h-2 mb-4" />
+        
+        {scalingMetric && (
+          <div className="flex items-center text-xs text-gray-600 mt-4">
+            <Link2 className="h-3 w-3 mr-1" />
+            <span>Linked to scaling metric: </span>
+            <Badge variant="outline" className="ml-1 font-normal bg-blue-50">
+              {scalingMetric.name} ({SCALING_METRIC_CATEGORIES[scalingMetric.category as keyof typeof SCALING_METRIC_CATEGORIES] || scalingMetric.category})
+            </Badge>
+          </div>
         )}
-      </CardHeader>
-      <CardContent className="pb-2 pt-0">
-        <div className="flex justify-between items-baseline mb-1">
-          <div className="text-2xl font-semibold">
-            {formatValue(metric.current_value, metric.unit)}
-          </div>
-          <div className="text-sm text-gray-500">
-            Target: {formatValue(metric.target_value, metric.unit)}
-          </div>
-        </div>
-        <Progress 
-          value={calculateProgress(metric.current_value, metric.target_value)} 
-          className="h-2" 
-        />
       </CardContent>
-      <CardFooter className="pt-2 pb-3">
-        <div className="flex items-center gap-1 text-xs">
-          <div className={`h-2 w-2 rounded-full ${STATUS_COLORS[metric.status as keyof typeof STATUS_COLORS]}`}></div>
-          <span className="capitalize">{metric.status}</span>
-          {metric.current_value < metric.target_value ? (
-            <TrendingUp className="h-3 w-3 ml-auto text-green-500" />
-          ) : (
-            <TrendingDown className="h-3 w-3 ml-auto text-gray-400" />
-          )}
+      
+      <CardFooter className="border-t bg-gray-50 px-6 py-3">
+        <div className="flex justify-end gap-2 w-full">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => onDelete(metric)}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
+          <Button 
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(metric)}
+          >
+            <Edit2 className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
         </div>
       </CardFooter>
     </Card>

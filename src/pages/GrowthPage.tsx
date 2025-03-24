@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +32,6 @@ const GrowthPage = () => {
     fetchModelData
   } = useGrowthModels(currentProject?.id || '');
   
-  // Check for tab in location state
   React.useEffect(() => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab) {
@@ -129,6 +127,7 @@ const GrowthPage = () => {
                     <ScalingReadinessMetrics 
                       projectId={currentProject.id}
                       refreshData={() => fetchModelData(currentProject.id)}
+                      growthMetrics={growthMetrics}
                     />
                   </TabsContent>
                   
