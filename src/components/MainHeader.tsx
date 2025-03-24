@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut, Settings, ChevronsUpDown, Check, PlusCircle, LayoutDashboard, Beaker, FlaskConical, Lightbulb, Layers, TrendingUp, GitBranch } from 'lucide-react';
+import { User, LogOut, Settings, ChevronsUpDown, Check, PlusCircle, LayoutDashboard, Beaker, FlaskConical, Lightbulb, Layers, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useProject } from '@/hooks/use-project';
 import ProjectForm from '@/components/forms/ProjectForm';
-
 const MainHeader = () => {
   const {
     user,
@@ -31,17 +30,14 @@ const MainHeader = () => {
     selectProject,
     createProject
   } = useProject();
-
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
-
   const handleProjectSelect = (project: Project) => {
     selectProject(project);
     setOpen(false);
   };
-
   const handleCreateProject = async (projectData: {
     name: string;
     description: string;
@@ -50,7 +46,6 @@ const MainHeader = () => {
     await createProject(projectData);
     setIsProjectFormOpen(false);
   };
-
   const validationPhases = [{
     name: "Problem Validation",
     icon: <Lightbulb className="h-4 w-4 mr-2" />,
@@ -67,14 +62,8 @@ const MainHeader = () => {
     name: "Growth Model",
     icon: <TrendingUp className="h-4 w-4 mr-2" />,
     path: "/growth"
-  }, {
-    name: "Pivot Decision",
-    icon: <GitBranch className="h-4 w-4 mr-2" />,
-    path: "/pivot"
   }];
-
   const initials = user?.email ? user.email.split('@')[0].substring(0, 2).toUpperCase() : 'U';
-
   return <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-validation-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center">
@@ -160,6 +149,8 @@ const MainHeader = () => {
             </PopoverContent>
           </Popover>
           
+          
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -197,8 +188,8 @@ const MainHeader = () => {
         </div>
       </div>
       
+      {/* Project Creation Dialog */}
       <ProjectForm isOpen={isProjectFormOpen} onClose={() => setIsProjectFormOpen(false)} onSave={handleCreateProject} />
     </header>;
 };
-
 export default MainHeader;
