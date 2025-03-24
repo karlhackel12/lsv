@@ -5,8 +5,7 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle,
-  CardDescription, 
-  CardFooter 
+  CardDescription
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -26,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { GrowthChannel, GrowthModel } from '@/types/database';
+import { GrowthChannel } from '@/types/database';
 import GrowthChannelForm from '@/components/forms/GrowthChannelForm';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +33,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface GrowthChannelsSectionProps {
   channels: GrowthChannel[];
-  growthModel: GrowthModel;
   projectId: string;
   refreshData: () => Promise<void>;
 }
@@ -55,7 +53,6 @@ const STATUS_BADGE_VARIANTS = {
 
 const GrowthChannelsSection = ({ 
   channels, 
-  growthModel, 
   projectId, 
   refreshData 
 }: GrowthChannelsSectionProps) => {
@@ -116,7 +113,6 @@ const GrowthChannelsSection = ({
     <div className="space-y-6">
       {showForm ? (
         <GrowthChannelForm
-          growthModel={growthModel}
           projectId={projectId}
           onSave={refreshData}
           onClose={handleCloseForm}

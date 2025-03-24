@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -43,19 +44,17 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ScalingReadinessMetric, GrowthModel, SCALING_METRIC_CATEGORIES } from '@/types/database';
+import { ScalingReadinessMetric, SCALING_METRIC_CATEGORIES } from '@/types/database';
 import ScalingMetricForm from './ScalingMetricForm';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ScalingReadinessMetricsProps {
   projectId: string;
-  growthModel: GrowthModel;
   refreshData: () => Promise<void>;
 }
 
 const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ 
   projectId, 
-  growthModel,
   refreshData
 }) => {
   const [metrics, setMetrics] = useState<ScalingReadinessMetric[]>([]);
@@ -68,10 +67,10 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (growthModel) {
+    if (projectId) {
       fetchMetrics();
     }
-  }, [growthModel]);
+  }, [projectId]);
 
   const fetchMetrics = async () => {
     try {
@@ -230,7 +229,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
       {showForm ? (
         <ScalingMetricForm
           projectId={projectId}
-          growthModelId={growthModel.id}
           metric={editingMetric}
           onSave={handleSave}
           onClose={handleCloseForm}

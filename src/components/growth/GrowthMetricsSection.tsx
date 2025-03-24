@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { GrowthMetric, GrowthModel } from '@/types/database';
+import { GrowthMetric } from '@/types/database';
 import GrowthMetricForm from '@/components/forms/GrowthMetricForm';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,14 +12,12 @@ import DeleteMetricDialog from './metrics/DeleteMetricDialog';
 
 interface GrowthMetricsSectionProps {
   metrics: GrowthMetric[];
-  growthModel: GrowthModel;
   projectId: string;
   refreshData: () => Promise<void>;
 }
 
 const GrowthMetricsSection = ({ 
   metrics, 
-  growthModel, 
   projectId, 
   refreshData 
 }: GrowthMetricsSectionProps) => {
@@ -81,7 +79,6 @@ const GrowthMetricsSection = ({
     <div className="space-y-6">
       {showForm ? (
         <GrowthMetricForm
-          growthModel={growthModel}
           projectId={projectId}
           onSave={refreshData}
           onClose={handleCloseForm}

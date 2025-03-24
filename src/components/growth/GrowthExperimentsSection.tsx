@@ -1,40 +1,60 @@
 
 import React, { useState } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Beaker, Calendar, TrendingUp, Target, CheckCircle, Clock, Trash2 } from 'lucide-react';
-import { GrowthExperiment, GrowthMetric, GrowthModel } from '@/types/database';
+import { 
+  PlusCircle, 
+  Edit2, 
+  Trash2, 
+  Beaker,
+  TrendingUp,
+  AlertCircle
+} from 'lucide-react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { GrowthExperiment, GrowthMetric } from '@/types/database';
 import GrowthExperimentForm from '@/components/forms/GrowthExperimentForm';
-import StructuredHypothesisForm from '@/components/growth/StructuredHypothesisForm';
-import DeleteGrowthExperimentDialog from '@/components/growth/DeleteGrowthExperimentDialog';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import TabNavigation, { TabItem } from '@/components/TabNavigation';
 
 interface GrowthExperimentsSectionProps {
   experiments: GrowthExperiment[];
   metrics: GrowthMetric[];
-  growthModel: GrowthModel;
   projectId: string;
   refreshData: () => Promise<void>;
 }
 
+const STATUS_COLORS = {
+  'planned': 'bg-blue-100 text-blue-700 border-blue-200',
+  'running': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  'completed': 'bg-green-100 text-green-700 border-green-200',
+  'failed': 'bg-red-100 text-red-700 border-red-200'
+};
+
 const GrowthExperimentsSection = ({ 
   experiments, 
-  metrics, 
-  growthModel, 
+  metrics,
   projectId, 
   refreshData 
 }: GrowthExperimentsSectionProps) => {
   const [showForm, setShowForm] = useState(false);
-  const [showHypothesisForm, setShowHypothesisForm] = useState(false);
   const [editingExperiment, setEditingExperiment] = useState<GrowthExperiment | null>(null);
-  const [activeTab, setActiveTab] = useState('all');
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [experimentToDelete, setExperimentToDelete] = useState<GrowthExperiment | null>(null);
   const { toast } = useToast();
 
@@ -48,227 +68,192 @@ const GrowthExperimentsSection = ({
     setEditingExperiment(null);
   };
 
-  const handleOpenHypothesisForm = () => {
-    setShowHypothesisForm(true);
+  const handleDeleteExperiment = async () => {
+    if (!experimentToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('growth_experiments')
+        .delete()
+        .eq('id', experimentToDelete.originalId || experimentToDelete.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: 'Experiment deleted',
+        description: 'The experiment has been successfully deleted',
+      });
+      
+      refreshData();
+    } catch (error) {
+      console.error('Error deleting experiment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete experiment',
+        variant: 'destructive',
+      });
+    } finally {
+      setExperimentToDelete(null);
+    }
   };
 
-  const handleCloseHypothesisForm = () => {
-    setShowHypothesisForm(false);
+  const getAssociatedMetric = (metricId: string | null) => {
+    if (!metricId) return null;
+    return metrics.find(m => m.id === metricId);
   };
 
-  const handleDelete = (experiment: GrowthExperiment) => {
-    setExperimentToDelete(experiment);
-    setIsDeleteDialogOpen(true);
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (e) {
+      return dateString;
+    }
   };
-
-  // Get the metric name for an experiment
-  const getMetricName = (metricId: string) => {
-    const metric = metrics.find(m => m.id === metricId);
-    return metric ? metric.name : 'Unknown metric';
-  };
-
-  // Filter experiments by status
-  const filteredExperiments = experiments.filter(exp => {
-    if (activeTab === 'all') return true;
-    return exp.status === activeTab;
-  });
-
-  // Function to calculate days remaining
-  const getDaysRemaining = (endDate: string) => {
-    const end = new Date(endDate);
-    const now = new Date();
-    const diff = end.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  };
-
-  // Status tab definitions
-  const statusTabs: TabItem[] = [
-    { id: 'all', label: 'All Experiments', icon: Beaker },
-    { id: 'planned', label: 'Planned', icon: Calendar },
-    { id: 'running', label: 'Running', icon: TrendingUp },
-    { id: 'completed', label: 'Completed', icon: CheckCircle },
-  ];
 
   return (
     <div className="space-y-6">
       {showForm ? (
         <GrowthExperimentForm
-          growthModel={growthModel}
           projectId={projectId}
           metrics={metrics}
           onSave={refreshData}
           onClose={handleCloseForm}
           experiment={editingExperiment}
         />
-      ) : showHypothesisForm ? (
-        <StructuredHypothesisForm
-          growthModel={growthModel}
-          projectId={projectId}
-          metrics={metrics}
-          onSave={refreshData}
-          onClose={handleCloseHypothesisForm}
-        />
       ) : (
         <>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Growth Experiments</h2>
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={handleOpenHypothesisForm} 
-                className="flex items-center gap-2"
-              >
-                <Target className="h-4 w-4" />
-                New Hypothesis
-              </Button>
-              <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
-                New Experiment
-              </Button>
-            </div>
+            <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Add Experiment
+            </Button>
           </div>
-          
-          <div className="border rounded-lg overflow-hidden bg-white">
-            <TabNavigation 
-              tabs={statusTabs}
-              activeTab={activeTab}
-              onChange={setActiveTab}
-              className="px-4 py-2 border-b"
-            />
-              
-            <div className="p-0 mt-0">
-              {filteredExperiments.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Beaker className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-600 mb-2">No {activeTab !== 'all' ? activeTab : ''} experiments yet</h3>
-                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                    Create experiments to test your growth hypotheses and validate your growth model.
-                  </p>
-                  <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
-                    <PlusCircle className="h-4 w-4" />
-                    Create First Experiment
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-                  {filteredExperiments.map(experiment => {
-                    const daysRemaining = getDaysRemaining(experiment.end_date);
-                    const isActive = experiment.status === 'running';
-                    const isCompleted = experiment.status === 'completed';
-                    
-                    // Get status badge color
-                    const getStatusColor = () => {
-                      switch (experiment.status) {
-                        case 'running': return 'bg-blue-500';
-                        case 'completed': return 'bg-green-500';
-                        case 'failed': return 'bg-red-500';
-                        default: return 'bg-gray-500';
-                      }
-                    };
-                    
-                    return (
-                      <Card key={experiment.id} className="overflow-hidden">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between">
-                            <Badge className={getStatusColor()}>
-                              {experiment.status.charAt(0).toUpperCase() + experiment.status.slice(1)}
+
+          {experiments.length === 0 ? (
+            <Card className="bg-gray-50 border-dashed border-2 border-gray-300">
+              <CardContent className="pt-6 pb-8 px-6 flex flex-col items-center text-center">
+                <Beaker className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Experiments Yet</h3>
+                <p className="text-gray-500 mb-4 max-w-md">
+                  Run experiments to test your growth hypotheses and improve your key metrics.
+                </p>
+                <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Add First Experiment
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {experiments.map((experiment) => {
+                const associatedMetric = getAssociatedMetric(experiment.metric_id);
+                
+                return (
+                  <Card key={experiment.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{experiment.title}</CardTitle>
+                          <div className="flex space-x-2 mt-1">
+                            <Badge className={`${STATUS_COLORS[experiment.status]}`}>
+                              {experiment.status}
                             </Badge>
-                            <div className="flex space-x-1">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0" 
-                                onClick={() => handleDelete(experiment)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0" 
-                                onClick={() => handleOpenForm(experiment)}
-                              >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                              </Button>
+                            {associatedMetric && (
+                              <Badge variant="outline" className="bg-gray-50">
+                                {associatedMetric.name}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleOpenForm(experiment)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                            <span className="sr-only">Edit</span>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => setExperimentToDelete(experiment)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 mb-3">{experiment.hypothesis}</p>
+                      
+                      <div className="bg-gray-50 rounded-md p-3 space-y-2">
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-gray-500 text-xs font-medium">Start Date</p>
+                            <p>{formatDate(experiment.start_date)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 text-xs font-medium">End Date</p>
+                            <p>{formatDate(experiment.end_date)}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-gray-500 text-xs font-medium">Expected Lift</p>
+                            <div className="flex items-center">
+                              <TrendingUp className="h-3.5 w-3.5 mr-1 text-green-500" />
+                              <span>{experiment.expected_lift}%</span>
                             </div>
                           </div>
-                          <CardTitle className="text-base mt-1">{experiment.title}</CardTitle>
-                          <CardDescription className="text-xs line-clamp-2">
-                            {experiment.hypothesis}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pb-3">
-                          <div className="grid grid-cols-2 gap-4 my-1">
-                            <div className="flex items-center text-xs">
-                              <Target className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
-                              <span className="text-gray-600">{getMetricName(experiment.metric_id || '')}</span>
-                            </div>
-                            <div className="flex items-center text-xs">
-                              <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
-                              <span className="text-gray-600">
-                                {format(new Date(experiment.start_date), 'MMM d')} - {format(new Date(experiment.end_date), 'MMM d')}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Experiment Target Metrics */}
-                          <div className="mt-3 border-t pt-2 border-gray-100">
-                            <div className="flex justify-between items-center text-xs mb-1">
+                          <div>
+                            <p className="text-gray-500 text-xs font-medium">Actual Lift</p>
+                            {experiment.actual_lift !== null ? (
                               <div className="flex items-center">
-                                <TrendingUp className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
-                                <span className="font-medium">Expected Lift</span>
+                                <TrendingUp className="h-3.5 w-3.5 mr-1 text-blue-500" />
+                                <span>{experiment.actual_lift}%</span>
                               </div>
-                              <span className="font-semibold">{experiment.expected_lift}%</span>
-                            </div>
-                            
-                            {isCompleted && experiment.actual_lift !== undefined && (
-                              <div className="flex justify-between items-center text-xs mb-1">
-                                <div className="flex items-center">
-                                  <CheckCircle className="h-3.5 w-3.5 mr-1.5 text-green-500" />
-                                  <span className="font-medium">Actual Lift</span>
-                                </div>
-                                <span className="font-semibold">{experiment.actual_lift}%</span>
-                              </div>
-                            )}
-                            
-                            {/* Time remaining for running experiments */}
-                            {isActive && (
-                              <div className="mt-2">
-                                <div className="flex justify-between text-xs mb-1">
-                                  <div className="flex items-center">
-                                    <Clock className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
-                                    <span className="text-gray-600">Time Remaining</span>
-                                  </div>
-                                  <span className="font-medium">
-                                    {daysRemaining} days
-                                  </span>
-                                </div>
-                                <Progress 
-                                  value={100 - (daysRemaining / 14 * 100)} 
-                                  className="h-1.5 mt-1" 
-                                />
-                              </div>
+                            ) : (
+                              <span className="text-gray-400">Pending</span>
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+                        </div>
+                      </div>
+                      
+                      {experiment.notes && (
+                        <div className="mt-3">
+                          <p className="text-xs text-gray-500 font-medium mb-1">Notes</p>
+                          <p className="text-sm text-gray-600">{experiment.notes}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          </div>
+          )}
         </>
       )}
 
-      <DeleteGrowthExperimentDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        experimentToDelete={experimentToDelete}
-        refreshData={refreshData}
-      />
+      <AlertDialog open={!!experimentToDelete} onOpenChange={(open) => !open && setExperimentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Experiment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this experiment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteExperiment} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
