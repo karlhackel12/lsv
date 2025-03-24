@@ -1029,4 +1029,4 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
               </CardContent>
               
               <CardFooter className="border-t pt-4 block">
-                <
+                <div className="
