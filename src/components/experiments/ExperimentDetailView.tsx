@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Edit, LinkIcon, FileText, CheckSquare, AlertTriangle, CalendarClock, FormInput } from 'lucide-react';
+import { Edit, LinkIcon, FileText, CheckSquare, AlertTriangle, CalendarClock, FormInput, Book } from 'lucide-react';
 import { Experiment, Hypothesis } from '@/types/database';
 import StatusBadge from '@/components/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import ExperimentTimeline from './ExperimentTimeline';
 import TypeformEmbed from './TypeformEmbed';
 import { useNavigate } from 'react-router-dom';
 import ExperimentConnectionsPanel from './ExperimentConnectionsPanel';
+import ExperimentJournal from './ExperimentJournal';
 
 interface ExperimentDetailViewProps {
   experiment: Experiment;
@@ -88,6 +89,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="results">Results & Decisions</TabsTrigger>
+          <TabsTrigger value="journal">Journal</TabsTrigger>
           {hasTypeform && <TabsTrigger value="survey-form">Survey Form</TabsTrigger>}
           {experiment.status === 'completed' && <TabsTrigger value="timeline">Timeline</TabsTrigger>}
         </TabsList>
@@ -217,9 +219,16 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
           )}
         </TabsContent>
         
+        <TabsContent value="journal" className="mt-4">
+          <ExperimentJournal 
+            experiment={experiment} 
+            refreshExperiment={onRefresh}
+          />
+        </TabsContent>
+        
         {hasTypeform && (
           <TabsContent value="survey-form" className="mt-4">
-            <TypeformEmbed experiment={experiment} />
+            <TypeformEmbed experiment={experiment} onRefresh={onRefresh} />
           </TabsContent>
         )}
         
