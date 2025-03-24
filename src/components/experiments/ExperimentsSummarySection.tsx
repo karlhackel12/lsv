@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,6 @@ interface ExperimentsSummarySectionProps {
 
 const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummarySectionProps) => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   
   // Count experiments by category and status
   const experimentCounts = {
@@ -32,16 +30,24 @@ const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummar
     .slice(0, 3);
 
   // Navigate to experiment list with specific filter
-  const navigateToExperiments = (status?: string) => {
+  const navigateToExperiments = (phase?: string, status?: string) => {
     // Create params object
     const params = new URLSearchParams();
+    
+    // Set the current phase if provided, otherwise use the default from the parent component
+    if (phase) {
+      params.set('phase', phase);
+    } else {
+      // If no phase specified, use 'problem' as default to ensure we go to a list view
+      params.set('phase', 'problem');
+    }
     
     // Add status filter if provided
     if (status) {
       params.set('status', status);
     }
     
-    // Force list view mode
+    // Force summary mode to false to ensure we get the list view
     params.set('view', 'list');
     
     // Navigate to the experiments page with our parameters
@@ -49,10 +55,8 @@ const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummar
   };
 
   // Navigate to create new experiment
-  const navigateToCreate = () => {
-    const params = new URLSearchParams(searchParams);
-    params.set('create', 'true');
-    setSearchParams(params);
+  const navigateToCreate = (phase: string) => {
+    navigate(`/experiments?phase=${phase}&create=true`);
   };
 
   return (
@@ -118,13 +122,13 @@ const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummar
                 <Badge variant="outline" className="bg-green-50">{experimentCounts.completed}</Badge>
               </div>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <Button size="sm" variant="outline" onClick={() => navigateToExperiments('planned')}>
+                <Button size="sm" variant="outline" onClick={() => navigateToExperiments(undefined, 'planned')}>
                   Planned
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => navigateToExperiments('in-progress')}>
+                <Button size="sm" variant="outline" onClick={() => navigateToExperiments(undefined, 'in-progress')}>
                   Running
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => navigateToExperiments('completed')}>
+                <Button size="sm" variant="outline" onClick={() => navigateToExperiments(undefined, 'completed')}>
                   Completed
                 </Button>
               </div>
@@ -147,10 +151,26 @@ const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummar
               <Button 
                 variant="outline" 
                 className="w-full justify-start" 
-                onClick={navigateToCreate}
+                onClick={() => navigateToCreate('problem')}
               >
                 <Beaker className="h-4 w-4 mr-2 text-blue-500" />
-                Create New Experiment
+                Problem Experiment
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => navigateToCreate('solution')}
+              >
+                <Beaker className="h-4 w-4 mr-2 text-purple-500" />
+                Solution Experiment
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => navigateToCreate('business-model')}
+              >
+                <Beaker className="h-4 w-4 mr-2 text-amber-500" />
+                Business Model Experiment
               </Button>
             </div>
           </CardContent>
@@ -186,7 +206,7 @@ const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummar
                     size="sm" 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => navigate(`/experiments?id=${experiment.id}`)}
+                    onClick={() => navigate(`/experiments?id=${experiment.id}&phase=${experiment.category}`)}
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     View Details
