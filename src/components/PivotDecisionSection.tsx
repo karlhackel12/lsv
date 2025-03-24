@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProject } from '@/hooks/use-project';
 import { Metric, ScalingReadinessMetric } from '@/types/database';
 
-const PivotDecisionSection = () => {
+const PivotDecisionSection: React.FC = () => {
   const navigate = useNavigate();
   const { currentProject } = useProject();
   const [metricsAtRisk, setMetricsAtRisk] = useState<ScalingReadinessMetric[]>([]);

@@ -11,7 +11,7 @@ interface PageIntroductionProps {
   storageKey?: string;
 }
 
-const PageIntroduction = ({
+const PageIntroduction: React.FC<PageIntroductionProps> = ({
   title,
   description,
   icon = <Info className="h-5 w-5 text-blue-500" />,

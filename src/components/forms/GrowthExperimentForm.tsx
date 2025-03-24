@@ -37,6 +37,10 @@ const formSchema = z.object({
   status: z.string(),
   notes: z.string().optional(),
   scaling_metric_id: z.string().nullable().optional(),
+  expected_lift: z.number().min(0, "Expected lift must be a positive number"),
+  actual_lift: z.number().nullable().optional(),
+  start_date: z.string(),
+  end_date: z.string(),
 });
 
 interface GrowthExperimentFormProps {
@@ -59,6 +63,12 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
   const { toast } = useToast();
   const isEditing = !!experiment;
 
+  // Get the current date in ISO format for the date inputs
+  const today = new Date().toISOString().split('T')[0];
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 14); // Default end date 2 weeks in the future
+  const defaultEndDate = futureDate.toISOString().split('T')[0];
+
   const form = useForm<ExtendedGrowthExperiment>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,10 +80,10 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
       project_id: projectId,
       growth_model_id: growthModelId,
       scaling_metric_id: experiment?.scaling_metric_id || null,
-      // Add required fields from GrowthExperiment
-      start_date: experiment?.start_date || new Date().toISOString(),
-      end_date: experiment?.end_date || new Date().toISOString(),
-      expected_lift: experiment?.expected_lift || 0,
+      // Add required fields with proper defaults
+      start_date: experiment?.start_date ? new Date(experiment.start_date).toISOString() : new Date().toISOString(),
+      end_date: experiment?.end_date ? new Date(experiment.end_date).toISOString() : futureDate.toISOString(),
+      expected_lift: experiment?.expected_lift ?? 0, // Default to 0 if null
       actual_lift: experiment?.actual_lift || null,
       metric_id: experiment?.metric_id || null,
     }
@@ -103,6 +113,13 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
 
   const handleSubmit = async (data: ExtendedGrowthExperiment) => {
     try {
+      // Ensure expected_lift is a number and not null
+      const expectedLift = Number(data.expected_lift) || 0;
+      
+      // Format the dates properly
+      const startDate = new Date(data.start_date);
+      const endDate = new Date(data.end_date);
+
       if (isEditing && experiment) {
         // Update experiment
         const { error } = await supabase
@@ -114,10 +131,10 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             notes: data.notes,
             scaling_metric_id: data.scaling_metric_id,
             // Include additional required fields
-            start_date: data.start_date,
-            end_date: data.end_date,
-            expected_lift: data.expected_lift,
-            actual_lift: data.actual_lift,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            expected_lift: expectedLift,
+            actual_lift: data.actual_lift !== null ? Number(data.actual_lift) : null,
             metric_id: data.metric_id,
             updated_at: new Date().toISOString()
           })
@@ -142,9 +159,9 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             project_id: projectId,
             scaling_metric_id: data.scaling_metric_id,
             // Include additional required fields
-            start_date: data.start_date,
-            end_date: data.end_date,
-            expected_lift: data.expected_lift,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            expected_lift: expectedLift,
             metric_id: data.metric_id
           });
           
@@ -242,7 +259,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
                       <Input 
                         type="number" 
                         {...field} 
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
                         value={field.value?.toString() || '0'} 
                         placeholder="e.g., 10" 
                       />
@@ -282,7 +299,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
                       <Input 
                         type="date" 
                         {...field}
-                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : today}
                         onChange={(e) => {
                           const date = new Date(e.target.value);
                           field.onChange(date.toISOString());
@@ -304,7 +321,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
                       <Input 
                         type="date" 
                         {...field}
-                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : defaultEndDate}
                         onChange={(e) => {
                           const date = new Date(e.target.value);
                           field.onChange(date.toISOString());
@@ -376,7 +393,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
                       <Input 
                         type="number" 
                         {...field} 
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                         value={field.value?.toString() || ''} 
                         placeholder="e.g., 5.2" 
                       />
