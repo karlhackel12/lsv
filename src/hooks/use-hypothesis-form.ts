@@ -56,6 +56,16 @@ export const useHypothesisForm = (
 
       // Ensure phase is set
       data.phase = phaseType;
+      
+      // Ensure we're not sending empty strings for UUID fields
+      // This prevents database validation errors when inserting data
+      Object.keys(data).forEach(key => {
+        if (data[key] === '') {
+          if (key.endsWith('_id')) {
+            data[key] = null;
+          }
+        }
+      });
 
       await onSave(data);
       toast({

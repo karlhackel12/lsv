@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { GrowthModel, GrowthMetric } from '@/types/database';
+import { GrowthModel, GrowthMetric, GrowthHypothesis } from '@/types/database';
 import { 
   Select,
   SelectContent,
@@ -31,7 +31,7 @@ interface StructuredHypothesisFormProps {
   metrics: GrowthMetric[];
   onSave: () => Promise<void>;
   onClose: () => void;
-  hypothesis?: any | null; // Would be GrowthHypothesis in a full implementation
+  hypothesis?: GrowthHypothesis | null;
 }
 
 interface HypothesisFormValues {
@@ -39,7 +39,7 @@ interface HypothesisFormValues {
   action: string;
   outcome: string;
   success_criteria: string;
-  metric_id: string;
+  metric_id: string | null;
   stage: string;
   growth_model_id: string;
   project_id: string;
@@ -62,7 +62,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
       action: '',
       outcome: '',
       success_criteria: '',
-      metric_id: metrics.length > 0 ? metrics[0].id : '',
+      metric_id: metrics.length > 0 ? metrics[0].id : null,
       stage: 'channel',
       growth_model_id: growthModel.id,
       project_id: projectId,
@@ -71,18 +71,44 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
 
   const handleSubmit = async (data: HypothesisFormValues) => {
     try {
+      console.log('Submitting hypothesis data:', data);
+      
+      // Validate required fields
+      if (!data.action.trim()) {
+        form.setError('action', { type: 'required', message: 'Action is required' });
+        return;
+      }
+      
+      if (!data.outcome.trim()) {
+        form.setError('outcome', { type: 'required', message: 'Outcome is required' });
+        return;
+      }
+      
+      // Ensure we're not sending empty strings for UUID fields
+      // This prevents database validation errors when inserting data
+      const cleanedData = { ...data };
+      if (cleanedData.metric_id === '') {
+        cleanedData.metric_id = null;
+      }
+      
       if (isEditing && hypothesis?.id) {
-        await supabase
+        console.log('Updating hypothesis:', cleanedData);
+        const { error } = await supabase
           .from('growth_hypotheses')
           .update({
-            action: data.action,
-            outcome: data.outcome,
-            success_criteria: data.success_criteria,
-            metric_id: data.metric_id,
-            stage: data.stage,
+            action: cleanedData.action,
+            outcome: cleanedData.outcome,
+            success_criteria: cleanedData.success_criteria,
+            metric_id: cleanedData.metric_id,
+            stage: cleanedData.stage,
             updated_at: new Date().toISOString()
           })
           .eq('id', hypothesis.id);
+          
+        if (error) {
+          console.error('Error updating hypothesis:', error);
+          throw error;
+        }
           
         toast({
           title: 'Hypothesis updated',
@@ -90,36 +116,45 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
         });
       } else {
         // First, create the growth hypothesis
+        console.log('Creating new hypothesis:', cleanedData);
         const { data: growthHypothesis, error: growthError } = await supabase
           .from('growth_hypotheses')
           .insert({
-            action: data.action,
-            outcome: data.outcome,
-            success_criteria: data.success_criteria || 'We\'ll know we\'re right when we see improvement.',
-            metric_id: data.metric_id,
-            stage: data.stage,
+            action: cleanedData.action,
+            outcome: cleanedData.outcome,
+            success_criteria: cleanedData.success_criteria || 'We\'ll know we\'re right when we see improvement.',
+            metric_id: cleanedData.metric_id,
+            stage: cleanedData.stage,
             growth_model_id: growthModel.id,
             project_id: projectId
           })
           .select()
           .single();
           
-        if (growthError) throw growthError;
+        if (growthError) {
+          console.error('Error creating growth hypothesis:', growthError);
+          throw growthError;
+        }
+        
+        console.log('Created growth hypothesis:', growthHypothesis);
         
         // Then, create a corresponding hypothesis in the main hypotheses table for cross-system compatibility
         const { error: hypothesisError } = await supabase
           .from('hypotheses')
           .insert({
-            statement: `We believe that ${data.action} will result in ${data.outcome}.`,
+            statement: `We believe that ${cleanedData.action} will result in ${cleanedData.outcome}.`,
             category: 'growth',
-            criteria: data.success_criteria || `We'll know we're right when we see improvement.`,
+            criteria: cleanedData.success_criteria || `We'll know we're right when we see improvement.`,
             experiment: 'To be defined',
             status: 'not-started',
             phase: 'solution',
             project_id: projectId
           });
           
-        if (hypothesisError) throw hypothesisError;
+        if (hypothesisError) {
+          console.error('Error creating corresponding hypothesis:', hypothesisError);
+          throw hypothesisError;
+        }
         
         toast({
           title: 'Hypothesis created',
@@ -280,7 +315,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                     <FormLabel>Target Metric</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger>

@@ -557,9 +557,9 @@ export type Database = {
     }
     Enums: {
       experiment_status: "completed" | "in-progress" | "planned"
-      feature_priority: "high" | "medium" | "low"
       feature_effort: "high" | "medium" | "low"
       feature_impact: "high" | "medium" | "low"
+      feature_priority: "high" | "medium" | "low"
       feature_status: "in-progress" | "planned" | "completed" | "post-mvp"
       hypothesis_status: "validated" | "validating" | "not-started" | "invalid"
       metric_status: "success" | "warning" | "error" | "not-started"
@@ -741,6 +741,21 @@ export interface MVPFeature {
   impact: 'high' | 'medium' | 'low';
   status: 'in-progress' | 'planned' | 'completed' | 'post-mvp';
   notes?: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Define the GrowthHypothesis interface to match the database schema
+export interface GrowthHypothesis {
+  id: string;
+  originalId?: string;
+  action: string;
+  outcome: string;
+  success_criteria?: string;
+  metric_id?: string | null;
+  stage: string;
+  growth_model_id: string;
   project_id: string;
   created_at: string;
   updated_at: string;
