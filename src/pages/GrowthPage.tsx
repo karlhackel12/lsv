@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import PivotDecisionSection from '@/components/PivotDecisionSection';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 const GrowthPage = () => {
   const {
@@ -23,6 +24,7 @@ const GrowthPage = () => {
     error
   } = useProject();
   const [activeTab, setActiveTab] = useState('metrics');
+  const [defaultGrowthModelId, setDefaultGrowthModelId] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,6 +38,55 @@ const GrowthPage = () => {
     fetchModelData
   } = useGrowthModels(currentProject?.id || '');
   
+  // Fetch a default growth model ID when project loads
+  useEffect(() => {
+    const fetchDefaultGrowthModel = async () => {
+      if (!currentProject?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('growth_models')
+          .select('id')
+          .eq('project_id', currentProject.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setDefaultGrowthModelId(data[0].id);
+        } else {
+          // Create a default growth model if none exists
+          const { data: newModel, error: createError } = await supabase
+            .from('growth_models')
+            .insert({
+              name: 'Default Growth Model',
+              description: 'Automatically created growth model',
+              framework: 'aarrr',
+              project_id: currentProject.id,
+              status: 'active'
+            })
+            .select();
+            
+          if (createError) throw createError;
+          
+          if (newModel && newModel.length > 0) {
+            setDefaultGrowthModelId(newModel[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching or creating default growth model:', err);
+        toast({
+          title: 'Error',
+          description: 'Could not set up a growth model. Some features may not work.',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    fetchDefaultGrowthModel();
+  }, [currentProject?.id]);
+
   React.useEffect(() => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab) {
@@ -157,7 +208,8 @@ const GrowthPage = () => {
                     <GrowthExperimentsSection 
                       experiments={growthExperiments} 
                       metrics={growthMetrics}
-                      projectId={currentProject.id} 
+                      projectId={currentProject.id}
+                      growthModelId={defaultGrowthModelId || ''} 
                       refreshData={() => fetchModelData(currentProject.id)} 
                     />
                   </TabsContent>

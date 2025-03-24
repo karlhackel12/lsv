@@ -37,6 +37,7 @@ interface GrowthExperimentsSectionProps {
   experiments: GrowthExperiment[];
   metrics: GrowthMetric[];
   projectId: string;
+  growthModelId: string;
   refreshData: () => Promise<void>;
 }
 
@@ -51,6 +52,7 @@ const GrowthExperimentsSection = ({
   experiments, 
   metrics,
   projectId, 
+  growthModelId,
   refreshData 
 }: GrowthExperimentsSectionProps) => {
   const [showForm, setShowForm] = useState(false);
@@ -59,6 +61,15 @@ const GrowthExperimentsSection = ({
   const { toast } = useToast();
 
   const handleOpenForm = (experiment?: GrowthExperiment) => {
+    if (!growthModelId) {
+      toast({
+        title: "Growth model missing",
+        description: "Cannot create experiments without a growth model. Please wait or refresh the page.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setEditingExperiment(experiment || null);
     setShowForm(true);
   };
@@ -115,7 +126,7 @@ const GrowthExperimentsSection = ({
       {showForm ? (
         <GrowthExperimentForm
           projectId={projectId}
-          growthModelId="default" // Using a default value as it's required
+          growthModelId={growthModelId}
           onSave={refreshData}
           onClose={handleCloseForm}
           experiment={editingExperiment}
@@ -124,7 +135,11 @@ const GrowthExperimentsSection = ({
         <>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Growth Experiments</h2>
-            <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
+            <Button 
+              onClick={() => handleOpenForm()} 
+              className="flex items-center gap-2"
+              disabled={!growthModelId}
+            >
               <PlusCircle className="h-4 w-4" />
               Add Experiment
             </Button>
@@ -138,7 +153,11 @@ const GrowthExperimentsSection = ({
                 <p className="text-gray-500 mb-4 max-w-md">
                   Run experiments to test your growth hypotheses and improve your key metrics.
                 </p>
-                <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
+                <Button 
+                  onClick={() => handleOpenForm()} 
+                  className="flex items-center gap-2"
+                  disabled={!growthModelId}
+                >
                   <PlusCircle className="h-4 w-4" />
                   Add First Experiment
                 </Button>
