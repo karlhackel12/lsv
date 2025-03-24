@@ -8,7 +8,6 @@ import PageIntroduction from '@/components/PageIntroduction';
 import { Beaker } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/hooks/use-project';
-import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
 
 // Define valid experiment status values for type checking
@@ -129,11 +128,6 @@ const ExperimentsPage = () => {
         {(!showSummary) && (
           <>
             <TabsContent value="problem">
-              <ValidationPhaseIntro 
-                phase="problem" 
-                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-                createButtonText="Create Problem Experiment"
-              />
               <ExperimentsSection 
                 experiments={experiments}
                 refreshData={fetchExperiments}
@@ -144,11 +138,6 @@ const ExperimentsPage = () => {
             </TabsContent>
             
             <TabsContent value="solution">
-              <ValidationPhaseIntro 
-                phase="solution" 
-                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-                createButtonText="Create Solution Experiment"
-              />
               <ExperimentsSection 
                 experiments={experiments}
                 refreshData={fetchExperiments}
@@ -159,11 +148,6 @@ const ExperimentsPage = () => {
             </TabsContent>
             
             <TabsContent value="business-model">
-              <ValidationPhaseIntro 
-                phase="growth" 
-                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-                createButtonText="Create Business Model Experiment"
-              />
               <ExperimentsSection 
                 experiments={experiments}
                 refreshData={fetchExperiments}

@@ -46,6 +46,18 @@ const ExperimentsSection = ({
     }
   }, [searchParams, experiments]);
 
+  useEffect(() => {
+    const createParam = searchParams.get('create');
+    if (createParam === 'true') {
+      handleCreateNew();
+      
+      // Clear the create parameter to prevent reopening on refresh
+      const params = new URLSearchParams(searchParams);
+      params.delete('create');
+      setSearchParams(params);
+    }
+  }, [searchParams]);
+
   const handleCreateNew = () => {
     console.log("Creating new experiment - resetting form state");
     // Explicitly set selectedExperiment to null to ensure a clean form
