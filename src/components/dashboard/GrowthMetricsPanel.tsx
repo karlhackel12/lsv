@@ -1,8 +1,11 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Users, DollarSign, LineChart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import InfoTooltip from '@/components/InfoTooltip';
+import { useProject } from '@/hooks/use-project';
+import { supabase } from '@/integrations/supabase/client';
+import { GrowthMetric } from '@/types/database';
 
 interface MetricProps {
   title: string;
@@ -41,6 +44,84 @@ const MetricCard = ({ title, value, change, changeType, icon, tooltip }: MetricP
 };
 
 const GrowthMetricsPanel = () => {
+  const { currentProject } = useProject();
+  const [isLoading, setIsLoading] = useState(true);
+  const [metrics, setMetrics] = useState<GrowthMetric[]>([]);
+
+  // Fetch metrics when the project changes
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!currentProject?.id) return;
+      
+      setIsLoading(true);
+      
+      try {
+        // Fetch metrics from the database
+        const { data, error } = await supabase
+          .from('growth_metrics')
+          .select('*')
+          .eq('project_id', currentProject.id)
+          .in('category', ['acquisition', 'conversion', 'revenue', 'retention']);
+          
+        if (error) {
+          console.error('Error fetching growth metrics:', error);
+          return;
+        }
+        
+        setMetrics(data || []);
+      } catch (err) {
+        console.error('Failed to fetch growth metrics:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchMetrics();
+  }, [currentProject?.id]);
+  
+  // Find metrics by category
+  const findMetric = (category: string): GrowthMetric | undefined => {
+    return metrics.find(m => m.category === category);
+  };
+  
+  // Get CAC metric
+  const cacMetric = findMetric('acquisition');
+  
+  // Get LTV metric
+  const ltvMetric = findMetric('revenue');
+  
+  // Get conversion rate metric
+  const conversionMetric = findMetric('conversion');
+  
+  // Get LTV:CAC ratio
+  const ltvCacRatio = cacMetric && ltvMetric && cacMetric.current_value > 0 
+    ? (ltvMetric.current_value / cacMetric.current_value).toFixed(1) + ':1'
+    : 'N/A';
+  
+  // Calculate change percentages  
+  const calculateChange = (metric?: GrowthMetric): { value: string, type: 'positive' | 'negative' } | undefined => {
+    if (!metric || metric.target_value === 0) return undefined;
+    
+    const change = ((metric.current_value / metric.target_value) * 100) - 100;
+    return {
+      value: `${Math.abs(change).toFixed(1)}%`,
+      type: change >= 0 ? 'positive' : 'negative'
+    };
+  };
+  
+  const formatMetricValue = (metric?: GrowthMetric): string => {
+    if (!metric) return 'N/A';
+    
+    switch (metric.unit) {
+      case 'currency':
+        return `$${metric.current_value.toFixed(2)}`;
+      case 'percentage':
+        return `${metric.current_value}%`;
+      default:
+        return metric.current_value.toString();
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -58,32 +139,32 @@ const GrowthMetricsPanel = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Customer Acquisition Cost"
-            value="$24.50"
-            change="12.5%"
-            changeType="negative"
+            value={formatMetricValue(cacMetric)}
+            change={calculateChange(cacMetric)?.value}
+            changeType={calculateChange(cacMetric)?.type}
             icon={<DollarSign className="h-5 w-5 text-blue-500" />}
             tooltip="The cost to acquire one new customer (CAC)"
           />
           <MetricCard
             title="Lifetime Value"
-            value="$156.00"
-            change="8.3%"
-            changeType="positive"
+            value={formatMetricValue(ltvMetric)}
+            change={calculateChange(ltvMetric)?.value}
+            changeType={calculateChange(ltvMetric)?.type}
             icon={<Users className="h-5 w-5 text-green-500" />}
             tooltip="The total revenue expected from a customer (LTV)"
           />
           <MetricCard
             title="Conversion Rate"
-            value="3.2%"
-            change="0.5%"
-            changeType="positive"
+            value={formatMetricValue(conversionMetric)}
+            change={calculateChange(conversionMetric)?.value}
+            changeType={calculateChange(conversionMetric)?.type}
             icon={<LineChart className="h-5 w-5 text-yellow-500" />}
             tooltip="Percentage of visitors who become customers"
           />
           <MetricCard
             title="LTV:CAC Ratio"
-            value="6.4:1"
-            change="15.2%"
+            value={ltvCacRatio}
+            change={ltvMetric && cacMetric ? "Calculated" : undefined}
             changeType="positive"
             icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
             tooltip="The ratio between customer lifetime value and acquisition cost"

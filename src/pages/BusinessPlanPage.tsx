@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -39,7 +38,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Section type definition
 type BusinessPlanSection = {
   id: string;
   project_id: string;
@@ -51,7 +49,6 @@ type BusinessPlanSection = {
   updated_at: string;
 };
 
-// Section types
 const sectionTypes = [
   { id: 'executive_summary', name: 'Executive Summary' },
   { id: 'company_description', name: 'Company Description' },
@@ -65,7 +62,6 @@ const sectionTypes = [
   { id: 'risk_assessment', name: 'Risk Assessment' },
 ];
 
-// Form schema
 const formSchema = z.object({
   section_type: z.string().min(1, "Section type is required"),
   title: z.string().min(1, "Title is required"),
@@ -87,7 +83,6 @@ const BusinessPlanPage = () => {
     },
   });
 
-  // Fetch business plan sections
   const { data: sections = [], isLoading, error } = useQuery({
     queryKey: ['businessPlanSections', currentProject?.id],
     queryFn: async () => {
@@ -108,7 +103,6 @@ const BusinessPlanPage = () => {
     enabled: !!currentProject?.id,
   });
   
-  // Add section mutation
   const addSectionMutation = useMutation({
     mutationFn: async (newSection: Omit<BusinessPlanSection, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
@@ -130,11 +124,10 @@ const BusinessPlanPage = () => {
       toast.success("Section added successfully");
     },
     onError: (error) => {
-      toast.error(`Failed to add section: ${error.message}`);
+      toast.error(`Failed to add section: ${error instanceof Error ? error.message : String(error)}`);
     },
   });
   
-  // Update section mutation
   const updateSectionMutation = useMutation({
     mutationFn: async (section: Partial<BusinessPlanSection> & { id: string }) => {
       const { data, error } = await supabase
@@ -161,11 +154,10 @@ const BusinessPlanPage = () => {
       toast.success("Section updated successfully");
     },
     onError: (error) => {
-      toast.error(`Failed to update section: ${error.message}`);
+      toast.error(`Failed to update section: ${error instanceof Error ? error.message : String(error)}`);
     },
   });
   
-  // Delete section mutation
   const deleteSectionMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -184,7 +176,7 @@ const BusinessPlanPage = () => {
       toast.success("Section deleted successfully");
     },
     onError: (error) => {
-      toast.error(`Failed to delete section: ${error.message}`);
+      toast.error(`Failed to delete section: ${error instanceof Error ? error.message : String(error)}`);
     },
   });
   
@@ -396,7 +388,6 @@ const BusinessPlanPage = () => {
         </Accordion>
       )}
 
-      {/* Edit section dialog */}
       {editingSection && (
         <Dialog open={!!editingSection} onOpenChange={(open) => !open && handleCancelEdit()}>
           <DialogContent>
