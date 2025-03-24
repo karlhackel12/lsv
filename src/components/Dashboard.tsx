@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -8,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
 import { Layers } from 'lucide-react';
+import GrowthMetricsPanel from './dashboard/GrowthMetricsPanel';
+import InfoTooltip from '@/components/InfoTooltip';
 
 const Dashboard = () => {
   const { currentProject } = useProject();
@@ -95,12 +98,20 @@ const Dashboard = () => {
         </Button>
       </div>
       
+      {/* Growth Metrics Panel */}
+      <GrowthMetricsPanel />
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
               <Lightbulb className="mr-2 h-5 w-5 text-blue-500" />
               Hypothesis Testing
+              <InfoTooltip 
+                text="Validate your business assumptions systematically" 
+                link="/lean-startup-methodology" 
+                className="ml-2"
+              />
             </CardTitle>
             <CardDescription>Validate your business assumptions</CardDescription>
           </CardHeader>
@@ -139,6 +150,11 @@ const Dashboard = () => {
             <CardTitle className="text-lg flex items-center">
               <Beaker className="mr-2 h-5 w-5 text-green-500" />
               Experiments
+              <InfoTooltip 
+                text="Test and learn systematically through structured experiments" 
+                link="/lean-startup-methodology" 
+                className="ml-2"
+              />
             </CardTitle>
             <CardDescription>Test and learn systematically</CardDescription>
           </CardHeader>
@@ -180,6 +196,11 @@ const Dashboard = () => {
             <CardTitle className="text-lg flex items-center">
               <Layers className="mr-2 h-5 w-5 text-yellow-500" />
               MVP Features
+              <InfoTooltip 
+                text="Minimum Viable Product features that deliver core value" 
+                link="/lean-startup-methodology" 
+                className="ml-2"
+              />
             </CardTitle>
             <CardDescription>Track your core feature development</CardDescription>
           </CardHeader>
@@ -222,6 +243,11 @@ const Dashboard = () => {
           <CardTitle className="flex items-center">
             <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
             Validation Journey
+            <InfoTooltip 
+              text="Follow the Lean Startup methodology to validate your business" 
+              link="/lean-startup-methodology" 
+              className="ml-2"
+            />
           </CardTitle>
           <CardDescription>
             Track your progress through the lean startup validation process

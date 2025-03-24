@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Info, Lightbulb, Beaker, Layers, TrendingUp } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import InfoTooltip from '@/components/InfoTooltip';
 
 interface PhaseInfo {
   title: string;
@@ -66,7 +67,14 @@ const ValidationPhaseIntro = ({
               {phaseInfo.icon}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-1">{phaseInfo.title}</h3>
+              <h3 className="text-lg font-semibold mb-1 flex items-center">
+                {phaseInfo.title}
+                <InfoTooltip 
+                  text={`Learn more about the ${phaseInfo.title}`}
+                  link="/lean-startup-methodology"
+                  className="ml-2"
+                />
+              </h3>
               <p className="text-gray-600">{phaseInfo.description}</p>
             </div>
           </div>
