@@ -5,11 +5,12 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ScalingMetricForm from './ScalingMetricForm';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PlusCircle, Loader2, TrendingUp, Info } from 'lucide-react';
 import ScalingReadinessTable from './ScalingReadinessTable';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGrowthModelsState } from '@/hooks/growth/use-growth-models-state';
+import ScalingReadinessSection from './ScalingReadinessSection';
 
 interface ScalingReadinessMetricsProps {
   projectId: string;
@@ -26,11 +27,16 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
   const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
   const [isAddingMetric, setIsAddingMetric] = useState(false);
   const [editingMetric, setEditingMetric] = useState<ScalingReadinessMetric | null>(null);
+  const [showLearnStartupView, setShowLearnStartupView] = useState(true);
   const { toast } = useToast();
   const [linkedMetrics, setLinkedMetrics] = useState<Record<string, GrowthMetric[]>>({});
+  const [growthModel, setGrowthModel] = useState<any>(null);
+  const [growthChannels, setGrowthChannels] = useState<any[]>([]);
 
   useEffect(() => {
     fetchScalingMetrics();
+    fetchGrowthModel();
+    fetchGrowthChannels();
   }, [projectId]);
 
   useEffect(() => {
@@ -48,6 +54,40 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
     
     setLinkedMetrics(linkMap);
   }, [growthMetrics]);
+
+  const fetchGrowthModel = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('growth_models')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setGrowthModel(data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching growth model:', error);
+    }
+  };
+
+  const fetchGrowthChannels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('growth_channels')
+        .select('*')
+        .eq('project_id', projectId);
+        
+      if (error) throw error;
+      
+      setGrowthChannels(data || []);
+    } catch (error) {
+      console.error('Error fetching growth channels:', error);
+    }
+  };
 
   const fetchScalingMetrics = async () => {
     try {
@@ -127,43 +167,95 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Scaling Readiness Metrics</h2>
+          <h2 className="text-2xl font-bold">Scaling Readiness</h2>
           <p className="text-gray-500 mt-1">
-            Track key metrics that indicate your startup's readiness to scale
+            Assess your startup's readiness to scale based on Lean Startup principles
           </p>
         </div>
-        <Button onClick={handleAddMetric} className="flex items-center gap-1">
-          <PlusCircle className="h-4 w-4" />
-          <span>Add Metric</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant={showLearnStartupView ? "default" : "outline"} 
+            onClick={() => setShowLearnStartupView(true)}
+            className="flex items-center gap-1"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>Framework View</span>
+          </Button>
+          <Button 
+            variant={!showLearnStartupView ? "default" : "outline"} 
+            onClick={() => setShowLearnStartupView(false)}
+            className="flex items-center gap-1"
+          >
+            <Info className="h-4 w-4" />
+            <span>Metrics View</span>
+          </Button>
+        </div>
       </div>
       
-      {scalingMetrics.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <Alert>
-              <AlertDescription>
-                No scaling readiness metrics found. Add metrics to track your startup's readiness to scale.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      ) : (
-        <ScalingReadinessTable 
-          metrics={scalingMetrics} 
-          onEdit={handleEditMetric} 
-          onDelete={handleDeleteMetric}
-          linkedGrowthMetrics={linkedMetrics}
-        />
-      )}
+      <Card className="bg-blue-50 border-blue-100 mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-start">
+            <Info className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-blue-800">Lean Startup Scaling Framework</h3>
+              <p className="text-sm text-blue-700 mt-1">
+                This framework helps assess your readiness to scale based on Lean Startup principles. It focuses on validated learning, innovation accounting, and sustainable growth engines rather than premature scaling.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
-      {isAddingMetric && (
-        <ScalingMetricForm
+      {showLearnStartupView ? (
+        <ScalingReadinessSection 
+          growthModel={growthModel}
           projectId={projectId}
-          metric={editingMetric}
-          onSave={handleSaveMetric}
-          onClose={() => setIsAddingMetric(false)}
+          metrics={growthMetrics}
+          channels={growthChannels}
         />
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-xl font-semibold">Scaling Metrics</h3>
+              <p className="text-gray-500 text-sm">
+                Track key metrics that indicate your startup's readiness to scale
+              </p>
+            </div>
+            <Button onClick={handleAddMetric} className="flex items-center gap-1">
+              <PlusCircle className="h-4 w-4" />
+              <span>Add Metric</span>
+            </Button>
+          </div>
+          
+          {scalingMetrics.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <Alert>
+                  <AlertDescription>
+                    No scaling readiness metrics found. Add metrics to track your startup's readiness to scale.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          ) : (
+            <ScalingReadinessTable 
+              metrics={scalingMetrics} 
+              onEdit={handleEditMetric} 
+              onDelete={handleDeleteMetric}
+              linkedGrowthMetrics={linkedMetrics}
+            />
+          )}
+          
+          {isAddingMetric && (
+            <ScalingMetricForm
+              projectId={projectId}
+              metric={editingMetric}
+              onSave={handleSaveMetric}
+              onClose={() => setIsAddingMetric(false)}
+            />
+          )}
+        </>
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
@@ -69,7 +70,7 @@ const GrowthPage = () => {
         icon={<TrendingUp className="h-5 w-5 text-blue-500" />} 
         description={
           <p>
-            Track key metrics, optimize acquisition channels, and run experiments to grow your startup.
+            Track key metrics, optimize acquisition channels, and evaluate your startup's readiness to scale using Lean Startup principles.
           </p>
         } 
       />
