@@ -135,6 +135,14 @@ const QuickActions = ({ className, variant = 'default' }: QuickActionsProps) => 
                 </Button>
               ))}
             </div>
+            
+            <Button 
+              onClick={() => navigate('/experiments/new')}
+              className="w-full mt-3 justify-center bg-blue-600 hover:bg-blue-700"
+            >
+              <FlaskConical className="h-4 w-4 mr-2" />
+              Create New Experiment
+            </Button>
           </div>
           
           <div>
@@ -182,6 +190,15 @@ const QuickActions = ({ className, variant = 'default' }: QuickActionsProps) => 
           <span>{item.label}</span>
         </Button>
       ))}
+      
+      <Button 
+        onClick={() => navigate('/experiments/new')}
+        size="sm"
+        className="bg-blue-600 hover:bg-blue-700 ml-2"
+      >
+        <FlaskConical className="h-4 w-4 mr-1" />
+        New Experiment
+      </Button>
     </div>
   );
 };

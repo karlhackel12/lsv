@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Lightbulb,
@@ -9,8 +9,10 @@ import {
   LineChart,
   GitFork,
   TrendingUp,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -18,8 +20,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
   SidebarRail,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 
 const mainNavItems = [
@@ -62,6 +64,7 @@ const mainNavItems = [
 
 const SideNavigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   return (
@@ -77,6 +80,16 @@ const SideNavigation = () => {
         </div>
       </SidebarHeader>
       <SidebarContent className="px-3">
+        <div className="mb-4 px-2">
+          <Button 
+            onClick={() => navigate('/experiments/new')}
+            className="w-full justify-start bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>New Experiment</span>
+          </Button>
+        </div>
+        
         <SidebarMenu>
           {mainNavItems.map((item) => {
             // Check if this nav item matches the current path
