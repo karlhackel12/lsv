@@ -122,7 +122,7 @@ const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelecte
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="">None (standalone experiment)</SelectItem>
+              <SelectItem value="none">None (standalone experiment)</SelectItem>
               {hypotheses.map(hypothesis => (
                 <SelectItem key={hypothesis.id} value={hypothesis.id}>
                   {hypothesis.statement.substring(0, 60)}{hypothesis.statement.length > 60 ? '...' : ''}
