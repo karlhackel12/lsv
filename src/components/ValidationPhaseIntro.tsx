@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Info, Lightbulb, Beaker, Layers, TrendingUp } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 interface PhaseInfo {
   title: string;
   description: string;
@@ -11,6 +12,7 @@ interface PhaseInfo {
   color: string;
   graduationCriteria: string[];
 }
+
 const phaseData: Record<string, PhaseInfo> = {
   problem: {
     title: 'Problem Validation Phase',
@@ -41,11 +43,13 @@ const phaseData: Record<string, PhaseInfo> = {
     graduationCriteria: ['Acquisition cost lower than customer lifetime value', 'Identified scalable customer acquisition channels', 'Retention metrics show sustained usage', 'Revenue model demonstrating positive unit economics']
   }
 };
+
 interface ValidationPhaseIntroProps {
   phase: 'problem' | 'solution' | 'mvp' | 'growth';
   onCreateNew?: () => void;
   createButtonText?: string;
 }
+
 const ValidationPhaseIntro = ({
   phase,
   onCreateNew,
@@ -53,8 +57,8 @@ const ValidationPhaseIntro = ({
 }: ValidationPhaseIntroProps) => {
   const phaseInfo = phaseData[phase];
 
-  // Adding the return statement that was missing
-  return <Card className="bg-white mb-6 overflow-hidden">
+  return (
+    <Card className="bg-white mb-6 overflow-hidden">
       <div className="p-6 border-b">
         <div className="flex items-start justify-between">
           <div className="flex items-center">
@@ -67,7 +71,11 @@ const ValidationPhaseIntro = ({
             </div>
           </div>
           
-          {onCreateNew}
+          {onCreateNew && (
+            <Button onClick={onCreateNew}>
+              {createButtonText}
+            </Button>
+          )}
         </div>
       </div>
       
@@ -81,16 +89,20 @@ const ValidationPhaseIntro = ({
           </AccordionTrigger>
           <AccordionContent className="px-6 pb-4">
             <ul className="space-y-2">
-              {phaseInfo.graduationCriteria.map((criteria, index) => <li key={index} className="flex items-start">
+              {phaseInfo.graduationCriteria.map((criteria, index) => (
+                <li key={index} className="flex items-start">
                   <span className="inline-block h-5 w-5 rounded-full bg-gray-200 text-center text-sm font-medium leading-5 mr-3 mt-0.5">
                     {index + 1}
                   </span>
                   <span>{criteria}</span>
-                </li>)}
+                </li>
+              ))}
             </ul>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-    </Card>;
+    </Card>
+  );
 };
+
 export default ValidationPhaseIntro;
