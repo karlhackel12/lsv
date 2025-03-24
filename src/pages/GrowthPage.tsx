@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +10,7 @@ import GrowthHypothesesSection from '@/components/growth/GrowthHypothesesSection
 import ScalingReadinessMetrics from '@/components/growth/ScalingReadinessMetrics';
 import ScalingPlanManager from '@/components/growth/ScalingPlanManager';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
-import { useGrowthModels } from '@/hooks/use-growth-models';
+import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocation } from 'react-router-dom';
 import TabNavigation, { TabItem } from '@/components/TabNavigation';
