@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -347,7 +348,7 @@ const GrowthMetricForm = ({
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value || ""}
+                      value={field.value || "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -355,7 +356,7 @@ const GrowthMetricForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {scalingMetrics.map((metric) => (
                           <SelectItem key={metric.id} value={metric.id}>
                             {formatScalingMetricLabel(metric)}

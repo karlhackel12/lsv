@@ -315,7 +315,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                     <FormLabel>Target Metric</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value || undefined}
+                      defaultValue={field.value || "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -323,6 +323,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
                         {metrics.map((metric) => (
                           <SelectItem key={metric.id} value={metric.id}>
                             {metric.name}

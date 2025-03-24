@@ -103,7 +103,7 @@ const ActionForm: React.FC<ActionFormProps> = ({
                 <FormLabel>Related Metric (Optional)</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value?.toString() || ''}
+                  value={field.value?.toString() || "none"}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -111,7 +111,7 @@ const ActionForm: React.FC<ActionFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {metrics.map(metric => (
                       <SelectItem key={metric.id} value={metric.id}>
                         {metric.name}
