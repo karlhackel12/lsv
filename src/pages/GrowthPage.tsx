@@ -6,14 +6,13 @@ import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Light
 import PageIntroduction from '@/components/PageIntroduction';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
-import ScalingReadinessMetrics from '@/components/growth/ScalingReadinessMetrics';
+import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessChecklist';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import ScalingRecommendationsPanel from '@/components/growth/ScalingRecommendationsPanel';
 
 const GrowthPage = () => {
   const {
@@ -79,92 +78,83 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardContent className="p-0">
-                  <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-                    <TabsList className="w-full flex justify-start p-1">
-                      <TabsTrigger value="metrics" className="flex items-center gap-2">
-                        <BarChart2 className="h-4 w-4" />
-                        <span>Metrics</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="scaling_readiness" className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>Scaling Readiness</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="channels" className="flex items-center gap-2">
-                        <ArrowRight className="h-4 w-4" />
-                        <span>Channels</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="experiments" className="flex items-center gap-2">
-                        <Layers className="h-4 w-4" />
-                        <span>Experiments</span>
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <div className="mt-6 px-4 pb-4">
-                      <Breadcrumb className="mb-6">
-                        <BreadcrumbList>
-                          <BreadcrumbItem>
-                            <BreadcrumbLink href="#">Growth</BreadcrumbLink>
-                          </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                          <BreadcrumbItem>
-                            <BreadcrumbLink>
-                              {activeTab === 'metrics' ? 'Growth Metrics' : 
-                               activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
-                               activeTab === 'channels' ? 'Acquisition Channels' : 'Growth Experiments'}
-                            </BreadcrumbLink>
-                          </BreadcrumbItem>
-                        </BreadcrumbList>
-                      </Breadcrumb>
-                      
-                      <TabsContent value="metrics" className="mt-0">
-                        <GrowthMetricsSection 
-                          metrics={growthMetrics} 
-                          projectId={currentProject.id} 
-                          refreshData={() => fetchModelData(currentProject.id)} 
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="scaling_readiness" className="mt-0">
-                        <ScalingReadinessMetrics 
-                          projectId={currentProject.id}
-                          refreshData={() => fetchModelData(currentProject.id)}
-                          growthMetrics={growthMetrics}
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="channels" className="mt-0">
-                        <GrowthChannelsSection 
-                          channels={growthChannels}
-                          projectId={currentProject.id} 
-                          refreshData={() => fetchModelData(currentProject.id)} 
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="experiments" className="mt-0">
-                        <GrowthExperimentsSection 
-                          experiments={growthExperiments} 
-                          metrics={growthMetrics}
-                          projectId={currentProject.id} 
-                          refreshData={() => fetchModelData(currentProject.id)} 
-                        />
-                      </TabsContent>
-                    </div>
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-1">
-              <ScalingRecommendationsPanel 
-                projectId={currentProject.id} 
-                refreshData={() => fetchModelData(currentProject.id)}
-              />
-            </div>
-          </div>
+          <Card>
+            <CardContent className="p-0">
+              <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
+                <TabsList className="w-full flex justify-start p-1">
+                  <TabsTrigger value="metrics" className="flex items-center gap-2">
+                    <BarChart2 className="h-4 w-4" />
+                    <span>Metrics</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="scaling_readiness" className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Scaling Readiness</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="channels" className="flex items-center gap-2">
+                    <ArrowRight className="h-4 w-4" />
+                    <span>Channels</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="experiments" className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    <span>Experiments</span>
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="mt-6 px-4 pb-4">
+                  <Breadcrumb className="mb-6">
+                    <BreadcrumbList>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink href="#">Growth</BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <BreadcrumbLink>
+                          {activeTab === 'metrics' ? 'Growth Metrics' : 
+                           activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
+                           activeTab === 'channels' ? 'Acquisition Channels' : 'Growth Experiments'}
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                  
+                  <TabsContent value="metrics" className="mt-0">
+                    <GrowthMetricsSection 
+                      metrics={growthMetrics} 
+                      projectId={currentProject.id} 
+                      refreshData={() => fetchModelData(currentProject.id)} 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="scaling_readiness" className="mt-0">
+                    <ScalingReadinessChecklist 
+                      projectId={currentProject.id}
+                      refreshData={() => fetchModelData(currentProject.id)}
+                      growthMetrics={growthMetrics}
+                      growthExperiments={growthExperiments}
+                      growthChannels={growthChannels}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="channels" className="mt-0">
+                    <GrowthChannelsSection 
+                      channels={growthChannels}
+                      projectId={currentProject.id} 
+                      refreshData={() => fetchModelData(currentProject.id)} 
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="experiments" className="mt-0">
+                    <GrowthExperimentsSection 
+                      experiments={growthExperiments} 
+                      metrics={growthMetrics}
+                      projectId={currentProject.id} 
+                      refreshData={() => fetchModelData(currentProject.id)} 
+                    />
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </CardContent>
+          </Card>
           
           {isLoadingData && (
             <div className="flex items-center justify-center h-64">
