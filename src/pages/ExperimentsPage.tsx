@@ -6,7 +6,6 @@ import { Experiment } from '@/types/database';
 import ExperimentsSection from '@/components/ExperimentsSection';
 import PageIntroduction from '@/components/PageIntroduction';
 import { Beaker } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/hooks/use-project';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
@@ -20,7 +19,6 @@ const ExperimentsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const currentPhase = searchParams.get('phase') || 'problem';
   const experimentId = searchParams.get('id');
   const createNew = searchParams.get('create') === 'true';
   const viewParam = searchParams.get('view');
@@ -48,13 +46,9 @@ const ExperimentsPage = () => {
         .eq('project_id', currentProject.id)
         .order('updated_at', { ascending: false });
       
-      // Apply filters if needed
+      // Apply status filter if needed
       if (statusFilter) {
         query = query.eq('status', statusFilter);
-      }
-      
-      if (currentPhase && !statusFilter) {
-        query = query.eq('category', currentPhase);
       }
       
       const { data, error } = await query;
@@ -78,26 +72,12 @@ const ExperimentsPage = () => {
     }
   };
   
-  // Refetch when project, phase, or status filter changes
+  // Refetch when project or status filter changes
   useEffect(() => {
     if (currentProject) {
       fetchExperiments();
     }
-  }, [currentProject, currentPhase, statusFilter]);
-  
-  // Change tab handler
-  const handleTabChange = (value: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('phase', value);
-    
-    // If we're viewing a specific experiment but changing the phase,
-    // clear the experiment ID to show the list for that phase
-    if (experimentId && !statusFilter) {
-      params.delete('id');
-    }
-    
-    setSearchParams(params);
-  };
+  }, [currentProject, statusFilter]);
   
   if (!currentProject) {
     return <div>Select a project to view experiments</div>;
@@ -111,69 +91,28 @@ const ExperimentsPage = () => {
         description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
       />
       
-      <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="problem">Problem Experiments</TabsTrigger>
-          <TabsTrigger value="solution">Solution Experiments</TabsTrigger>
-          <TabsTrigger value="business-model">Business Model Experiments</TabsTrigger>
-        </TabsList>
-        
-        {showSummary && (
-          <ExperimentsSummarySection
-            experiments={experiments}
-            projectId={currentProject.id}
+      {showSummary && (
+        <ExperimentsSummarySection
+          experiments={experiments}
+          projectId={currentProject.id}
+        />
+      )}
+      
+      {(!showSummary) && (
+        <>
+          <ValidationPhaseIntro 
+            phase="experiment" 
+            onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
+            createButtonText="Create New Experiment"
           />
-        )}
-        
-        {(!showSummary) && (
-          <>
-            <TabsContent value="problem">
-              <ValidationPhaseIntro 
-                phase="problem" 
-                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-                createButtonText="Create Problem Experiment"
-              />
-              <ExperimentsSection 
-                experiments={experiments}
-                refreshData={fetchExperiments}
-                projectId={currentProject.id}
-                isLoading={isLoading}
-                experimentType="problem"
-              />
-            </TabsContent>
-            
-            <TabsContent value="solution">
-              <ValidationPhaseIntro 
-                phase="solution" 
-                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-                createButtonText="Create Solution Experiment"
-              />
-              <ExperimentsSection 
-                experiments={experiments}
-                refreshData={fetchExperiments}
-                projectId={currentProject.id}
-                isLoading={isLoading}
-                experimentType="solution"
-              />
-            </TabsContent>
-            
-            <TabsContent value="business-model">
-              <ValidationPhaseIntro 
-                phase="growth" 
-                onCreateNew={() => document.getElementById('create-experiment-button')?.click()}
-                createButtonText="Create Business Model Experiment"
-              />
-              <ExperimentsSection 
-                experiments={experiments}
-                refreshData={fetchExperiments}
-                projectId={currentProject.id}
-                isLoading={isLoading}
-                experimentType="business-model"
-              />
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+          <ExperimentsSection 
+            experiments={experiments}
+            refreshData={fetchExperiments}
+            projectId={currentProject.id}
+            isLoading={isLoading}
+          />
+        </>
+      )}
     </div>
   );
 };
