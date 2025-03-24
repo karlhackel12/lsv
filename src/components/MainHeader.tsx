@@ -1,13 +1,19 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   User, 
   LogOut, 
   Settings, 
   ChevronsUpDown, 
   Check,
-  PlusCircle
+  PlusCircle,
+  LayoutDashboard,
+  Beaker, 
+  FlaskConical, 
+  Lightbulb, 
+  Layers, 
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,6 +39,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { 
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/database';
@@ -64,24 +78,110 @@ const MainHeader = () => {
     setIsProjectFormOpen(false);
   };
 
+  const validationPhases = [
+    { 
+      name: "Problem Validation", 
+      icon: <Lightbulb className="h-4 w-4 mr-2" />, 
+      path: "/hypotheses?phase=problem" 
+    },
+    { 
+      name: "Solution Validation", 
+      icon: <Beaker className="h-4 w-4 mr-2" />, 
+      path: "/hypotheses?phase=solution" 
+    },
+    { 
+      name: "MVP Testing", 
+      icon: <Layers className="h-4 w-4 mr-2" />, 
+      path: "/mvp" 
+    },
+    { 
+      name: "Growth Model", 
+      icon: <TrendingUp className="h-4 w-4 mr-2" />, 
+      path: "/growth" 
+    }
+  ];
+
   const initials = user?.email 
     ? user.email.split('@')[0].substring(0, 2).toUpperCase() 
     : 'U';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-validation-gray-200">
-      <div className="flex h-14 md:h-16 items-center justify-between px-3 md:px-6">
-        <div className="flex items-center space-x-2 w-full max-w-xs">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-validation-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/">
+            <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-validation-blue-600 to-validation-blue-800">
+              Lean Startup Validation Tool
+            </h1>
+          </Link>
+          
+          <div className="flex ml-8 space-x-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/" className="flex items-center">
+                <LayoutDashboard className="h-4 w-4 mr-1" />
+                Dashboard
+              </Link>
+            </Button>
+            
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="h-9 px-3 flex items-center text-sm">
+                    Validation Journey
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-2 p-4 bg-white">
+                      {validationPhases.map((phase, index) => (
+                        <li key={index}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              to={phase.path}
+                              className={cn(
+                                "flex items-center p-2 rounded-md hover:bg-validation-gray-100",
+                                "focus:bg-validation-gray-100 focus:outline-none"
+                              )}
+                            >
+                              <div className={cn(
+                                "flex items-center justify-center rounded-full p-1",
+                                index === 0 ? "bg-blue-100" : 
+                                index === 1 ? "bg-green-100" : 
+                                index === 2 ? "bg-yellow-100" : "bg-purple-100"
+                              )}>
+                                {phase.icon}
+                              </div>
+                              <div className="ml-2">
+                                <p className="font-medium text-sm">{phase.name}</p>
+                              </div>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+            
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/experiments" className="flex items-center">
+                <Beaker className="h-4 w-4 mr-1" />
+                Experiments
+              </Link>
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-3">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-full justify-between truncate"
+                className="w-[180px] md:w-[220px] justify-between truncate"
               >
                 {currentProject ? (
-                  <span className="truncate max-w-[120px] md:max-w-[200px]">
+                  <span className="truncate max-w-[120px] md:max-w-[160px]">
                     {currentProject.name}
                   </span>
                 ) : (
@@ -129,15 +229,15 @@ const MainHeader = () => {
               </Command>
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="flex items-center space-x-4">
+          
           <Button 
-            onClick={() => setIsProjectFormOpen(true)}
-            className="hidden md:flex"
+            onClick={() => navigate('/experiments/new')}
+            variant="default"
             size="sm"
+            className="bg-blue-600 hover:bg-blue-700 hidden md:flex"
           >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Project
+            <FlaskConical className="h-4 w-4 mr-1" />
+            New Experiment
           </Button>
           
           <DropdownMenu>
