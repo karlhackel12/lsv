@@ -19,6 +19,7 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
   };
 
   const handleEdit = (hypothesis: Hypothesis) => {
+    console.log('Editing hypothesis:', hypothesis);
     setSelectedHypothesis({
       ...hypothesis,
       id: hypothesis.originalId || hypothesis.id
@@ -71,13 +72,16 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
 
   const updateHypothesisStatus = async (hypothesis: Hypothesis, newStatus: 'validated' | 'validating' | 'not-started' | 'invalid') => {
     try {
+      const hypothesisId = hypothesis.originalId || hypothesis.id;
+      console.log('Updating hypothesis status:', hypothesisId, newStatus);
+      
       const { error } = await supabase
         .from('hypotheses')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', hypothesis.originalId || hypothesis.id);
+        .eq('id', hypothesisId);
       
       if (error) throw error;
       
@@ -98,11 +102,15 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
 
   const handleSaveHypothesis = async (formData: Hypothesis): Promise<void> => {
     try {
+      console.log('Saving hypothesis with data:', formData);
+      
       // Add phase data to the form data
       formData.phase = phaseType;
       
       // Determine if we're updating an existing hypothesis or creating a new one
       if (selectedHypothesis) {
+        console.log('Updating existing hypothesis:', selectedHypothesis.id);
+        
         // Update existing hypothesis
         const { error } = await supabase
           .from('hypotheses')
@@ -126,6 +134,8 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
           description: 'The hypothesis has been successfully updated.',
         });
       } else {
+        console.log('Creating new hypothesis for project:', formData.project_id);
+        
         // Create new hypothesis
         const { error } = await supabase
           .from('hypotheses')
@@ -151,6 +161,7 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
       setViewMode('list');
       return Promise.resolve();
     } catch (error: any) {
+      console.error('Error saving hypothesis:', error);
       toast({
         title: 'Error',
         description: error.message || 'An error occurred while saving.',

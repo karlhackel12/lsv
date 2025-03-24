@@ -51,6 +51,16 @@ const GrowthMetricForm = ({
   const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
   const [isLoadingScalingMetrics, setIsLoadingScalingMetrics] = useState(false);
 
+  // Define core metric types for better categorization
+  const CORE_METRIC_CATEGORIES = [
+    { value: 'acquisition', label: 'Acquisition' },
+    { value: 'activation', label: 'Activation' },
+    { value: 'retention', label: 'Retention' },
+    { value: 'referral', label: 'Referral' },
+    { value: 'revenue', label: 'Revenue' },
+    { value: 'custom', label: 'Custom' }
+  ];
+
   useEffect(() => {
     const fetchScalingMetrics = async () => {
       try {
@@ -206,12 +216,9 @@ const GrowthMetricForm = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="acquisition">Acquisition</SelectItem>
-                          <SelectItem value="activation">Activation</SelectItem>
-                          <SelectItem value="retention">Retention</SelectItem>
-                          <SelectItem value="referral">Referral</SelectItem>
-                          <SelectItem value="revenue">Revenue</SelectItem>
-                          <SelectItem value="custom">Custom</SelectItem>
+                          {CORE_METRIC_CATEGORIES.map((category) => (
+                            <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
