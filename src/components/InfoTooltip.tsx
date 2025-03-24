@@ -9,9 +9,16 @@ interface InfoTooltipProps {
   link?: string;
   icon?: React.ReactNode;
   className?: string;
+  showBorder?: boolean;
 }
 
-const InfoTooltip = ({ text, link, icon, className = '' }: InfoTooltipProps) => {
+const InfoTooltip = ({ 
+  text, 
+  link, 
+  icon, 
+  className = '',
+  showBorder = false
+}: InfoTooltipProps) => {
   const tooltipContent = link ? (
     <div className="text-sm">
       <p>{text}</p>
@@ -28,7 +35,11 @@ const InfoTooltip = ({ text, link, icon, className = '' }: InfoTooltipProps) => 
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className={`text-blue-500 hover:text-blue-700 focus:outline-none ${className}`}>
+          <button className={`
+            text-blue-500 hover:text-blue-700 focus:outline-none 
+            ${showBorder ? 'border border-blue-200 p-1 rounded-full hover:bg-blue-50' : ''}
+            ${className}
+          `}>
             {icon || <Info className="h-4 w-4" />}
           </button>
         </TooltipTrigger>

@@ -2,9 +2,10 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Info, Lightbulb, Beaker, Layers, TrendingUp } from 'lucide-react';
+import { Info, Lightbulb, Beaker, Layers, TrendingUp, BookOpen } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import InfoTooltip from '@/components/InfoTooltip';
+import { useNavigate } from 'react-router-dom';
 
 interface PhaseInfo {
   title: string;
@@ -57,12 +58,13 @@ const ValidationPhaseIntro = ({
   createButtonText = 'Create New'
 }: ValidationPhaseIntroProps) => {
   const phaseInfo = phaseData[phase];
+  const navigate = useNavigate();
 
   return (
     <Card className="bg-white mb-6 overflow-hidden">
       <div className="p-6 border-b">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="flex items-start">
             <div className={`p-3 rounded-full bg-${phaseInfo.color}-100 mr-4`}>
               {phaseInfo.icon}
             </div>
@@ -79,11 +81,23 @@ const ValidationPhaseIntro = ({
             </div>
           </div>
           
-          {onCreateNew && (
-            <Button onClick={onCreateNew}>
-              {createButtonText}
+          <div className="flex flex-wrap md:flex-nowrap gap-2 mt-2 md:mt-0">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/lean-startup-methodology')}
+              className="flex items-center text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Learn Lean Startup
             </Button>
-          )}
+            
+            {onCreateNew && (
+              <Button onClick={onCreateNew}>
+                {createButtonText}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       

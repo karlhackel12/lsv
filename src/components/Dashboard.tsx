@@ -3,13 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
-import { Metric, Experiment, Hypothesis } from '@/types/database';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import GrowthMetricsPanel from './dashboard/GrowthMetricsPanel';
+import LeanStartupBanner from './dashboard/LeanStartupBanner';
 import InfoTooltip from '@/components/InfoTooltip';
 
 const Dashboard = () => {
@@ -97,6 +96,9 @@ const Dashboard = () => {
           Project Settings
         </Button>
       </div>
+      
+      {/* Lean Startup Banner */}
+      <LeanStartupBanner />
       
       {/* Growth Metrics Panel */}
       <GrowthMetricsPanel />
