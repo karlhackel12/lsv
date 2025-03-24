@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Beaker, LayoutDashboard } from 'lucide-react';
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -16,6 +17,21 @@ const Navbar = () => {
               Lean Startup Validation Tool
             </h1>
           </Link>
+          
+          <div className="hidden md:flex ml-8 space-x-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/" className="flex items-center">
+                <LayoutDashboard className="h-4 w-4 mr-1" />
+                Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/experiments" className="flex items-center">
+                <Beaker className="h-4 w-4 mr-1" />
+                Experiments
+              </Link>
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-sm font-medium text-validation-gray-500">

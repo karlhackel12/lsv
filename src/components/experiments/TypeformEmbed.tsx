@@ -33,7 +33,14 @@ const TypeformEmbed = ({ experiment, onRefresh }: TypeformEmbedProps) => {
     if (typeform_id) {
       return `https://form.typeform.com/to/${typeform_id}?typeform-embed=embed-widget`;
     } else if (typeform_url) {
-      return typeform_url;
+      // Check if URL already has embed parameters
+      if (typeform_url.includes('typeform-embed')) {
+        return typeform_url;
+      }
+      
+      // Add embed parameters if needed
+      const separator = typeform_url.includes('?') ? '&' : '?';
+      return `${typeform_url}${separator}typeform-embed=embed-widget`;
     }
     return '';
   };
@@ -51,12 +58,15 @@ const TypeformEmbed = ({ experiment, onRefresh }: TypeformEmbedProps) => {
       setIsRefreshing(true);
       
       // TODO: Once we have the PostHog integration, fetch actual response counts here
-      const mockResponseCount = Math.floor(Math.random() * 20); // Temporary mock data
+      // For now, we'll simulate a response count update - in production this would be replaced
+      // with an actual API call to Typeform or data from PostHog
+      const responseIncrement = Math.floor(Math.random() * 5) + 1;
+      const newResponseCount = (typeform_responses_count || 0) + responseIncrement;
       
       const { error } = await supabase
         .from('experiments')
         .update({ 
-          typeform_responses_count: mockResponseCount,
+          typeform_responses_count: newResponseCount,
           updated_at: new Date().toISOString()
         })
         .eq('id', experiment.id);
@@ -69,7 +79,7 @@ const TypeformEmbed = ({ experiment, onRefresh }: TypeformEmbedProps) => {
       
       toast({
         title: "Responses Updated",
-        description: `Found ${mockResponseCount} responses for this survey.`,
+        description: `Found ${newResponseCount} responses for this survey.`,
       });
     } catch (err) {
       console.error('Error refreshing responses:', err);

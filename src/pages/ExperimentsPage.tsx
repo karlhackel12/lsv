@@ -12,6 +12,9 @@ import PhaseNavigation from '@/components/PhaseNavigation';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
 
+// Define valid experiment status values for type checking
+type ExperimentStatus = 'planned' | 'in-progress' | 'completed';
+
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
   const [experiments, setExperiments] = useState<Experiment[]>([]);
@@ -21,7 +24,14 @@ const ExperimentsPage = () => {
   const currentPhase = searchParams.get('phase') || 'problem';
   const experimentId = searchParams.get('id');
   const createNew = searchParams.get('create') === 'true';
-  const statusFilter = searchParams.get('status');
+  
+  // Validate status parameter against allowed values
+  const rawStatus = searchParams.get('status');
+  const statusFilter = rawStatus && ['planned', 'in-progress', 'completed'].includes(rawStatus) 
+    ? rawStatus as ExperimentStatus
+    : null;
+  
+  // Show summary when no specific experiment is being viewed and not creating a new one
   const showSummary = !experimentId && !createNew;
   
   const fetchExperiments = async () => {
