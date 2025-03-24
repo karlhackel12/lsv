@@ -6,6 +6,9 @@ import InfoTooltip from '@/components/InfoTooltip';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { GrowthMetric } from '@/types/database';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 
 interface MetricProps {
   title: string;
@@ -46,59 +49,11 @@ const MetricCard = ({ title, value, change, changeType, icon, tooltip }: MetricP
 const GrowthMetricsPanel = () => {
   const { currentProject } = useProject();
   const [isLoading, setIsLoading] = useState(true);
-  const [metrics, setMetrics] = useState<GrowthMetric[]>([]);
-
-  // Fetch metrics when the project changes
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      if (!currentProject?.id) return;
-      
-      setIsLoading(true);
-      
-      try {
-        // Fetch metrics from the database
-        const { data, error } = await supabase
-          .from('growth_metrics')
-          .select('*')
-          .eq('project_id', currentProject.id)
-          .in('category', ['acquisition', 'conversion', 'revenue', 'retention']);
-          
-        if (error) {
-          console.error('Error fetching growth metrics:', error);
-          return;
-        }
-        
-        // Map the database results to the GrowthMetric type
-        const mappedMetrics: GrowthMetric[] = data?.map(item => ({
-          id: item.id,
-          originalId: item.id,
-          name: item.name,
-          description: item.description || undefined,
-          category: item.category,
-          current_value: item.current_value,
-          target_value: item.target_value,
-          unit: item.unit,
-          growth_model_id: item.growth_model_id || '',
-          project_id: item.project_id || '',
-          status: (item.status as 'on-track' | 'at-risk' | 'off-track') || 'on-track',
-          created_at: item.created_at,
-          updated_at: item.updated_at
-        })) || [];
-        
-        setMetrics(mappedMetrics);
-      } catch (err) {
-        console.error('Failed to fetch growth metrics:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchMetrics();
-  }, [currentProject?.id]);
+  const { growthMetrics, fetchModelData } = useGrowthModels(currentProject?.id || '');
   
   // Find metrics by category
   const findMetric = (category: string): GrowthMetric | undefined => {
-    return metrics.find(m => m.category === category);
+    return growthMetrics.find(m => m.category === category);
   };
   
   // Get CAC metric
@@ -139,9 +94,20 @@ const GrowthMetricsPanel = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      if (currentProject?.id) {
+        await fetchModelData(currentProject.id);
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [currentProject?.id, fetchModelData]);
+
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg flex items-center">
           <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />
           Growth Metrics
@@ -151,6 +117,9 @@ const GrowthMetricsPanel = () => {
             className="ml-2"
           />
         </CardTitle>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/growth?tab=metrics">View All</Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

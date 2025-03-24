@@ -10,7 +10,7 @@ import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessCheck
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import PivotDecisionSection from '@/components/PivotDecisionSection';
@@ -23,7 +23,9 @@ const GrowthPage = () => {
     isLoading,
     error
   } = useProject();
-  const [activeTab, setActiveTab] = useState('metrics');
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'metrics');
   const [defaultGrowthModelId, setDefaultGrowthModelId] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
@@ -87,15 +89,16 @@ const GrowthPage = () => {
     fetchDefaultGrowthModel();
   }, [currentProject?.id]);
 
-  React.useEffect(() => {
-    const state = location.state as { tab?: string } | null;
-    if (state?.tab) {
-      setActiveTab(state.tab);
+  // Use URL parameter for active tab
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
     }
-  }, [location.state]);
+  }, [tabFromUrl]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    navigate(`/growth?tab=${value}`, { replace: true });
   };
 
   if (isLoading) {
@@ -136,7 +139,7 @@ const GrowthPage = () => {
           
           <Card>
             <CardContent className="p-0">
-              <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full flex justify-start p-1">
                   <TabsTrigger value="metrics" className="flex items-center gap-2">
                     <BarChart2 className="h-4 w-4" />
