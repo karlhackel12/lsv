@@ -70,6 +70,7 @@ const ExperimentsPage = () => {
         originalId: item.id
       })) as Experiment[];
       
+      console.log("Fetched experiments:", processedData);
       setExperiments(processedData || []);
     } catch (err) {
       console.error('Error:', err);

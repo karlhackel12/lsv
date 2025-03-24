@@ -43,6 +43,29 @@ const ExperimentForm = ({
     experimentType
   });
 
+  // Reset form with experiment data when it changes
+  useEffect(() => {
+    if (experiment) {
+      // Explicitly set all form fields to ensure proper data binding
+      form.reset({
+        id: experiment.id,
+        title: experiment.title || '',
+        hypothesis: experiment.hypothesis || '',
+        method: experiment.method || '',
+        metrics: experiment.metrics || '',
+        status: experiment.status || 'planned',
+        category: experiment.category || experimentType || 'problem',
+        results: experiment.results || '',
+        insights: experiment.insights || '',
+        decisions: experiment.decisions || '',
+        project_id: experiment.project_id || projectId,
+        hypothesis_id: experiment.hypothesis_id || hypothesisId,
+        created_at: experiment.created_at,
+        updated_at: experiment.updated_at,
+      });
+    }
+  }, [experiment, form, experimentType, projectId, hypothesisId]);
+
   // If we have a hypothesis ID but no experiment, let's fetch the hypothesis details
   // to pre-populate the form
   useEffect(() => {

@@ -27,7 +27,7 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
           <FormLabel>Category</FormLabel>
           <Select 
             onValueChange={field.onChange} 
-            defaultValue={field.value}
+            value={field.value || 'problem'}
           >
             <FormControl>
               <SelectTrigger>

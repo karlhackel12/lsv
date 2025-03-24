@@ -35,12 +35,16 @@ export function useExperimentForm({
       results: '',
       insights: '',
       decisions: '',
+      project_id: projectId,
+      hypothesis_id: hypothesisId,
     },
   });
 
   const handleSubmit = async (data: Experiment) => {
     try {
-      if (isEditing) {
+      console.log("Submitting experiment data:", { isEditing, data });
+      
+      if (isEditing && experiment?.id) {
         // Update existing experiment
         const { error } = await supabase
           .from('experiments')
@@ -58,7 +62,10 @@ export function useExperimentForm({
           })
           .eq('id', experiment.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase update error:", error);
+          throw error;
+        }
         
         toast({
           title: 'Success',
@@ -79,7 +86,10 @@ export function useExperimentForm({
             hypothesis_id: hypothesisId || null,
           });
           
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
         
         toast({
           title: 'Success',

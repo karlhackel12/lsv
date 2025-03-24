@@ -8,7 +8,6 @@ import DeleteExperimentDialog from './experiments/DeleteExperimentDialog';
 import ExperimentDetailView from './experiments/ExperimentDetailView';
 import ExperimentHypothesisLink from './experiments/ExperimentHypothesisLink';
 import { useSearchParams } from 'react-router-dom';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -48,11 +47,13 @@ const ExperimentsSection = ({
   }, [searchParams, experiments]);
 
   const handleCreateNew = () => {
+    console.log("Creating new experiment");
     setSelectedExperiment(null);
     setIsFormOpen(true);
   };
 
   const handleEdit = (experiment: Experiment) => {
+    console.log("Editing experiment:", experiment);
     setSelectedExperiment(experiment);
     setIsFormOpen(true);
   };
@@ -65,17 +66,24 @@ const ExperimentsSection = ({
   const handleViewDetail = (experiment: Experiment) => {
     setSelectedExperiment(experiment);
     setViewMode('detail');
-    setSearchParams({ id: experiment.id, phase: experimentType });
+    setSearchParams({ id: experiment.id });
   };
 
   const handleBackToList = () => {
     setViewMode('list');
     setSelectedExperiment(null);
-    setSearchParams({ phase: experimentType });
+    const params = new URLSearchParams(searchParams);
+    params.delete('id');
+    setSearchParams(params);
   };
 
   const handleHypothesisFound = (hypothesis: Hypothesis | null) => {
     setRelatedHypothesis(hypothesis);
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedExperiment(null);
   };
 
   if (isLoading) {
@@ -129,7 +137,7 @@ const ExperimentsSection = ({
               <ExperimentDetailView 
                 experiment={selectedExperiment}
                 relatedHypothesis={relatedHypothesis}
-                onEdit={() => setIsFormOpen(true)}
+                onEdit={() => handleEdit(selectedExperiment)}
                 onClose={handleBackToList}
                 onRefresh={refreshData}
                 projectId={projectId}
@@ -141,7 +149,7 @@ const ExperimentsSection = ({
 
       <ExperimentForm
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={handleFormClose}
         onSave={refreshData}
         experiment={selectedExperiment}
         projectId={projectId}
