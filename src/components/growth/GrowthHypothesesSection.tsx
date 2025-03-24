@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -15,7 +14,7 @@ import {
   Link,
   ArrowUpRight
 } from 'lucide-react';
-import { GrowthModel, GrowthMetric } from '@/types/database';
+import { GrowthModel, GrowthMetric, GrowthHypothesis } from '@/types/database';
 import StructuredHypothesisForm from './StructuredHypothesisForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,16 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 
-interface GrowthHypothesisData {
-  id: string;
-  action: string;
-  outcome: string;
-  success_criteria: string | null;
-  stage: string;
-  metric_id: string | null;
-  growth_model_id: string;
-  created_at: string;
-  updated_at: string;
+interface GrowthHypothesisData extends Omit<GrowthHypothesis, 'originalId'> {
   metric_name?: string;
   experiment_count?: number;
 }

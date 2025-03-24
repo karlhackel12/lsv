@@ -60,9 +60,11 @@ export const useHypothesisForm = (
       // Ensure we're not sending empty strings for UUID fields
       // This prevents database validation errors when inserting data
       Object.keys(data).forEach(key => {
-        if (data[key] === '') {
+        const k = key as keyof Hypothesis;
+        if (typeof data[k] === 'string' && (data[k] as string) === '') {
           if (key.endsWith('_id')) {
-            data[key] = null;
+            // @ts-ignore: We know this is safe because we're checking for '_id' suffix
+            data[k] = null;
           }
         }
       });
