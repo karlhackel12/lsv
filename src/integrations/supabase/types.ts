@@ -904,6 +904,174 @@ export type Database = {
         }
         Relationships: []
       }
+      scaling_plan_actions: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          metric_id: string | null
+          priority: string
+          scaling_plan_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metric_id?: string | null
+          priority?: string
+          scaling_plan_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metric_id?: string | null
+          priority?: string
+          scaling_plan_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scaling_plan_actions_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "scaling_readiness_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scaling_plan_actions_scaling_plan_id_fkey"
+            columns: ["scaling_plan_id"]
+            isOneToOne: false
+            referencedRelation: "scaling_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scaling_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          growth_model_id: string | null
+          id: string
+          overall_readiness: number | null
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          growth_model_id?: string | null
+          id?: string
+          overall_readiness?: number | null
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          growth_model_id?: string | null
+          id?: string
+          overall_readiness?: number | null
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scaling_plans_growth_model_id_fkey"
+            columns: ["growth_model_id"]
+            isOneToOne: false
+            referencedRelation: "growth_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scaling_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scaling_readiness_metrics: {
+        Row: {
+          category: string
+          created_at: string
+          current_value: number
+          description: string | null
+          growth_model_id: string | null
+          id: string
+          importance: number
+          name: string
+          project_id: string
+          status: string
+          target_value: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          growth_model_id?: string | null
+          id?: string
+          importance?: number
+          name: string
+          project_id: string
+          status?: string
+          target_value?: number
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          growth_model_id?: string | null
+          id?: string
+          importance?: number
+          name?: string
+          project_id?: string
+          status?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scaling_readiness_metrics_growth_model_id_fkey"
+            columns: ["growth_model_id"]
+            isOneToOne: false
+            referencedRelation: "growth_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scaling_readiness_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stages: {
         Row: {
           created_at: string

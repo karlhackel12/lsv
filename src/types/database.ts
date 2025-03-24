@@ -530,7 +530,7 @@ export type Database = {
           name?: string
           position?: number
           project_id?: string | null
-          status?: Database["public"]["Enums"]["stage_status"]
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -1010,3 +1010,40 @@ export interface ExperimentLog {
   created_by?: string;
   created_by_name?: string;
 }
+
+// Scaling Readiness Types
+export interface ScalingReadinessMetric {
+  id: string;
+  originalId?: string;
+  project_id: string;
+  growth_model_id?: string | null;
+  category: string;
+  name: string;
+  description?: string;
+  current_value: number;
+  target_value: number;
+  unit: string;
+  importance: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScalingPlan {
+  id: string;
+  originalId?: string;
+  project_id: string;
+  growth_model_id?: string | null;
+  title: string;
+  description?: string;
+  overall_readiness: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScalingPlanAction {
+  id: string;
+  originalId?: string;
+  scaling_plan_id: string;
+  title
