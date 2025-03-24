@@ -148,8 +148,8 @@ const LeanStartupPage = () => {
                     <div className="mt-4 bg-blue-50 p-4 rounded-md">
                       <h4 className="font-medium mb-2">Hypothesis Structure:</h4>
                       <p className="italic mb-2">
-                        "We believe [customer segment] experiences [problem] when trying to [goal/activity],
-                        which causes [negative impact]."
+                        &quot;We believe [customer segment] experiences [problem] when trying to [goal/activity],
+                        which causes [negative impact].&quot;
                       </p>
                       <p>
                         Your hypotheses should be falsifiable, specific, and focused on problems rather than
@@ -332,8 +332,8 @@ const LeanStartupPage = () => {
                     <div className="mt-4 bg-purple-50 p-4 rounded-md">
                       <h4 className="font-medium mb-2">Scaling Readiness Checklist:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>LTV > 3x CAC (customer lifetime value exceeds acquisition cost)</li>
-                        <li>Payback period < 12 months</li>
+                        <li>LTV &gt; 3x CAC (customer lifetime value exceeds acquisition cost)</li>
+                        <li>Payback period &lt; 12 months</li>
                         <li>At least two reliable acquisition channels identified</li>
                         <li>Retention metrics meet or exceed industry benchmarks</li>
                         <li>Revenues growing faster than costs</li>
