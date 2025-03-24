@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Info } from 'lucide-react';
+import { Info, BookOpen } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from 'react-router-dom';
 
@@ -15,8 +15,9 @@ const InfoTooltip = ({ text, link, icon, className = '' }: InfoTooltipProps) => 
   const tooltipContent = link ? (
     <div className="text-sm">
       <p>{text}</p>
-      <Link to={link} className="text-blue-500 hover:text-blue-700 mt-1 block text-xs font-medium">
-        Learn more →
+      <Link to={link} className="text-blue-500 hover:text-blue-700 mt-1 block text-xs font-medium flex items-center">
+        <BookOpen className="h-3 w-3 mr-1" />
+        Learn more about Lean Startup
       </Link>
     </div>
   ) : (

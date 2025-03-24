@@ -10,6 +10,7 @@ import {
   GitFork,
   TrendingUp,
   Plus,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,11 @@ const mainNavItems = [
     title: 'Pivot',
     href: '/pivot',
     icon: <GitFork className="h-5 w-5 mr-3" />,
+  },
+  {
+    title: 'Lean Startup Guide',
+    href: '/lean-startup-methodology',
+    icon: <BookOpen className="h-5 w-5 mr-3" />,
   },
 ];
 
