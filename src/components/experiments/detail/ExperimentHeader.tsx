@@ -4,18 +4,27 @@ import { Experiment } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/StatusBadge';
 import { Badge } from '@/components/ui/badge';
-import { Edit, CalendarClock } from 'lucide-react';
+import { Edit, CalendarClock, Link as LinkIcon } from 'lucide-react';
 
 interface ExperimentHeaderProps {
   experiment: Experiment;
   onEdit: () => void;
+  hasRelatedHypothesis?: boolean;
 }
 
-const ExperimentHeader = ({ experiment, onEdit }: ExperimentHeaderProps) => {
+const ExperimentHeader = ({ experiment, onEdit, hasRelatedHypothesis = false }: ExperimentHeaderProps) => {
   return (
     <div className="flex justify-between items-start mb-4">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">{experiment.title}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-900">{experiment.title}</h1>
+          {hasRelatedHypothesis && (
+            <Badge variant="outline" className="bg-blue-50 border-blue-200">
+              <LinkIcon className="h-3 w-3 mr-1" />
+              Linked
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center mt-2 space-x-3 text-sm text-gray-500">
           <StatusBadge status={experiment.status} />
           <span className="flex items-center">

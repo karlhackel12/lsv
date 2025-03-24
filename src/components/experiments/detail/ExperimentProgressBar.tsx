@@ -5,9 +5,10 @@ import { Experiment } from '@/types/database';
 
 interface ExperimentProgressBarProps {
   experiment: Experiment;
+  showLabels?: boolean;
 }
 
-const ExperimentProgressBar = ({ experiment }: ExperimentProgressBarProps) => {
+const ExperimentProgressBar = ({ experiment, showLabels = true }: ExperimentProgressBarProps) => {
   // Calculate experiment progress based on status and completed fields
   const calculateProgress = () => {
     switch(experiment.status) {
@@ -28,11 +29,13 @@ const ExperimentProgressBar = ({ experiment }: ExperimentProgressBarProps) => {
         <span className="text-sm">{progress}%</span>
       </div>
       <Progress value={progress} className="h-2" />
-      <div className="flex justify-between mt-2">
-        <span className="text-xs text-gray-500">Planning</span>
-        <span className="text-xs text-gray-500">In Progress</span>
-        <span className="text-xs text-gray-500">Completed</span>
-      </div>
+      {showLabels && (
+        <div className="flex justify-between mt-2">
+          <span className="text-xs text-gray-500">Planning</span>
+          <span className="text-xs text-gray-500">In Progress</span>
+          <span className="text-xs text-gray-500">Completed</span>
+        </div>
+      )}
     </div>
   );
 };

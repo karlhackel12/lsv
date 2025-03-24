@@ -52,7 +52,11 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
       {/* Header Section with Progress */}
       <Card className="overflow-hidden">
         <div className="bg-gray-50 p-6 border-b">
-          <ExperimentHeader experiment={experiment} onEdit={onEdit} />
+          <ExperimentHeader 
+            experiment={experiment} 
+            onEdit={onEdit} 
+            hasRelatedHypothesis={!!relatedHypothesis}
+          />
           <ExperimentProgressBar experiment={experiment} />
         </div>
         
