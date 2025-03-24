@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,6 @@ import PageIntroduction from '@/components/PageIntroduction';
 import { Lightbulb } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/hooks/use-project';
-import PhaseNavigation from '@/components/PhaseNavigation';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
 // Define a type for phase to avoid excessive type instantiation
@@ -82,8 +80,6 @@ const HypothesesPage = () => {
         icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
         description="Create and test hypotheses to validate your business model. The scientific method helps you make evidence-based decisions."
       />
-      
-      <PhaseNavigation />
       
       <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">
         <TabsList className="mb-6">

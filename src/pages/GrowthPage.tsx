@@ -14,7 +14,6 @@ import { useGrowthModels } from '@/hooks/use-growth-models';
 import { Card, CardContent } from '@/components/ui/card';
 import ValidationStageCard from '@/components/growth/ValidationStageCard';
 import { useLocation } from 'react-router-dom';
-import PhaseNavigation from '@/components/PhaseNavigation';
 import TabNavigation, { TabItem } from '@/components/TabNavigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
@@ -187,8 +186,6 @@ const GrowthPage = () => {
         }
       />
       
-      <PhaseNavigation />
-
       {currentProject && !isLoadingModels && (
         <>
           <GrowthModelSection 

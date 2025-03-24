@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,6 @@ import PageIntroduction from '@/components/PageIntroduction';
 import { Beaker } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/hooks/use-project';
-import PhaseNavigation from '@/components/PhaseNavigation';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
 
@@ -109,8 +107,6 @@ const ExperimentsPage = () => {
         icon={<Beaker className="h-5 w-5 text-blue-500" />}
         description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
       />
-      
-      <PhaseNavigation />
       
       <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">
         <TabsList className="mb-6">

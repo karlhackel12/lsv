@@ -5,7 +5,6 @@ import { useProject } from '@/hooks/use-project';
 import MVPSection from '@/components/MVPSection';
 import PageIntroduction from '@/components/PageIntroduction';
 import { Layers } from 'lucide-react';
-import PhaseNavigation from '@/components/PhaseNavigation';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
 const MVPPage = () => {
@@ -63,8 +62,6 @@ const MVPPage = () => {
         icon={<Layers className="h-5 w-5 text-yellow-500" />}
         description="Define and prioritize the essential features for your MVP. Focus on features that deliver the most value with the least effort."
       />
-      
-      <PhaseNavigation />
       
       <ValidationPhaseIntro 
         phase="mvp" 

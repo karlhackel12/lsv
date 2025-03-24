@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
-import PhaseNavigation from '@/components/PhaseNavigation';
 import { Layers } from 'lucide-react';
 
 const Dashboard = () => {
@@ -95,8 +94,6 @@ const Dashboard = () => {
           Project Settings
         </Button>
       </div>
-      
-      <PhaseNavigation />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
