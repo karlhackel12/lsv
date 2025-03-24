@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Link2, Filter, Info, BarChart2, TrendingUp, DollarSign, LineChart } from 'lucide-react';
@@ -43,14 +42,11 @@ const GrowthMetricsSection = ({
   const { toast } = useToast();
   const [showCoreMetricsOnly, setShowCoreMetricsOnly] = useState(false);
 
-  // Core metrics
   const coreMetricNames = ['CAC', 'LTV', 'Conversion Rate'];
   const coreMetricCategories = ['acquisition', 'revenue', 'conversion'];
 
-  // Derived metrics that get calculated
   const [derivedMetrics, setDerivedMetrics] = useState<GrowthMetric[]>([]);
   
-  // Fetch scaling metrics to display linked info
   useEffect(() => {
     const fetchScalingMetrics = async () => {
       try {
@@ -71,7 +67,6 @@ const GrowthMetricsSection = ({
     calculateDerivedMetrics();
   }, [projectId, metrics]);
 
-  // Calculate derived metrics like LTV:CAC ratio
   const calculateDerivedMetrics = () => {
     const cac = metrics.find(m => 
       m.name.toLowerCase().includes('cac') || 
@@ -146,7 +141,6 @@ const GrowthMetricsSection = ({
     }
   };
 
-  // Check if all core metrics are present
   const areCoreMetricsPresent = () => {
     const hasCac = metrics.some(m => 
       m.name.toLowerCase().includes('cac') || 
@@ -166,7 +160,6 @@ const GrowthMetricsSection = ({
     return hasCac && hasLtv && hasConversion;
   };
 
-  // Filter metrics based on scaling metric link if needed
   const filteredMetrics = () => {
     let results = [...metrics];
     
@@ -184,7 +177,6 @@ const GrowthMetricsSection = ({
     return results.concat(derivedMetrics);
   };
 
-  // Group metrics by category
   const groupedMetrics = filteredMetrics().reduce((groups, metric) => {
     const category = metric.category;
     if (!groups[category]) {
@@ -194,13 +186,11 @@ const GrowthMetricsSection = ({
     return groups;
   }, {} as Record<string, GrowthMetric[]>);
 
-  // Find scaling metric for a growth metric
   const getScalingMetricForGrowthMetric = (growthMetric: GrowthMetric) => {
     if (!growthMetric.scaling_metric_id) return null;
     return scalingMetrics.find(sm => sm.id === growthMetric.scaling_metric_id) || null;
   };
 
-  // Create a new core metric
   const createCoreMetric = async (metricType: 'cac' | 'ltv' | 'conversion') => {
     let name = '', category = '', description = '', unit = '';
     let current_value = 0, target_value = 0;
@@ -364,7 +354,6 @@ const GrowthMetricsSection = ({
             </Card>
           )}
           
-          {/* Core Metrics Summary Card */}
           {derivedMetrics.length > 0 && (
             <Card className="mb-6">
               <CardHeader className="pb-3">
@@ -377,7 +366,7 @@ const GrowthMetricsSection = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="pb-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {metrics
                     .filter(m => 
                       m.name.toLowerCase().includes('cac') || 

@@ -122,7 +122,7 @@ const GrowthMetricsPanel = () => {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <MetricCard
             title="Customer Acquisition Cost"
             value={formatMetricValue(cacMetric)}
@@ -146,14 +146,6 @@ const GrowthMetricsPanel = () => {
             changeType={calculateChange(conversionMetric)?.type}
             icon={<LineChart className="h-5 w-5 text-yellow-500" />}
             tooltip="Percentage of visitors who become customers"
-          />
-          <MetricCard
-            title="LTV:CAC Ratio"
-            value={ltvCacRatio}
-            change={ltvMetric && cacMetric ? "Calculated" : undefined}
-            changeType="positive"
-            icon={<TrendingUp className="h-5 w-5 text-purple-500" />}
-            tooltip="The ratio between customer lifetime value and acquisition cost"
           />
         </div>
       </CardContent>
