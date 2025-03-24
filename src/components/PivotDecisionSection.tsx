@@ -75,7 +75,7 @@ const PivotDecisionSection = () => {
           
           {totalMetricsAtRisk > 0 ? (
             <>
-              <Alert variant="warning" className="mb-4">
+              <Alert className="mb-4 bg-yellow-50 border-yellow-200 text-yellow-800">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Potential Pivot Signals Detected</AlertTitle>
                 <AlertDescription>
