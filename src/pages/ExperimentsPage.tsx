@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +23,7 @@ const ExperimentsPage = () => {
   const currentPhase = searchParams.get('phase') || 'problem';
   const experimentId = searchParams.get('id');
   const createNew = searchParams.get('create') === 'true';
+  const viewParam = searchParams.get('view');
   
   // Validate status parameter against allowed values
   const rawStatus = searchParams.get('status');
@@ -29,8 +31,9 @@ const ExperimentsPage = () => {
     ? rawStatus as ExperimentStatus
     : null;
   
-  // Show summary when no specific experiment is being viewed and not creating a new one
-  const showSummary = !experimentId && !createNew;
+  // Show summary when no specific experiment is being viewed, not creating a new one,
+  // and not explicitly requesting list view
+  const showSummary = !experimentId && !createNew && viewParam !== 'list' && !statusFilter;
   
   const fetchExperiments = async () => {
     try {
@@ -115,14 +118,14 @@ const ExperimentsPage = () => {
           <TabsTrigger value="business-model">Business Model Experiments</TabsTrigger>
         </TabsList>
         
-        {showSummary && !statusFilter && (
+        {showSummary && (
           <ExperimentsSummarySection
             experiments={experiments}
             projectId={currentProject.id}
           />
         )}
         
-        {(!showSummary || statusFilter) && (
+        {(!showSummary) && (
           <>
             <TabsContent value="problem">
               <ValidationPhaseIntro 

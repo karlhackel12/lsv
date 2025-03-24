@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,9 +31,26 @@ const ExperimentsSummarySection = ({ experiments, projectId }: ExperimentsSummar
 
   // Navigate to experiment list with specific filter
   const navigateToExperiments = (phase?: string, status?: string) => {
+    // Create params object
     const params = new URLSearchParams();
-    if (phase) params.set('phase', phase);
-    if (status) params.set('status', status);
+    
+    // Set the current phase if provided, otherwise use the default from the parent component
+    if (phase) {
+      params.set('phase', phase);
+    } else {
+      // If no phase specified, use 'problem' as default to ensure we go to a list view
+      params.set('phase', 'problem');
+    }
+    
+    // Add status filter if provided
+    if (status) {
+      params.set('status', status);
+    }
+    
+    // Force summary mode to false to ensure we get the list view
+    params.set('view', 'list');
+    
+    // Navigate to the experiments page with our parameters
     navigate(`/experiments?${params.toString()}`);
   };
 
