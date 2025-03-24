@@ -19,6 +19,7 @@ import MetricsPage from "./pages/MetricsPage";
 import PivotPage from "./pages/PivotPage";
 import GrowthPage from "./pages/GrowthPage";
 import LeanStartupPage from "./pages/LeanStartupPage";
+import BusinessPlanPage from "./pages/BusinessPlanPage";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App: React.FC = () => {
                     <Route path="/pivot" element={<PivotPage />} />
                     <Route path="/growth" element={<GrowthPage />} />
                     <Route path="/lean-startup-methodology" element={<LeanStartupPage />} />
+                    <Route path="/business-plan" element={<BusinessPlanPage />} />
                     {/* These routes will be implemented later */}
                     <Route path="/profile" element={<div>Profile Page</div>} />
                     <Route path="/settings" element={<div>Settings Page</div>} />

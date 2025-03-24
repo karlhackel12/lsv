@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -8,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import GrowthMetricsPanel from './dashboard/GrowthMetricsPanel';
-import LeanStartupBanner from './dashboard/LeanStartupBanner';
+import LeanStartupBanner from '@/components/dashboard/LeanStartupBanner';
+import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
 import InfoTooltip from '@/components/InfoTooltip';
 
 const Dashboard = () => {
@@ -86,19 +86,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">{currentProject.name}</h1>
-          <p className="text-muted-foreground">{currentProject.description}</p>
-        </div>
-        <Button variant="outline" onClick={() => navigate('/settings')} className="flex items-center">
-          <Settings className="mr-2 h-4 w-4" />
-          Project Settings
-        </Button>
-      </div>
-      
-      {/* Lean Startup Banner */}
       <LeanStartupBanner />
+      <BusinessPlanBanner />
       
       {/* Growth Metrics Panel */}
       <GrowthMetricsPanel />

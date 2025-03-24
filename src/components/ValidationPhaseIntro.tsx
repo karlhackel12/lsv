@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Info, Lightbulb, Beaker, Layers, TrendingUp, BookOpen } from 'lucide-react';
+import { Info, Lightbulb, Beaker, Layers, TrendingUp, BookOpen, FileText } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import InfoTooltip from '@/components/InfoTooltip';
 import { useNavigate } from 'react-router-dom';
@@ -90,6 +90,16 @@ const ValidationPhaseIntro = ({
             >
               <BookOpen className="h-4 w-4 mr-2" />
               Learn Lean Startup
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/business-plan')}
+              className="flex items-center text-green-600 border-green-200 hover:bg-green-50"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Business Plan
             </Button>
             
             {onCreateNew && (

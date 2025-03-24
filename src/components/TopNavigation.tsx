@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Lightbulb, FlaskConical, Layers, LineChart, GitFork, TrendingUp, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Lightbulb, FlaskConical, Layers, LineChart, GitFork, TrendingUp, BookOpen, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const mainNavItems = [
@@ -44,6 +44,11 @@ const mainNavItems = [
     title: 'Lean Startup Guide',
     href: '/lean-startup-methodology',
     icon: <BookOpen className="h-5 w-5 mr-2" />
+  },
+  {
+    title: 'Business Plan',
+    href: '/business-plan',
+    icon: <FileText className="h-5 w-5 mr-2" />
   }
 ];
 

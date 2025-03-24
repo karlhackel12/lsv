@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Plus,
   BookOpen,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,11 @@ const mainNavItems = [
     title: 'Lean Startup Guide',
     href: '/lean-startup-methodology',
     icon: <BookOpen className="h-5 w-5 mr-3" />,
+  },
+  {
+    title: 'Business Plan',
+    href: '/business-plan',
+    icon: <FileText className="h-5 w-5 mr-3" />,
   },
 ];
 

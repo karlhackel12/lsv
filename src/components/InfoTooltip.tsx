@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Info, BookOpen } from 'lucide-react';
+import { Info, BookOpen, FileText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from 'react-router-dom';
 
@@ -10,6 +10,8 @@ interface InfoTooltipProps {
   icon?: React.ReactNode;
   className?: string;
   showBorder?: boolean;
+  linkText?: string;
+  linkIcon?: React.ReactNode;
 }
 
 const InfoTooltip = ({ 
@@ -17,14 +19,16 @@ const InfoTooltip = ({
   link, 
   icon, 
   className = '',
-  showBorder = false
+  showBorder = false,
+  linkText = 'Learn more about Lean Startup',
+  linkIcon = <BookOpen className="h-3 w-3 mr-1" />
 }: InfoTooltipProps) => {
   const tooltipContent = link ? (
     <div className="text-sm">
       <p>{text}</p>
       <Link to={link} className="text-blue-500 hover:text-blue-700 mt-1 block text-xs font-medium flex items-center">
-        <BookOpen className="h-3 w-3 mr-1" />
-        Learn more about Lean Startup
+        {linkIcon}
+        {linkText}
       </Link>
     </div>
   ) : (
