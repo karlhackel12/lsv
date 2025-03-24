@@ -1,65 +1,30 @@
+
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription,
-  CardFooter
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ScalingPlan, 
   ScalingPlanAction, 
   ScalingReadinessMetric, 
-  GrowthModel,
-  SCALING_METRIC_CATEGORIES
+  GrowthModel
 } from '@/types/database';
 import { 
-  Rocket, 
-  PlusCircle,
-  Check,
-  AlertTriangle,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-  Edit2,
-  Trash2,
-  Calendar as CalendarIcon
-} from 'lucide-react';
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { ScrollArea } from "@/components/ui/scroll-area";
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+
+// Import the new component files
+import EmptyPlanState from './scaling-plan/EmptyPlanState';
+import PlanForm from './scaling-plan/PlanForm';
+import ActionForm from './scaling-plan/ActionForm';
+import ActionList from './scaling-plan/ActionList';
+import PlanProgress from './scaling-plan/PlanProgress';
+import PlanHeader from './scaling-plan/PlanHeader';
 
 interface ScalingPlanManagerProps {
   projectId: string;
@@ -83,34 +48,6 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const planForm = useForm<ScalingPlan>({
-    defaultValues: {
-      id: '',
-      project_id: projectId,
-      growth_model_id: growthModel.id,
-      title: '',
-      description: '',
-      overall_readiness: 0,
-      status: 'draft',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as ScalingPlan,
-  });
-
-  const actionForm = useForm<ScalingPlanAction>({
-    defaultValues: {
-      id: '',
-      scaling_plan_id: '',
-      title: '',
-      description: '',
-      metric_id: null,
-      priority: 'medium',
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as ScalingPlanAction,
-  });
-
   useEffect(() => {
     if (growthModel) {
       fetchPlans();
@@ -120,10 +57,6 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
   useEffect(() => {
     if (currentPlan) {
       fetchActions();
-      
-      planForm.reset({
-        ...currentPlan,
-      });
     }
   }, [currentPlan]);
 
@@ -282,17 +215,7 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
       
       await fetchActions();
       setIsAddingAction(false);
-      actionForm.reset({
-        id: '',
-        scaling_plan_id: currentPlan.id,
-        title: '',
-        description: '',
-        metric_id: null,
-        priority: 'medium',
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      setEditingAction(null);
     } catch (error) {
       console.error('Error adding action item:', error);
       toast({
@@ -342,9 +265,6 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
   const handleEditAction = (action: ScalingPlanAction) => {
     setEditingAction(action);
     setIsAddingAction(true);
-    actionForm.reset({
-      ...action,
-    });
   };
 
   const handleDeleteAction = async (actionId: string) => {
@@ -530,164 +450,46 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'text-red-600';
-      case 'medium':
-        return 'text-yellow-600';
-      case 'low':
-        return 'text-blue-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Check className="h-4 w-4 text-green-600" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      default:
-        return <AlertTriangle className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const calculateProgress = () => {
-    if (actions.length === 0) return 0;
-    
-    const completed = actions.filter(a => a.status === 'completed').length;
-    return Math.round((completed / actions.length) * 100);
+  const handlePlanSelect = (planId: string) => {
+    const selected = plans.find(p => p.id === planId);
+    if (selected) setCurrentPlan(selected);
   };
 
   return (
     <div className="space-y-6">
       {!isLoading && plans.length === 0 && !isEditingPlan && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Rocket className="h-12 w-12 text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Scaling Plan Yet</h3>
-            <p className="text-center text-gray-500 mb-6 max-w-md">
-              Create a structured scaling plan to prepare your startup for growth
-            </p>
-            <Button onClick={() => setIsEditingPlan(true)}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create Scaling Plan
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyPlanState onCreatePlan={() => setIsEditingPlan(true)} />
       )}
       
       {isEditingPlan && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{currentPlan ? 'Edit Scaling Plan' : 'Create New Scaling Plan'}</CardTitle>
-            <CardDescription>
-              Define your plan for scaling your startup
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...planForm}>
-              <form 
-                onSubmit={planForm.handleSubmit(currentPlan ? handleUpdatePlan : handleCreatePlan)} 
-                className="space-y-6"
-              >
-                <FormField
-                  control={planForm.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Plan Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Q4 2023 Scaling Strategy" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={planForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe the goals and scope of this scaling plan" 
-                          className="resize-none min-h-[100px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsEditingPlan(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    {currentPlan ? 'Update Plan' : 'Create Plan'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        <PlanForm
+          currentPlan={currentPlan}
+          projectId={projectId}
+          growthModelId={growthModel.id}
+          onCancel={() => setIsEditingPlan(false)}
+          onSubmit={currentPlan ? handleUpdatePlan : handleCreatePlan}
+        />
       )}
       
       {!isLoading && currentPlan && !isEditingPlan && (
         <>
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-semibold">{currentPlan.title}</h2>
-              <p className="text-gray-500">{currentPlan.description}</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Select
-                value={currentPlan.id}
-                onValueChange={(value) => {
-                  const selected = plans.find(p => p.id === value);
-                  if (selected) setCurrentPlan(selected);
-                }}
-              >
-                <SelectTrigger className="w-[220px]">
-                  <SelectValue placeholder="Select plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map(plan => (
-                    <SelectItem key={plan.id} value={plan.id}>
-                      {plan.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => setIsEditingPlan(true)}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="destructive" 
-                size="icon"
-                onClick={() => handleDeletePlan(currentPlan.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          <PlanHeader
+            currentPlan={currentPlan}
+            plans={plans}
+            onChangePlan={handlePlanSelect}
+            onEditPlan={() => setIsEditingPlan(true)}
+            onDeletePlan={handleDeletePlan}
+          />
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <Card className="lg:col-span-3">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-lg">Action Plan</CardTitle>
-                  <Button size="sm" onClick={() => setIsAddingAction(true)}>
+                  <Button size="sm" onClick={() => {
+                    setIsAddingAction(true);
+                    setEditingAction(null);
+                  }}>
                     <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
                     Add Action
                   </Button>
@@ -698,335 +500,43 @@ const ScalingPlanManager: React.FC<ScalingPlanManagerProps> = ({
               </CardHeader>
               <CardContent className="pt-4">
                 {isAddingAction ? (
-                  <Form {...actionForm}>
-                    <form 
-                      onSubmit={actionForm.handleSubmit(editingAction ? handleUpdateAction : handleCreateAction)} 
-                      className="space-y-4"
-                    >
-                      <FormField
-                        control={actionForm.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Action Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g. Improve LTV:CAC Ratio" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={actionForm.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Describe what needs to be done" 
-                                className="resize-none min-h-[80px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={actionForm.control}
-                          name="metric_id"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Related Metric (Optional)</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value?.toString() || ''}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a metric" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="">None</SelectItem>
-                                  {metrics.map(metric => (
-                                    <SelectItem key={metric.id} value={metric.id}>
-                                      {metric.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={actionForm.control}
-                          name="priority"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Priority</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select priority" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="high">High</SelectItem>
-                                  <SelectItem value="medium">Medium</SelectItem>
-                                  <SelectItem value="low">Low</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={actionForm.control}
-                        name="due_date"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Due Date (Optional)</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                      "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
-                                    {field.value ? (
-                                      format(new Date(field.value), "PPP")
-                                    ) : (
-                                      <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value ? new Date(field.value) : undefined}
-                                  onSelect={(date) => field.onChange(date ? date.toISOString() : undefined)}
-                                  initialFocus
-                                  className="p-3 pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex justify-end space-x-2 pt-4">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => {
-                            setIsAddingAction(false);
-                            setEditingAction(null);
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="submit">
-                          {editingAction ? 'Update Action' : 'Add Action'}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                ) : actions.length > 0 ? (
-                  <div className="space-y-4">
-                    <Accordion type="multiple" className="w-full">
-                      {actions.map(action => (
-                        <AccordionItem key={action.id} value={action.id} className="border-b">
-                          <AccordionTrigger className="py-3 px-2 data-[state=open]:bg-gray-50">
-                            <div className="flex items-center mr-4">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleActionStatus(action);
-                                }}
-                                className={cn(
-                                  "h-4 w-4 rounded border mr-2 flex items-center justify-center",
-                                  action.status === 'completed' 
-                                    ? "bg-primary border-primary" 
-                                    : "border-gray-300"
-                                )}
-                              >
-                                {action.status === 'completed' && <Check className="h-3 w-3 text-white" />}
-                              </button>
-                              <span className={cn(
-                                "font-medium",
-                                action.status === 'completed' && "line-through text-gray-500"
-                              )}>
-                                {action.title}
-                              </span>
-                            </div>
-                            <div className="flex items-center ml-auto mr-2 space-x-2">
-                              <Badge className={`ml-auto ${getPriorityColor(action.priority)}`}>
-                                {action.priority}
-                              </Badge>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pl-8 pb-4 pt-2">
-                            <div className="text-sm text-gray-600 mb-3">
-                              {action.description}
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                              {action.metric_id && (
-                                <Badge variant="outline">
-                                  Related to: {
-                                    metrics.find(m => m.id === action.metric_id)?.name || 'Unknown metric'
-                                  }
-                                </Badge>
-                              )}
-                              
-                              {action.due_date && (
-                                <Badge variant="outline" className="flex items-center gap-1">
-                                  <CalendarIcon className="h-3 w-3" />
-                                  Due: {format(new Date(action.due_date), "MMM d, yyyy")}
-                                </Badge>
-                              )}
-                              
-                              <Badge variant="outline" className="flex items-center gap-1">
-                                {getStatusIcon(action.status)}
-                                Status: {action.status === 'completed' ? 'Completed' : 'Pending'}
-                              </Badge>
-                            </div>
-                            
-                            <div className="flex justify-end space-x-2 mt-3">
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleEditAction(action)}
-                              >
-                                <Edit2 className="h-3.5 w-3.5 mr-1" />
-                                Edit
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="text-red-600 hover:text-red-700" 
-                                onClick={() => handleDeleteAction(action.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </div>
+                  <ActionForm
+                    action={editingAction}
+                    scalingPlanId={currentPlan.id}
+                    metrics={metrics}
+                    onCancel={() => {
+                      setIsAddingAction(false);
+                      setEditingAction(null);
+                    }}
+                    onSubmit={editingAction ? handleUpdateAction : handleCreateAction}
+                  />
                 ) : (
-                  <div className="text-center py-8">
-                    <AlertTriangle className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Action Items</h3>
-                    <p className="text-gray-500 mb-4">
-                      Add action items to your scaling plan to track progress
-                    </p>
-                    <Button onClick={() => setIsAddingAction(true)}>
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      Add First Action Item
-                    </Button>
-                  </div>
+                  <ActionList
+                    actions={actions}
+                    metrics={metrics}
+                    onAddAction={() => setIsAddingAction(true)}
+                    onToggleStatus={handleToggleActionStatus}
+                    onEdit={handleEditAction}
+                    onDelete={handleDeleteAction}
+                  />
                 )}
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Plan Progress</CardTitle>
-                {currentPlan.status === 'draft' ? (
-                  <Badge variant="outline" className="w-fit">Draft</Badge>
-                ) : (
-                  <Badge className="bg-green-600 w-fit">Active</Badge>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span>{calculateProgress()}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 transition-all duration-300"
-                      style={{ width: `${calculateProgress()}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 pt-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center">
-                      <Check className="h-3.5 w-3.5 text-green-600 mr-1" />
-                      Completed
-                    </span>
-                    <span>
-                      {actions.filter(a => a.status === 'completed').length} / {actions.length}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center">
-                      <Clock className="h-3.5 w-3.5 text-yellow-600 mr-1" />
-                      Pending
-                    </span>
-                    <span>
-                      {actions.filter(a => a.status === 'pending').length} / {actions.length}
-                    </span>
-                  </div>
-                  
-                  <Separator className="my-2" />
-                  
-                  {Object.entries(
-                    actions.reduce((acc, action) => {
-                      const key = action.priority as string;
-                      if (!acc[key]) acc[key] = 0;
-                      acc[key]++;
-                      return acc;
-                    }, {} as Record<string, number>)
-                  ).map(([priority, count]) => (
-                    <div key={priority} className="flex justify-between text-sm">
-                      <span className={`capitalize ${getPriorityColor(priority)}`}>{priority}</span>
-                      <span>{count}</span>
-                    </div>
-                  ))}
-                </div>
-                
-                {currentPlan.status === 'draft' && actions.length > 0 && (
-                  <Button 
-                    className="w-full mt-4" 
-                    onClick={handleMarkPlanActive}
-                  >
-                    <Rocket className="h-4 w-4 mr-2" />
-                    Activate Plan
-                  </Button>
-                )}
-                
-                {actions.length === 0 && (
-                  <div className="text-center text-sm text-gray-500 py-2">
-                    Add actions to track plan progress
-                  </div>
-                )}
-              </CardContent>
-              
-              <CardFooter className="border-t pt-4 block">
-                <div className="
+            <PlanProgress
+              plan={currentPlan}
+              actions={actions}
+              onActivatePlan={handleMarkPlanActive}
+            />
+          </div>
+          
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-6 gap-4">
+            {/* Grid with action cards for quick navigation could go here */}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default ScalingPlanManager;
