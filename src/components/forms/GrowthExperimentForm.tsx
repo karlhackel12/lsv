@@ -35,8 +35,7 @@ const formSchema = z.object({
   title: z.string().min(2, "Name must be at least 2 characters"),
   hypothesis: z.string().min(10, "Hypothesis should be more detailed"),
   status: z.string(),
-  metrics: z.string().optional(),
-  results: z.string().optional(),
+  notes: z.string().optional(),
   scaling_metric_id: z.string().nullable().optional(),
 });
 
@@ -67,8 +66,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
       title: experiment?.title || '',
       hypothesis: experiment?.hypothesis || '',
       status: experiment?.status || 'planned',
-      metrics: experiment?.metrics || '',
-      results: experiment?.results || '',
+      notes: experiment?.notes || '',
       project_id: projectId,
       growth_model_id: growthModelId,
       scaling_metric_id: experiment?.scaling_metric_id || null,
@@ -113,8 +111,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             title: data.title,
             hypothesis: data.hypothesis,
             status: data.status,
-            metrics: data.metrics,
-            results: data.results,
+            notes: data.notes,
             scaling_metric_id: data.scaling_metric_id,
             // Include additional required fields
             start_date: data.start_date,
@@ -140,8 +137,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             title: data.title,
             hypothesis: data.hypothesis,
             status: data.status,
-            metrics: data.metrics,
-            results: data.results,
+            notes: data.notes,
             growth_model_id: growthModelId,
             project_id: projectId,
             scaling_metric_id: data.scaling_metric_id,
@@ -323,14 +319,14 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             
             <FormField
               control={form.control}
-              name="metrics"
+              name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Metrics to Track</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea 
                       {...field} 
-                      placeholder="What metrics will you use to measure success?" 
+                      placeholder="Additional notes about this experiment" 
                       className="min-h-[80px]"
                     />
                   </FormControl>
@@ -372,15 +368,17 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             {form.watch('status') === 'completed' && (
               <FormField
                 control={form.control}
-                name="results"
+                name="actual_lift"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Results</FormLabel>
+                    <FormLabel>Actual Lift (%)</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Input 
+                        type="number" 
                         {...field} 
-                        placeholder="What were the results of the experiment?" 
-                        className="min-h-[100px]"
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        value={field.value?.toString() || ''} 
+                        placeholder="e.g., 5.2" 
                       />
                     </FormControl>
                     <FormMessage />
