@@ -75,7 +75,13 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
         
       if (error) throw error;
       
-      setGrowthMetrics(data || []);
+      // Ensure the data conforms to the GrowthMetric type
+      const typedMetrics = data?.map(metric => ({
+        ...metric,
+        status: (metric.status as "on-track" | "at-risk" | "off-track") || "on-track"
+      })) as GrowthMetric[];
+      
+      setGrowthMetrics(typedMetrics || []);
     } catch (err) {
       console.error("Error fetching growth metrics:", err);
     } finally {
@@ -269,14 +275,14 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
             <div className="grid gap-2">
               <Label htmlFor="growthMetric">Growth Metric (Impact)</Label>
               <Select 
-                value={growthMetricId || ''} 
-                onValueChange={(value) => setGrowthMetricId(value || null)}
+                value={growthMetricId || "none"} 
+                onValueChange={(value) => setGrowthMetricId(value === "none" ? null : value)}
               >
                 <SelectTrigger id="growthMetric">
                   <SelectValue placeholder="Select a growth metric" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {growthMetrics.map(metric => (
                     <SelectItem key={metric.id} value={metric.id}>
                       {metric.name}
@@ -284,9 +290,6 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">
-                Connecting features to growth metrics helps track their impact on scaling readiness
-              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes</Label>
@@ -294,16 +297,16 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Additional Notes"
+                placeholder="Additional notes about this feature"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} className="mr-2">
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save changes"}
+              {isSaving ? "Saving..." : feature ? "Update Feature" : "Create Feature"}
             </Button>
           </DialogFooter>
         </form>

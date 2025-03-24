@@ -1,11 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { GrowthExperiment, GrowthMetric, ScalingReadinessMetric } from '@/types/database';
+import { useForm } from 'react-hook-form';
+import { GrowthExperiment, ScalingReadinessMetric } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -15,392 +22,354 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
-import { format } from 'date-fns';
+import { Card, CardContent } from '@/components/ui/card';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
-interface GrowthExperimentFormProps {
-  projectId: string;
-  metrics: GrowthMetric[];
-  onSave: () => Promise<void>;
-  onClose?: () => void;
-  experiment?: GrowthExperiment | null;
+// Update the GrowthExperiment type to include scaling_metric_id
+interface ExtendedGrowthExperiment extends GrowthExperiment {
+  scaling_metric_id?: string | null;
 }
 
-const GrowthExperimentForm = ({ 
-  projectId, 
-  metrics, 
-  onSave, 
-  onClose,
-  experiment 
-}: GrowthExperimentFormProps) => {
-  const [title, setTitle] = useState(experiment?.title || '');
-  const [hypothesis, setHypothesis] = useState(experiment?.hypothesis || '');
-  const [metricId, setMetricId] = useState<string>(experiment?.metric_id || '');
-  const [expectedLift, setExpectedLift] = useState<string>(
-    experiment?.expected_lift ? experiment.expected_lift.toString() : ''
-  );
-  const [actualLift, setActualLift] = useState<string>(
-    experiment?.actual_lift ? experiment.actual_lift.toString() : ''
-  );
-  const [startDate, setStartDate] = useState<string>(
-    experiment?.start_date 
-      ? format(new Date(experiment.start_date), 'yyyy-MM-dd')
-      : format(new Date(), 'yyyy-MM-dd')
-  );
-  const [endDate, setEndDate] = useState<string>(
-    experiment?.end_date 
-      ? format(new Date(experiment.end_date), 'yyyy-MM-dd')
-      : format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
-  );
-  const [status, setStatus] = useState<'planned' | 'running' | 'completed' | 'failed'>(
-    experiment?.status as any || 'planned'
-  );
-  const [notes, setNotes] = useState(experiment?.notes || '');
-  const [scalingMetricId, setScalingMetricId] = useState<string>(
-    experiment?.scaling_metric_id || ''
-  );
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  hypothesis: z.string().min(10, "Hypothesis should be more detailed"),
+  success_criteria: z.string().min(2, "Success criteria must be defined"),
+  status: z.string(),
+  stage: z.string(),
+  metrics: z.string().optional(),
+  results: z.string().optional(),
+  scaling_metric_id: z.string().nullable().optional(),
+});
 
-  const [growthModelId, setGrowthModelId] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface GrowthExperimentFormProps {
+  experiment?: ExtendedGrowthExperiment | null;
+  projectId: string;
+  growthModelId: string;
+  onSave: () => Promise<void>;
+  onClose: () => void;
+}
+
+const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
+  experiment,
+  projectId,
+  growthModelId,
+  onSave,
+  onClose
+}) => {
   const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
-  const [isLoadingScalingMetrics, setIsLoadingScalingMetrics] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!experiment;
+
+  const form = useForm<ExtendedGrowthExperiment>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      id: experiment?.id || '',
+      name: experiment?.name || '',
+      hypothesis: experiment?.hypothesis || '',
+      success_criteria: experiment?.success_criteria || '',
+      status: experiment?.status || 'planned',
+      stage: experiment?.stage || 'channel',
+      metrics: experiment?.metrics || '',
+      results: experiment?.results || '',
+      project_id: projectId,
+      growth_model_id: growthModelId,
+      scaling_metric_id: experiment?.scaling_metric_id || null,
+    }
+  });
 
   useEffect(() => {
-    fetchGrowthModel();
     fetchScalingMetrics();
   }, [projectId]);
 
-  const fetchGrowthModel = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('growth_models')
-        .select('id')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-        
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setGrowthModelId(data[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching growth model:', error);
-    }
-  };
-
   const fetchScalingMetrics = async () => {
+    setIsLoading(true);
     try {
-      setIsLoadingScalingMetrics(true);
       const { data, error } = await supabase
         .from('scaling_readiness_metrics')
         .select('*')
-        .eq('project_id', projectId)
-        .order('importance', { ascending: false });
+        .eq('project_id', projectId);
         
       if (error) throw error;
       
-      setScalingMetrics(data || []);
-    } catch (error) {
-      console.error('Error fetching scaling metrics:', error);
+      setScalingMetrics(data as ScalingReadinessMetric[]);
+    } catch (err) {
+      console.error('Error fetching scaling metrics:', err);
     } finally {
-      setIsLoadingScalingMetrics(false);
+      setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!title || !hypothesis || !metricId || !expectedLift || !startDate || !endDate) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+  const handleSubmit = async (data: ExtendedGrowthExperiment) => {
     try {
-      const experimentData = {
-        title,
-        hypothesis,
-        metric_id: metricId,
-        expected_lift: parseFloat(expectedLift),
-        actual_lift: actualLift ? parseFloat(actualLift) : null,
-        start_date: new Date(startDate).toISOString(),
-        end_date: new Date(endDate).toISOString(),
-        status,
-        notes,
-        growth_model_id: growthModelId,
-        project_id: projectId,
-        scaling_metric_id: scalingMetricId || null
-      };
-      
-      if (experiment) {
-        // Update existing experiment
+      if (isEditing && experiment) {
+        // Update experiment
         const { error } = await supabase
           .from('growth_experiments')
-          .update(experimentData)
-          .eq('id', experiment.originalId || experiment.id);
+          .update({
+            name: data.name,
+            hypothesis: data.hypothesis,
+            success_criteria: data.success_criteria,
+            status: data.status,
+            stage: data.stage,
+            metrics: data.metrics,
+            results: data.results,
+            scaling_metric_id: data.scaling_metric_id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', experiment.id);
           
         if (error) throw error;
         
-        // Update or create dependency
-        if (scalingMetricId) {
-          await supabase
-            .from('entity_dependencies')
-            .upsert({
-              project_id: projectId,
-              source_type: 'growth_experiment',
-              source_id: experiment.originalId || experiment.id,
-              target_type: 'scaling_metric',
-              target_id: scalingMetricId,
-              relationship_type: 'validates',
-              strength: 2.0,
-            }, {
-              onConflict: 'source_id, target_id, relationship_type'
-            });
-        }
-        
         toast({
-          title: "Success",
-          description: "Experiment updated successfully",
+          title: 'Experiment updated',
+          description: 'Growth experiment has been updated'
         });
       } else {
-        // Create new experiment
-        const { data, error } = await supabase
+        // Create experiment
+        const { error } = await supabase
           .from('growth_experiments')
-          .insert(experimentData)
-          .select();
+          .insert({
+            name: data.name,
+            hypothesis: data.hypothesis,
+            success_criteria: data.success_criteria,
+            status: data.status,
+            stage: data.stage,
+            metrics: data.metrics,
+            results: data.results,
+            growth_model_id: growthModelId,
+            project_id: projectId,
+            scaling_metric_id: data.scaling_metric_id
+          });
           
         if (error) throw error;
         
-        // Create dependency if scaling metric is selected
-        if (scalingMetricId && data && data.length > 0) {
-          await supabase
-            .from('entity_dependencies')
-            .insert({
-              project_id: projectId,
-              source_type: 'growth_experiment',
-              source_id: data[0].id,
-              target_type: 'scaling_metric',
-              target_id: scalingMetricId,
-              relationship_type: 'validates',
-              strength: 2.0,
-            });
-        }
-        
         toast({
-          title: "Success",
-          description: "Experiment created successfully",
+          title: 'Experiment created',
+          description: 'Growth experiment has been created'
         });
       }
       
-      onSave();
-      if (onClose) onClose();
-    } catch (error: any) {
+      // Create or update entity dependency if scaling metric is selected
+      if (data.scaling_metric_id) {
+        await supabase
+          .from('entity_dependencies')
+          .upsert({
+            project_id: projectId,
+            source_type: 'growth_experiment',
+            source_id: experiment?.id || '', // For new experiments, this won't have an ID yet
+            target_type: 'scaling_readiness_metric',
+            target_id: data.scaling_metric_id,
+            relationship_type: 'validates',
+            strength: 2.0,
+          }, {
+            onConflict: 'source_id, target_id, relationship_type'
+          });
+      }
+      
+      await onSave();
+      onClose();
+    } catch (error) {
       console.error('Error saving experiment:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to save experiment",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save experiment',
+        variant: 'destructive'
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="border-2 border-blue-100">
-      <CardHeader>
-        <CardTitle>{experiment ? 'Edit Experiment' : 'Create Growth Experiment'}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Tabs defaultValue="basic">
-            <TabsList className="mb-4">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="details">Metrics & Results</TabsTrigger>
-              <TabsTrigger value="links">Dependencies</TabsTrigger>
-            </TabsList>
+    <Card>
+      <CardContent className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Experiment Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g., Multi-channel acquisition test" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <TabsContent value="basic" className="space-y-4">
-              <div>
-                <Label htmlFor="title">Experiment Title</Label>
-                <Input 
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="E.g., A/B Test for Sign-up Page"
-                  required
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="stage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Growth Stage</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a stage" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="channel">Acquisition Channel</SelectItem>
+                        <SelectItem value="activation">Activation</SelectItem>
+                        <SelectItem value="retention">Retention</SelectItem>
+                        <SelectItem value="referral">Referral</SelectItem>
+                        <SelectItem value="revenue">Revenue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
-              <div>
-                <Label htmlFor="hypothesis">Hypothesis</Label>
-                <Textarea 
-                  id="hypothesis"
-                  value={hypothesis}
-                  onChange={(e) => setHypothesis(e.target.value)}
-                  placeholder="We believe that [change] will result in [outcome] because [reason]"
-                  rows={3}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={status} 
-                  onValueChange={(value: 'planned' | 'running' | 'completed' | 'failed') => setStatus(value)}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select experiment status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planned">Planned</SelectItem>
-                    <SelectItem value="running">Running</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input 
-                    id="startDate"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input 
-                    id="endDate"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </TabsContent>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="planned">Planned</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="abandoned">Abandoned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
-            <TabsContent value="details" className="space-y-4">
-              <div>
-                <Label htmlFor="metricId">Target Growth Metric</Label>
-                <Select 
-                  value={metricId} 
-                  onValueChange={(value) => setMetricId(value)}
-                >
-                  <SelectTrigger id="metricId">
-                    <SelectValue placeholder="Select a metric to improve" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {metrics.map(metric => (
-                      <SelectItem key={metric.id} value={metric.id}>
-                        {metric.name} ({metric.current_value}/{metric.target_value} {metric.unit})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="expectedLift">Expected Lift (%)</Label>
-                  <Input 
-                    id="expectedLift"
-                    type="number"
-                    value={expectedLift}
-                    onChange={(e) => setExpectedLift(e.target.value)}
-                    placeholder="10"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="actualLift">Actual Lift (%)</Label>
-                  <Input 
-                    id="actualLift"
-                    type="number"
-                    value={actualLift}
-                    onChange={(e) => setActualLift(e.target.value)}
-                    placeholder="Leave blank if not completed"
-                    disabled={status !== 'completed'}
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea 
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Additional notes about this experiment"
-                  rows={3}
-                />
-              </div>
-            </TabsContent>
+            <FormField
+              control={form.control}
+              name="hypothesis"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hypothesis</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="What do you expect to happen?" 
+                      className="min-h-[100px]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <TabsContent value="links" className="space-y-4">
-              <div>
-                <Label htmlFor="scalingMetricId">Related Scaling Metric</Label>
-                {isLoadingScalingMetrics ? (
-                  <div className="flex items-center mt-2">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <span>Loading scaling metrics...</span>
-                  </div>
-                ) : (
-                  <Select 
-                    value={scalingMetricId} 
-                    onValueChange={(value) => setScalingMetricId(value)}
+            <FormField
+              control={form.control}
+              name="success_criteria"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Success Criteria</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="How will you know if the experiment was successful?" 
+                      className="min-h-[80px]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="metrics"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Metrics to Track</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="What metrics will you use to measure success?" 
+                      className="min-h-[80px]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="scaling_metric_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Related Scaling Metric</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === "none" ? null : value)}
+                    value={field.value || "none"}
+                    defaultValue={field.value || "none"}
                   >
-                    <SelectTrigger id="scalingMetricId">
-                      <SelectValue placeholder="Select a scaling metric this experiment validates" />
-                    </SelectTrigger>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a scaling metric" />
+                      </SelectTrigger>
+                    </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {scalingMetrics.map(metric => (
                         <SelectItem key={metric.id} value={metric.id}>
-                          {metric.name} ({metric.category})
+                          {metric.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {form.watch('status') === 'completed' && (
+              <FormField
+                control={form.control}
+                name="results"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Results</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="What were the results of the experiment?" 
+                        className="min-h-[100px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Connecting experiments to scaling metrics helps track validation progress toward scaling readiness
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
-          
-          <div className="flex justify-end gap-3 pt-4">
-            {onClose && (
+              />
+            )}
+            
+            <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-            )}
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {experiment ? 'Update Experiment' : 'Create Experiment'}
-            </Button>
-          </div>
-        </form>
+              <Button type="submit">
+                {isEditing ? 'Update Experiment' : 'Create Experiment'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );
