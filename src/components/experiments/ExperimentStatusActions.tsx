@@ -34,6 +34,33 @@ const ExperimentStatusActions = ({ experiment, refreshData, onEdit }: Experiment
         description: `Experiment status changed to ${newStatus}.`,
       });
       
+      // Update corresponding growth experiment if it exists
+      const { data: growthExperiments, error: fetchError } = await supabase
+        .from('growth_experiments')
+        .select('*')
+        .eq('project_id', experiment.project_id)
+        .eq('title', `From exp: ${experiment.title}`);
+      
+      if (fetchError) {
+        console.error('Error fetching related growth experiments:', fetchError);
+      } else if (growthExperiments && growthExperiments.length > 0) {
+        // Map the status to appropriate growth experiment status
+        let growthStatus = newStatus;
+        if (newStatus === 'in-progress') growthStatus = 'running';
+        
+        const { error: updateError } = await supabase
+          .from('growth_experiments')
+          .update({
+            status: growthStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', growthExperiments[0].id);
+        
+        if (updateError) {
+          console.error('Error updating related growth experiment:', updateError);
+        }
+      }
+      
       refreshData();
     } catch (error: any) {
       toast({
