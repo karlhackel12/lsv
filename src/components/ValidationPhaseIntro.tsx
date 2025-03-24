@@ -2,7 +2,9 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Info, Lightbulb, ArrowRight, Beaker, Layers, TrendingUp } from 'lucide-react';
+import { Info, Lightbulb, Beaker, Layers, TrendingUp } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface PhaseInfo {
   title: string;
@@ -89,28 +91,56 @@ const ValidationPhaseIntro = ({
               <p className="text-validation-gray-600 mb-4">{phaseInfo.description}</p>
             </div>
             {onCreateNew && (
-              <Button 
-                onClick={onCreateNew}
-                className={`bg-validation-${phaseInfo.color}-600 hover:bg-validation-${phaseInfo.color}-700`}
-              >
-                {createButtonText}
-              </Button>
+              <div className="flex items-center">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`mr-2 bg-validation-${phaseInfo.color}-50 text-validation-${phaseInfo.color}-700 border-validation-${phaseInfo.color}-200 hover:bg-validation-${phaseInfo.color}-100`}
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent 
+                      className={`w-80 p-0 border-validation-${phaseInfo.color}-200 bg-white`}
+                      side="bottom"
+                    >
+                      <div className={`px-4 py-2 bg-validation-${phaseInfo.color}-50 border-b border-validation-${phaseInfo.color}-200 text-validation-${phaseInfo.color}-700 font-medium`}>
+                        Graduation Criteria
+                      </div>
+                      <div className="px-1 py-1">
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="criteria" className="border-0">
+                            <AccordionTrigger className="px-3 py-2 text-sm">
+                              View criteria to advance
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <ul className="list-none space-y-1 p-2">
+                                {phaseInfo.graduationCriteria.map((criteria, index) => (
+                                  <li key={index} className="flex items-start text-sm">
+                                    <div className={`h-2 w-2 rounded-full bg-validation-${phaseInfo.color}-500 mt-1.5 mr-2 flex-shrink-0`}></div>
+                                    <span className="text-validation-gray-600">{criteria}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <Button 
+                  onClick={onCreateNew}
+                  className={`bg-validation-${phaseInfo.color}-600 hover:bg-validation-${phaseInfo.color}-700`}
+                >
+                  {createButtonText}
+                </Button>
+              </div>
             )}
-          </div>
-          
-          <div className="mt-4">
-            <h3 className="flex items-center text-sm font-semibold text-validation-gray-700 mb-2">
-              <Info className="h-4 w-4 mr-1" />
-              Graduation Criteria
-            </h3>
-            <ul className="list-none space-y-1">
-              {phaseInfo.graduationCriteria.map((criteria, index) => (
-                <li key={index} className="flex items-start">
-                  <ArrowRight className="h-3.5 w-3.5 text-validation-gray-400 mt-1 mr-2 flex-shrink-0" />
-                  <span className="text-sm text-validation-gray-600">{criteria}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </div>
