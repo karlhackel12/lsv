@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -192,9 +193,12 @@ const BusinessPlanPage = () => {
         return;
       }
       
+      // Ensure all required properties are provided
       addSectionMutation.mutate({
-        ...values,
         project_id: currentProject.id,
+        section_type: values.section_type,
+        title: values.title,
+        content: values.content || '',
         order_index: sections.length
       });
     }

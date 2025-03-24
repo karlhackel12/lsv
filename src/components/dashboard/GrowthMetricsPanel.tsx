@@ -68,7 +68,24 @@ const GrowthMetricsPanel = () => {
           return;
         }
         
-        setMetrics(data || []);
+        // Map the database results to the GrowthMetric type
+        const mappedMetrics: GrowthMetric[] = data?.map(item => ({
+          id: item.id,
+          originalId: item.id,
+          name: item.name,
+          description: item.description || undefined,
+          category: item.category,
+          current_value: item.current_value,
+          target_value: item.target_value,
+          unit: item.unit,
+          growth_model_id: item.growth_model_id || '',
+          project_id: item.project_id || '',
+          status: (item.status as 'on-track' | 'at-risk' | 'off-track') || 'on-track',
+          created_at: item.created_at,
+          updated_at: item.updated_at
+        })) || [];
+        
+        setMetrics(mappedMetrics);
       } catch (err) {
         console.error('Failed to fetch growth metrics:', err);
       } finally {
