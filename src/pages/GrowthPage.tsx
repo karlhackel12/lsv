@@ -72,7 +72,8 @@ const GrowthPage = () => {
           <p>
             Track key metrics, optimize acquisition channels, and evaluate your startup's readiness to scale using Lean Startup principles.
           </p>
-        } 
+        }
+        storageKey="growth-page"
       />
       
       {currentProject && (

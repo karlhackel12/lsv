@@ -383,6 +383,7 @@ export type Database = {
           id: string
           name: string
           project_id: string | null
+          scaling_metric_id: string | null
           status: string
           target_value: number
           unit: string
@@ -397,6 +398,7 @@ export type Database = {
           id?: string
           name: string
           project_id?: string | null
+          scaling_metric_id?: string | null
           status?: string
           target_value?: number
           unit: string
@@ -411,6 +413,7 @@ export type Database = {
           id?: string
           name?: string
           project_id?: string | null
+          scaling_metric_id?: string | null
           status?: string
           target_value?: number
           unit?: string
@@ -429,6 +432,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_metrics_scaling_metric_id_fkey"
+            columns: ["scaling_metric_id"]
+            isOneToOne: false
+            referencedRelation: "scaling_readiness_metrics"
             referencedColumns: ["id"]
           },
         ]
