@@ -8,7 +8,8 @@ import {
   Layers, 
   TrendingUp, 
   ArrowRight, 
-  CheckCircle2
+  CheckCircle2,
+  GitFork
 } from 'lucide-react';
 
 interface Phase {
@@ -42,6 +43,12 @@ const phases: Phase[] = [
     name: 'Growth Model',
     icon: <TrendingUp className="h-5 w-5" />,
     path: '/growth'
+  },
+  {
+    id: 'pivot',
+    name: 'Pivot Decision',
+    icon: <GitFork className="h-5 w-5" />,
+    path: '/pivot'
   }
 ];
 
@@ -61,6 +68,8 @@ const PhaseNavigation = () => {
       return 'mvp';
     } else if (path.includes('/growth')) {
       return 'growth';
+    } else if (path.includes('/pivot')) {
+      return 'pivot';
     }
     
     return 'problem'; // Default to problem

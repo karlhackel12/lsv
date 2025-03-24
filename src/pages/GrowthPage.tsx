@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Lightbulb } from 'lucide-react';
+import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Lightbulb, GitFork } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
@@ -10,9 +10,11 @@ import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessCheck
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import PivotDecisionSection from '@/components/PivotDecisionSection';
+import { Button } from '@/components/ui/button';
 
 const GrowthPage = () => {
   const {
@@ -23,6 +25,7 @@ const GrowthPage = () => {
   const [activeTab, setActiveTab] = useState('metrics');
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     growthMetrics,
     growthChannels,
@@ -78,6 +81,8 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="mt-6 space-y-6">
+          <PivotDecisionSection />
+          
           <Card>
             <CardContent className="p-0">
               <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
@@ -98,6 +103,10 @@ const GrowthPage = () => {
                     <Layers className="h-4 w-4" />
                     <span>Experiments</span>
                   </TabsTrigger>
+                  <TabsTrigger value="pivot" className="flex items-center gap-2">
+                    <GitFork className="h-4 w-4" />
+                    <span>Pivot</span>
+                  </TabsTrigger>
                 </TabsList>
                 
                 <div className="mt-6 px-4 pb-4">
@@ -111,7 +120,8 @@ const GrowthPage = () => {
                         <BreadcrumbLink>
                           {activeTab === 'metrics' ? 'Growth Metrics' : 
                            activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
-                           activeTab === 'channels' ? 'Acquisition Channels' : 'Growth Experiments'}
+                           activeTab === 'channels' ? 'Acquisition Channels' : 
+                           activeTab === 'pivot' ? 'Pivot Decision' : 'Growth Experiments'}
                         </BreadcrumbLink>
                       </BreadcrumbItem>
                     </BreadcrumbList>
@@ -150,6 +160,25 @@ const GrowthPage = () => {
                       projectId={currentProject.id} 
                       refreshData={() => fetchModelData(currentProject.id)} 
                     />
+                  </TabsContent>
+                  
+                  <TabsContent value="pivot" className="mt-0">
+                    <div className="space-y-6">
+                      <div className="text-center p-8">
+                        <GitFork className="mx-auto h-12 w-12 text-orange-500 mb-4" />
+                        <h3 className="text-xl font-bold mb-2">Pivot Decision Framework</h3>
+                        <p className="text-gray-600 mb-6">
+                          When your metrics indicate that your current approach isn't working, 
+                          it may be time to consider a strategic pivot.
+                        </p>
+                        <Button 
+                          onClick={() => navigate('/pivot')}
+                          className="bg-orange-600 hover:bg-orange-700"
+                        >
+                          View Full Pivot Framework
+                        </Button>
+                      </div>
+                    </div>
                   </TabsContent>
                 </div>
               </Tabs>
