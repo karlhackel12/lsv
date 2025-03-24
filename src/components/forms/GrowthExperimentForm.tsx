@@ -32,11 +32,9 @@ interface ExtendedGrowthExperiment extends GrowthExperiment {
 }
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  title: z.string().min(2, "Name must be at least 2 characters"),
   hypothesis: z.string().min(10, "Hypothesis should be more detailed"),
-  success_criteria: z.string().min(2, "Success criteria must be defined"),
   status: z.string(),
-  stage: z.string(),
   metrics: z.string().optional(),
   results: z.string().optional(),
   scaling_metric_id: z.string().nullable().optional(),
@@ -66,16 +64,20 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       id: experiment?.id || '',
-      name: experiment?.name || '',
+      title: experiment?.title || '',
       hypothesis: experiment?.hypothesis || '',
-      success_criteria: experiment?.success_criteria || '',
       status: experiment?.status || 'planned',
-      stage: experiment?.stage || 'channel',
       metrics: experiment?.metrics || '',
       results: experiment?.results || '',
       project_id: projectId,
       growth_model_id: growthModelId,
       scaling_metric_id: experiment?.scaling_metric_id || null,
+      // Add required fields from GrowthExperiment
+      start_date: experiment?.start_date || new Date().toISOString(),
+      end_date: experiment?.end_date || new Date().toISOString(),
+      expected_lift: experiment?.expected_lift || 0,
+      actual_lift: experiment?.actual_lift || null,
+      metric_id: experiment?.metric_id || null,
     }
   });
 
@@ -108,14 +110,18 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
         const { error } = await supabase
           .from('growth_experiments')
           .update({
-            name: data.name,
+            title: data.title,
             hypothesis: data.hypothesis,
-            success_criteria: data.success_criteria,
             status: data.status,
-            stage: data.stage,
             metrics: data.metrics,
             results: data.results,
             scaling_metric_id: data.scaling_metric_id,
+            // Include additional required fields
+            start_date: data.start_date,
+            end_date: data.end_date,
+            expected_lift: data.expected_lift,
+            actual_lift: data.actual_lift,
+            metric_id: data.metric_id,
             updated_at: new Date().toISOString()
           })
           .eq('id', experiment.id);
@@ -131,16 +137,19 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
         const { error } = await supabase
           .from('growth_experiments')
           .insert({
-            name: data.name,
+            title: data.title,
             hypothesis: data.hypothesis,
-            success_criteria: data.success_criteria,
             status: data.status,
-            stage: data.stage,
             metrics: data.metrics,
             results: data.results,
             growth_model_id: growthModelId,
             project_id: projectId,
-            scaling_metric_id: data.scaling_metric_id
+            scaling_metric_id: data.scaling_metric_id,
+            // Include additional required fields
+            start_date: data.start_date,
+            end_date: data.end_date,
+            expected_lift: data.expected_lift,
+            metric_id: data.metric_id
           });
           
         if (error) throw error;
@@ -187,7 +196,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="title"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Experiment Name</FormLabel>
@@ -200,34 +209,6 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="stage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Growth Stage</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a stage" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="channel">Acquisition Channel</SelectItem>
-                        <SelectItem value="activation">Activation</SelectItem>
-                        <SelectItem value="retention">Retention</SelectItem>
-                        <SelectItem value="referral">Referral</SelectItem>
-                        <SelectItem value="revenue">Revenue</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="status"
@@ -245,11 +226,31 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="planned">Planned</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="running">In Progress</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="abandoned">Abandoned</SelectItem>
+                        <SelectItem value="failed">Abandoned</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="expected_lift"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expected Lift (%)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        value={field.value?.toString() || '0'} 
+                        placeholder="e.g., 10" 
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -274,23 +275,51 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="success_criteria"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Success Criteria</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="How will you know if the experiment was successful?" 
-                      className="min-h-[80px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="start_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        {...field}
+                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        onChange={(e) => {
+                          const date = new Date(e.target.value);
+                          field.onChange(date.toISOString());
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="end_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        {...field}
+                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        onChange={(e) => {
+                          const date = new Date(e.target.value);
+                          field.onChange(date.toISOString());
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}

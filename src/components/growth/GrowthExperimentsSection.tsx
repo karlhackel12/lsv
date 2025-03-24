@@ -115,7 +115,7 @@ const GrowthExperimentsSection = ({
       {showForm ? (
         <GrowthExperimentForm
           projectId={projectId}
-          metrics={metrics}
+          growthModelId="default" // Using a default value as it's required
           onSave={refreshData}
           onClose={handleCloseForm}
           experiment={editingExperiment}
@@ -156,7 +156,7 @@ const GrowthExperimentsSection = ({
                         <div>
                           <CardTitle className="text-lg">{experiment.title}</CardTitle>
                           <div className="flex space-x-2 mt-1">
-                            <Badge className={`${STATUS_COLORS[experiment.status]}`}>
+                            <Badge variant="secondary" className={STATUS_COLORS[experiment.status as keyof typeof STATUS_COLORS]}>
                               {experiment.status}
                             </Badge>
                             {associatedMetric && (
