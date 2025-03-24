@@ -149,10 +149,7 @@ const MainHeader = () => {
             </PopoverContent>
           </Popover>
           
-          <Button onClick={() => navigate('/experiments/new')} variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 hidden md:flex">
-            <FlaskConical className="h-4 w-4 mr-1" />
-            New Experiment
-          </Button>
+          
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
