@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -1046,4 +1047,12 @@ export interface ScalingPlanAction {
   id: string;
   originalId?: string;
   scaling_plan_id: string;
-  title
+  title: string;
+  description?: string;
+  metric_id?: string | null;
+  priority: string;
+  status: string;
+  due_date?: string;
+  created_at: string;
+  updated_at: string;
+}
