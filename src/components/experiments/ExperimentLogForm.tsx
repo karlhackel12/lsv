@@ -3,7 +3,6 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -57,7 +56,9 @@ const ExperimentLogForm = ({ experimentId, onSuccess }: ExperimentLogFormProps) 
       
       const { error } = await supabase
         .from('experiment_logs')
-        .insert(newLog);
+        .insert(newLog)
+        .select('experiment_logs.id')
+        .single();
         
       if (error) throw error;
       
