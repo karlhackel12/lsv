@@ -14,6 +14,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import PivotDecisionSection from '@/components/PivotDecisionSection';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
 const GrowthPage = () => {
   const {
@@ -103,6 +104,10 @@ const GrowthPage = () => {
     navigate('/experiments?type=growth');
   };
 
+  const handleAddScalingMetric = () => {
+    navigate('/growth?tab=scaling_readiness', { state: { openForm: true } });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -137,6 +142,12 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="mt-6 space-y-6">
+          <ValidationPhaseIntro 
+            phase="growth"
+            onCreateNew={handleAddScalingMetric}
+            createButtonText="Add Scaling Metric"
+          />
+          
           <PivotDecisionSection />
           
           <Card>
