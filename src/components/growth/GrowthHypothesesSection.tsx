@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -218,6 +219,7 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
     <div className="space-y-6">
       {showForm ? (
         <StructuredHypothesisForm
+          isOpen={showForm}
           growthModel={growthModel}
           projectId={projectId}
           metrics={metrics}

@@ -125,6 +125,7 @@ const GrowthExperimentsSection = ({
     <div className="space-y-6">
       {showForm ? (
         <GrowthExperimentForm
+          isOpen={showForm}
           projectId={projectId}
           growthModelId={growthModelId}
           onSave={refreshData}
