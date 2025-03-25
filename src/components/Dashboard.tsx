@@ -10,6 +10,8 @@ import { Layers } from 'lucide-react';
 import LeanStartupBanner from '@/components/dashboard/LeanStartupBanner';
 import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
 import InfoTooltip from '@/components/InfoTooltip';
+import { adaptGrowthExperimentToExperiment } from '@/utils/experiment-adapters';
+import { GrowthExperiment } from '@/types/database';
 
 const Dashboard = () => {
   const {
@@ -20,6 +22,7 @@ const Dashboard = () => {
   const [experiments, setExperiments] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [mvpFeatures, setMvpFeatures] = useState<any[]>([]);
+  const [growthExperiments, setGrowthExperiments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -65,10 +68,21 @@ const Dashboard = () => {
         ascending: false
       }).limit(5);
       if (mvpError) throw mvpError;
+
+      // Fetch growth experiments
+      const {
+        data: growthExperimentsData,
+        error: growthExperimentsError
+      } = await supabase.from('growth_experiments').select('*').eq('project_id', currentProject?.id).order('updated_at', {
+        ascending: false
+      }).limit(5);
+      if (growthExperimentsError) throw growthExperimentsError;
+
       setHypotheses(hypothesesData || []);
       setExperiments(experimentsData || []);
       setMetrics(metricsData || []);
       setMvpFeatures(mvpData || []);
+      setGrowthExperiments(growthExperimentsData || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -174,8 +188,54 @@ const Dashboard = () => {
       </div>
       
       <Card>
-        
-        
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center">
+            <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
+            Growth Experiments
+            <InfoTooltip text="Optimize your growth metrics through focused experiments" link="/growth" className="ml-2" />
+          </CardTitle>
+          <CardDescription>Accelerate your growth metrics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{growthExperiments.length}</div>
+          <p className="text-sm text-muted-foreground">Growth experiments</p>
+          
+          {growthExperiments.length > 0 ? (
+            <div className="mt-4 space-y-4">
+              {growthExperiments.slice(0, 3).map(experiment => {
+                const status = experiment.status === 'running' ? 'in-progress' : 
+                               experiment.status === 'completed' || experiment.status === 'failed' ? 'completed' : 
+                               'planned';
+                const statusColor = status === 'completed' ? 'bg-green-500' : 
+                                   status === 'in-progress' ? 'bg-yellow-500' : 
+                                   'bg-gray-400';
+                return (
+                  <div key={experiment.id} className="flex flex-col">
+                    <div className="flex items-start">
+                      <div className={`w-2 h-2 mt-1.5 rounded-full ${statusColor} mr-2`}></div>
+                      <div className="text-sm font-medium">{experiment.title}</div>
+                    </div>
+                    <div className="ml-4 flex items-center mt-1 text-xs text-gray-500">
+                      <span>Expected lift: {experiment.expected_lift}%</span>
+                      {experiment.actual_lift !== null && (
+                        <span className="ml-3">Actual: {experiment.actual_lift}%</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+              No growth experiments created yet
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" className="w-full text-purple-600" onClick={() => navigate('/experiments?type=growth')}>
+            View Growth Experiments
+          </Button>
+        </CardFooter>
       </Card>
     </div>;
 };
