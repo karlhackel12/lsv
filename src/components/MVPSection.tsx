@@ -11,37 +11,56 @@ import MVPTable from './MVPTable';
 import CurrentlyWorkingOn from './CurrentlyWorkingOn';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import ProgressBar from './ProgressBar';
+
 interface MVPSectionProps {
   mvpFeatures: any[];
   refreshData: () => void;
   projectId: string;
+  isFormOpen?: boolean;
+  onFormClose?: () => void;
 }
+
 const MVPSection = ({
   mvpFeatures,
   refreshData,
-  projectId
+  projectId,
+  isFormOpen = false,
+  onFormClose = () => {}
 }: MVPSectionProps) => {
   const {
     toast
   } = useToast();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedFeature, setSelectedFeature] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [featureToDelete, setFeatureToDelete] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [selectedFeature, setSelectedFeature] = useState<any>(null);
+  const [internalFormOpen, setInternalFormOpen] = useState(isFormOpen);
+
+  React.useEffect(() => {
+    setInternalFormOpen(isFormOpen);
+  }, [isFormOpen]);
+
   const handleCreateNew = () => {
     setSelectedFeature(null);
-    setIsFormOpen(true);
+    setInternalFormOpen(true);
   };
+
   const handleEdit = (feature: any) => {
-    // Find original feature with string ID for database operations
     const originalFeature = {
       ...feature,
       id: feature.originalId
     };
     setSelectedFeature(originalFeature);
-    setIsFormOpen(true);
+    setInternalFormOpen(true);
   };
+
+  const handleCloseForm = () => {
+    setInternalFormOpen(false);
+    if (onFormClose) {
+      onFormClose();
+    }
+  };
+
   const handleDelete = (feature: any) => {
     setFeatureToDelete({
       ...feature,
@@ -49,6 +68,7 @@ const MVPSection = ({
     });
     setIsDeleteDialogOpen(true);
   };
+
   const confirmDelete = async () => {
     if (!featureToDelete) return;
     try {
@@ -72,6 +92,7 @@ const MVPSection = ({
       setFeatureToDelete(null);
     }
   };
+
   const updateFeatureStatus = async (feature: any, newStatus: 'completed' | 'in-progress' | 'planned') => {
     try {
       const {
@@ -95,7 +116,6 @@ const MVPSection = ({
     }
   };
 
-  // Calculate MVP progress
   const calculateProgress = () => {
     if (mvpFeatures.length === 0) return 0;
     const completed = mvpFeatures.filter(f => f.status === 'completed').length;
@@ -103,11 +123,11 @@ const MVPSection = ({
   };
   const progress = calculateProgress();
 
-  // Helper function to safely capitalize a string with null checks
   const safeCapitalize = (str: string | undefined | null): string => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
+
   return <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-validation-gray-900">Minimum Viable Product</h2>
@@ -209,10 +229,8 @@ Focus on features that deliver the most value with the least effort.</p>
             </div>}
         </div>}
 
-      {/* MVP Feature Form Dialog */}
-      <MVPFeatureForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onSave={refreshData} feature={selectedFeature} projectId={projectId} />
+      <MVPFeatureForm isOpen={internalFormOpen} onClose={handleCloseForm} onSave={refreshData} feature={selectedFeature} projectId={projectId} />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -232,4 +250,5 @@ Focus on features that deliver the most value with the least effort.</p>
       </AlertDialog>
     </div>;
 };
+
 export default MVPSection;

@@ -56,6 +56,10 @@ const MVPPage = () => {
     setShowMvpForm(true);
   };
   
+  const handleCloseMvpForm = () => {
+    setShowMvpForm(false);
+  };
+  
   if (!currentProject) {
     return <div>Select a project to view MVP features</div>;
   }
@@ -79,7 +83,7 @@ const MVPPage = () => {
         refreshData={fetchMVPFeatures}
         projectId={currentProject.id}
         isFormOpen={showMvpForm}
-        onFormClose={() => setShowMvpForm(false)}
+        onFormClose={handleCloseMvpForm}
       />
     </div>
   );

@@ -69,7 +69,13 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
         
       if (error) throw error;
       
-      setExperiments(data);
+      // Fix for the TypeScript error - ensure the status field matches the expected type
+      const typedData = data?.map(item => ({
+        ...item,
+        status: item.status as GrowthExperiment['status'] // Force type assertion to ensure compatibility
+      })) as GrowthExperiment[];
+      
+      setExperiments(typedData || []);
     } catch (err) {
       console.error('Error fetching experiments:', err);
       toast({

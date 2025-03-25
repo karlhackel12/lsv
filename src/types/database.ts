@@ -1025,6 +1025,7 @@ export interface ScalingReadinessMetric {
   unit: string;
   importance: number;
   status: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }
