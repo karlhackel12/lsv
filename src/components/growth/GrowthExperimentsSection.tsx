@@ -69,11 +69,19 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
         
       if (error) throw error;
       
-      // Fix for the TypeScript error - ensure the status field matches the expected type
-      const typedData = data?.map(item => ({
-        ...item,
-        status: item.status as GrowthExperiment['status'] // Force type assertion to ensure compatibility
-      })) as GrowthExperiment[];
+      // Ensure the data conforms to the GrowthExperiment type
+      const typedData = data?.map(item => {
+        // Validate that status is one of the allowed values
+        let validStatus: GrowthExperiment['status'] = 'planned';
+        if (['planned', 'running', 'completed', 'failed'].includes(item.status)) {
+          validStatus = item.status as GrowthExperiment['status'];
+        }
+        
+        return {
+          ...item,
+          status: validStatus
+        } as GrowthExperiment;
+      });
       
       setExperiments(typedData || []);
     } catch (err) {

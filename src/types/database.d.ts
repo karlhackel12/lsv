@@ -407,3 +407,38 @@ export type PivotOption = Database['public']['Tables']['pivot_options']['Row'];
 export type PivotMetricTrigger = Database['public']['Tables']['pivot_metric_triggers']['Row'];
 export type GrowthMetric = Database['public']['Tables']['growth_metrics']['Row'];
 export type GrowthModel = Database['public']['Tables']['growth_models']['Row'];
+
+export interface ScalingReadinessMetric {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  current_value: number;
+  target_value: number;
+  unit: string;
+  importance: number;
+  status: string;
+  project_id: string;
+  growth_model_id?: string;
+  created_at: string;
+  updated_at: string;
+  notes?: string;
+}
+
+export interface GrowthExperiment {
+  id: string;
+  title: string;
+  hypothesis: string;
+  expected_lift: number;
+  actual_lift?: number;
+  start_date: string;
+  end_date: string;
+  status: "planned" | "running" | "completed" | "failed";
+  notes?: string;
+  project_id: string;
+  growth_model_id?: string;
+  metric_id?: string;
+  scaling_metric_id?: string;
+  created_at: string;
+  updated_at: string;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from './Card';
 import StatusBadge from './StatusBadge';
 import { Target, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
@@ -36,7 +36,7 @@ const MVPSection = ({
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
   const [internalFormOpen, setInternalFormOpen] = useState(isFormOpen);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setInternalFormOpen(isFormOpen);
   }, [isFormOpen]);
 
@@ -93,20 +93,20 @@ const MVPSection = ({
     }
   };
 
-  const updateFeatureStatus = async (feature: any, newStatus: 'completed' | 'in-progress' | 'planned') => {
+  function updateFeatureStatus(feature: any, newStatus: 'completed' | 'in-progress' | 'planned') {
     try {
-      const {
-        error
-      } = await supabase.from('mvp_features').update({
+      supabase.from('mvp_features').update({
         status: newStatus,
         updated_at: new Date().toISOString()
-      }).eq('id', feature.originalId);
-      if (error) throw error;
-      toast({
-        title: 'Status updated',
-        description: `Feature status changed to ${newStatus}.`
+      }).eq('id', feature.originalId)
+      .then(({ error }) => {
+        if (error) throw error;
+        toast({
+          title: 'Status updated',
+          description: `Feature status changed to ${newStatus}.`
+        });
+        refreshData();
       });
-      refreshData();
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -114,19 +114,18 @@ const MVPSection = ({
         variant: 'destructive'
       });
     }
-  };
+  }
 
-  const calculateProgress = () => {
+  function calculateProgress() {
     if (mvpFeatures.length === 0) return 0;
     const completed = mvpFeatures.filter(f => f.status === 'completed').length;
     return Math.round(completed / mvpFeatures.length * 100);
-  };
-  const progress = calculateProgress();
+  }
 
-  const safeCapitalize = (str: string | undefined | null): string => {
+  function safeCapitalize(str: string | undefined | null): string {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
-  };
+  }
 
   return <div className="animate-fadeIn">
       <div className="flex justify-between items-center mb-6">
@@ -150,9 +149,9 @@ Focus on features that deliver the most value with the least effort.</p>
       {mvpFeatures.length > 0 && <Card className="mb-8 p-6 animate-slideUpFade animate-delay-200">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-semibold text-validation-gray-900">MVP Progress</h3>
-            <span className="text-validation-gray-700 font-medium">{progress}% Complete</span>
+            <span className="text-validation-gray-700 font-medium">{calculateProgress()}% Complete</span>
           </div>
-          <ProgressBar value={progress} variant={progress >= 70 ? 'success' : progress >= 30 ? 'warning' : 'error'} size="md" />
+          <ProgressBar value={calculateProgress()} variant={calculateProgress() >= 70 ? 'success' : calculateProgress() >= 30 ? 'warning' : 'error'} size="md" />
         </Card>}
 
       {mvpFeatures.filter(f => f.status === 'in-progress').length > 0 && <Card className="mb-8 p-6 animate-slideUpFade animate-delay-200">

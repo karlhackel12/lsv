@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +20,7 @@ const HypothesesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   // Set a default value and use type assertion to avoid type instantiation errors
   const currentPhase = (searchParams.get('phase') || 'problem') as PhaseType;
+  const [createHypothesisTrigger, setCreateHypothesisTrigger] = useState(0);
   
   const fetchHypotheses = async () => {
     try {
@@ -69,6 +71,10 @@ const HypothesesPage = () => {
     setSearchParams({ phase: validPhase });
   };
   
+  const handleCreateHypothesis = () => {
+    setCreateHypothesisTrigger(prev => prev + 1);
+  };
+  
   if (!currentProject) {
     return <div>Select a project to view hypotheses</div>;
   }
@@ -90,7 +96,7 @@ const HypothesesPage = () => {
         <TabsContent value="problem">
           <ValidationPhaseIntro 
             phase="problem" 
-            onCreateNew={() => document.getElementById('create-hypothesis-button')?.click()}
+            onCreateNew={handleCreateHypothesis}
             createButtonText="Create Problem Hypothesis"
           />
           <HypothesesSection 
@@ -99,13 +105,14 @@ const HypothesesPage = () => {
             projectId={currentProject.id}
             isLoading={isLoading}
             phaseType="problem"
+            createTrigger={createHypothesisTrigger}
           />
         </TabsContent>
         
         <TabsContent value="solution">
           <ValidationPhaseIntro 
             phase="solution" 
-            onCreateNew={() => document.getElementById('create-hypothesis-button')?.click()}
+            onCreateNew={handleCreateHypothesis}
             createButtonText="Create Solution Hypothesis"
           />
           <HypothesesSection 
@@ -114,6 +121,7 @@ const HypothesesPage = () => {
             projectId={currentProject.id}
             isLoading={isLoading}
             phaseType="solution"
+            createTrigger={createHypothesisTrigger}
           />
         </TabsContent>
       </Tabs>

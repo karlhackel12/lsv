@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Hypothesis } from '@/types/database';
@@ -10,19 +11,23 @@ import DeleteHypothesisDialog from './hypotheses/DeleteHypothesisDialog';
 import HypothesisDetailView from './hypotheses/HypothesisDetailView';
 import { useHypotheses } from '@/hooks/use-hypothesis';
 import { Loader2 } from 'lucide-react';
+
 interface HypothesesSectionProps {
   hypotheses: Hypothesis[];
   refreshData: () => void;
   projectId: string;
   isLoading?: boolean;
   phaseType?: 'problem' | 'solution';
+  createTrigger?: number;
 }
+
 const HypothesesSection = ({
   hypotheses,
   refreshData,
   projectId,
   isLoading = false,
-  phaseType = 'problem'
+  phaseType = 'problem',
+  createTrigger = 0
 }: HypothesesSectionProps) => {
   const {
     isFormOpen,
@@ -43,19 +48,30 @@ const HypothesesSection = ({
     setViewMode,
     handleViewDetail
   } = useHypotheses(refreshData, phaseType);
+  
+  // Listen to createTrigger changes from parent component
+  useEffect(() => {
+    if (createTrigger > 0) {
+      handleCreateNew();
+    }
+  }, [createTrigger]);
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 animate-pulse">
         <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
         <span className="text-lg font-medium text-validation-gray-600">Loading hypotheses...</span>
       </div>;
   }
+  
   return <div className="animate-fadeIn">
       {viewMode === 'list' ? <>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-validation-gray-900">
               {phaseType === 'problem' ? 'Problem Hypotheses' : 'Solution Hypotheses'}
             </h2>
-            
+            <Button onClick={handleCreateNew} id="create-hypothesis-button" className="hidden">
+              Create Hypothesis
+            </Button>
           </div>
 
           <HypothesisTemplates showTemplates={showTemplates} setShowTemplates={setShowTemplates} phaseType={phaseType} />
@@ -70,4 +86,5 @@ const HypothesesSection = ({
       <DeleteHypothesisDialog isOpen={isDeleteDialogOpen} setIsOpen={setIsDeleteDialogOpen} hypothesisToDelete={hypothesisToDelete} onConfirmDelete={confirmDelete} />
     </div>;
 };
+
 export default HypothesesSection;
