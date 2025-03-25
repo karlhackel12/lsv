@@ -128,7 +128,7 @@ const ExperimentCard = ({
             <ExperimentStatusActions 
               experiment={experiment} 
               refreshData={refreshData}
-              onEdit={onEdit}
+              onEdit={() => onEdit(experiment)}
               isGrowthExperiment={isGrowthExperiment}
             />
           </div>

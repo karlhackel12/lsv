@@ -76,7 +76,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
                   <ExperimentStatusActions 
                     experiment={experiment} 
                     refreshData={handleRefresh} 
-                    onEdit={onEdit} 
+                    onEdit={() => onEdit()} 
                     isGrowthExperiment={isGrowthExperiment}
                   />
                 </div>

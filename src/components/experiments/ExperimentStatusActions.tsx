@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Experiment, ExperimentStatus } from '@/types/database';
+import { Experiment } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { 
   BeakerIcon, 
@@ -25,12 +25,14 @@ interface ExperimentStatusActionsProps {
   experiment: Experiment;
   refreshData: () => void;
   isGrowthExperiment?: boolean;
+  onEdit?: (experiment: Experiment) => void;
 }
 
 const ExperimentStatusActions = ({ 
   experiment, 
   refreshData,
-  isGrowthExperiment = false 
+  isGrowthExperiment = false,
+  onEdit
 }: ExperimentStatusActionsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -39,17 +41,14 @@ const ExperimentStatusActions = ({
   
   const StartIcon = isGrowthExperiment ? TrendingUp : BeakerIcon;
   
-  const handleUpdateStatus = async (newStatus: ExperimentStatus) => {
+  const handleUpdateStatus = async (newStatus: 'planned' | 'in-progress' | 'completed') => {
     setIsLoading(true);
     
     try {
-      let table = 'experiments';
-      if (isGrowthExperiment) {
-        table = 'growth_experiments';
-      }
+      const tableName = isGrowthExperiment ? 'growth_experiments' : 'experiments';
       
       const { error } = await supabase
-        .from(table)
+        .from(tableName)
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
