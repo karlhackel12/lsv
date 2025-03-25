@@ -7,6 +7,7 @@ import { Loader2, GitBranch } from 'lucide-react';
 import PivotSection from '@/components/PivotSection';
 import { PivotOption } from '@/types/pivot';
 import PageIntroduction from '@/components/PageIntroduction';
+import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
 const PivotPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -59,6 +60,19 @@ const PivotPage = () => {
       fetchPivotOptions();
     }
   }, [currentProject]);
+  
+  const handleCreatePivotOption = () => {
+    // This will be passed to the ValidationPhaseIntro component to trigger
+    // the creation of a new pivot option
+    const pivotSection = document.querySelector('#pivot-section');
+    if (pivotSection) {
+      // If the section exists, find the Add Pivot Option button and click it
+      const addButton = pivotSection.querySelector('button');
+      if (addButton) {
+        addButton.click();
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -119,12 +133,20 @@ const PivotPage = () => {
         }
       />
 
+      <ValidationPhaseIntro
+        phase="pivot"
+        onCreateNew={handleCreatePivotOption}
+        createButtonText="Add Pivot Option"
+      />
+
       {currentProject && !isLoadingPivotOptions && (
-        <PivotSection
-          pivotOptions={pivotOptions}
-          refreshData={fetchPivotOptions}
-          projectId={currentProject.id}
-        />
+        <div id="pivot-section">
+          <PivotSection
+            pivotOptions={pivotOptions}
+            refreshData={fetchPivotOptions}
+            projectId={currentProject.id}
+          />
+        </div>
       )}
       
       {isLoadingPivotOptions && (

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Info, Lightbulb, Beaker, Layers, TrendingUp, BookOpen, FileText } from 'lucide-react';
+import { Info, Lightbulb, Beaker, Layers, TrendingUp, BookOpen, FileText, GitBranch } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import InfoTooltip from '@/components/InfoTooltip';
 import { useNavigate } from 'react-router-dom';
@@ -43,11 +43,18 @@ const phaseData: Record<string, PhaseInfo> = {
     icon: <TrendingUp className="h-6 w-6" />,
     color: 'purple',
     graduationCriteria: ['Acquisition cost lower than customer lifetime value', 'Identified scalable customer acquisition channels', 'Retention metrics show sustained usage', 'Revenue model demonstrating positive unit economics']
+  },
+  pivot: {
+    title: 'Pivot Decision Phase',
+    description: 'Evaluate when a strategic change in direction is needed based on validated learning and systematic experimentation.',
+    icon: <GitBranch className="h-6 w-6" />,
+    color: 'orange',
+    graduationCriteria: ['Defined clear pivot triggers based on key metrics', 'Evaluated multiple pivot options with evidence', 'Maintained what's working while changing direction', 'Developed hypothesis and experiment plan for new direction']
   }
 };
 
 interface ValidationPhaseIntroProps {
-  phase: 'problem' | 'solution' | 'mvp' | 'growth';
+  phase: 'problem' | 'solution' | 'mvp' | 'growth' | 'pivot';
   onCreateNew?: () => void;
   createButtonText?: string;
 }
