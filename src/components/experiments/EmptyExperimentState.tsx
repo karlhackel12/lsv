@@ -1,26 +1,38 @@
 
 import React from 'react';
-import { AlertCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Card from '@/components/Card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Beaker, PlusCircle, TrendingUp } from 'lucide-react';
 
 interface EmptyExperimentStateProps {
   onCreateNew: () => void;
+  isGrowthExperiment?: boolean;
 }
 
-const EmptyExperimentState = ({ onCreateNew }: EmptyExperimentStateProps) => {
+const EmptyExperimentState: React.FC<EmptyExperimentStateProps> = ({ 
+  onCreateNew,
+  isGrowthExperiment = false
+}) => {
+  const Icon = isGrowthExperiment ? TrendingUp : Beaker;
+  
   return (
-    <Card className="p-12 text-center animate-slideUpFade">
-      <AlertCircle className="mx-auto h-12 w-12 text-validation-gray-400 mb-4" />
-      <h3 className="text-xl font-medium text-validation-gray-900 mb-2">No Experiments Yet</h3>
-      <p className="text-validation-gray-600 mb-6">Design your first experiment to test a hypothesis.</p>
-      <Button 
-        className="bg-validation-blue-600 hover:bg-validation-blue-700 text-white"
-        onClick={onCreateNew}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Design First Experiment
-      </Button>
+    <Card className="mt-6 border-dashed">
+      <CardContent className="pt-6 flex flex-col items-center text-center">
+        <Icon className="h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium mb-2">
+          {isGrowthExperiment ? 'No Growth Experiments Yet' : 'No Experiments Yet'}
+        </h3>
+        <p className="text-gray-500 mb-4 max-w-md">
+          {isGrowthExperiment 
+            ? 'Create experiments to optimize your growth metrics and test your growth hypotheses.'
+            : 'Design experiments to validate your hypotheses and collect evidence to support your decisions.'
+          }
+        </p>
+        <Button onClick={onCreateNew} className="flex items-center gap-2">
+          <PlusCircle className="h-4 w-4" />
+          {isGrowthExperiment ? 'Create First Growth Experiment' : 'Create First Experiment'}
+        </Button>
+      </CardContent>
     </Card>
   );
 };

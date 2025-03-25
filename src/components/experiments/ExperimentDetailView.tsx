@@ -22,6 +22,7 @@ interface ExperimentDetailViewProps {
   relatedHypothesis: Hypothesis | null;
   onRefresh?: () => void;
   projectId?: string;
+  isGrowthExperiment?: boolean;
 }
 
 const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
@@ -30,7 +31,8 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
   onClose,
   relatedHypothesis,
   onRefresh,
-  projectId
+  projectId,
+  isGrowthExperiment = false
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
@@ -56,6 +58,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
             experiment={experiment} 
             onEdit={onEdit} 
             hasRelatedHypothesis={!!relatedHypothesis}
+            isGrowthExperiment={isGrowthExperiment}
           />
           <ExperimentProgressBar experiment={experiment} />
         </div>
@@ -64,13 +67,17 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
           <div className="flex justify-between items-start">
             <div className="space-y-4 flex-1">
               <div>
-                <ExperimentStatusIndicator experiment={experiment} />
+                <ExperimentStatusIndicator 
+                  experiment={experiment}
+                  isGrowthExperiment={isGrowthExperiment}
+                />
                 
                 <div className="mt-4">
                   <ExperimentStatusActions 
                     experiment={experiment} 
                     refreshData={handleRefresh} 
                     onEdit={onEdit} 
+                    isGrowthExperiment={isGrowthExperiment}
                   />
                 </div>
               </div>
@@ -90,10 +97,12 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
             <BarChart2 className="h-4 w-4 mr-2" />
             Results & Insights
           </TabsTrigger>
-          <TabsTrigger value="journal" className="flex items-center">
-            <Book className="h-4 w-4 mr-2" />
-            Journal
-          </TabsTrigger>
+          {!isGrowthExperiment && (
+            <TabsTrigger value="journal" className="flex items-center">
+              <Book className="h-4 w-4 mr-2" />
+              Journal
+            </TabsTrigger>
+          )}
         </TabsList>
         
         {/* Overview Tab */}
@@ -104,21 +113,27 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
             projectId={projectId}
             onRefresh={handleRefresh}
             navigateToHypothesis={navigateToHypothesis}
+            isGrowthExperiment={isGrowthExperiment}
           />
         </TabsContent>
         
         {/* Results Tab */}
         <TabsContent value="results">
-          <ExperimentResultsTab experiment={experiment} />
-        </TabsContent>
-        
-        {/* Journal Tab */}
-        <TabsContent value="journal" className="space-y-6">
-          <ExperimentJournal 
-            experiment={experiment} 
-            refreshExperiment={onRefresh}
+          <ExperimentResultsTab 
+            experiment={experiment}
+            isGrowthExperiment={isGrowthExperiment}
           />
         </TabsContent>
+        
+        {/* Journal Tab - Only for regular experiments */}
+        {!isGrowthExperiment && (
+          <TabsContent value="journal" className="space-y-6">
+            <ExperimentJournal 
+              experiment={experiment} 
+              refreshExperiment={onRefresh}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

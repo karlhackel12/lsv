@@ -936,24 +936,23 @@ export interface Hypothesis {
 
 export interface Experiment {
   id: string;
+  originalId?: string;
   title: string;
   hypothesis: string;
   method: string;
   metrics: string;
-  results?: string;
-  insights?: string;
-  decisions?: string;
   status: 'planned' | 'in-progress' | 'completed';
-  category?: string;
-  created_at: string;
-  updated_at: string;
-  project_id?: string;
-  hypothesis_id?: string;
-  typeform_id?: string;
-  typeform_url?: string;
-  typeform_workspace_id?: string;
-  typeform_responses_count?: number;
-  originalId?: string;
+  category: string;
+  results?: string | null;
+  insights?: string | null;
+  decisions?: string | null;
+  project_id: string;
+  hypothesis_id: string | null;
+  created_at?: string;
+  updated_at?: string;
+  // Additional fields for tracking growth experiments
+  isGrowthExperiment?: boolean;
+  originalGrowthExperiment?: GrowthExperiment;
 }
 
 export interface Metric {

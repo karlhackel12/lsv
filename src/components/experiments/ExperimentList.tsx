@@ -8,9 +8,10 @@ interface ExperimentListProps {
   experiments: Experiment[];
   refreshData: () => void;
   onEdit: (experiment: Experiment) => void;
-  onDelete: (experiment: Experiment) => void;
+  onDelete?: (experiment: Experiment) => void;
   onCreateNew: () => void;
   onViewDetail: (experiment: Experiment) => void;
+  isGrowthExperiment?: boolean;
 }
 
 const ExperimentList = ({ 
@@ -19,10 +20,16 @@ const ExperimentList = ({
   onEdit, 
   onDelete, 
   onCreateNew,
-  onViewDetail
+  onViewDetail,
+  isGrowthExperiment = false
 }: ExperimentListProps) => {
   if (experiments.length === 0) {
-    return <EmptyExperimentState onCreateNew={onCreateNew} />;
+    return (
+      <EmptyExperimentState 
+        onCreateNew={onCreateNew} 
+        isGrowthExperiment={isGrowthExperiment}
+      />
+    );
   }
 
   return (
@@ -36,6 +43,7 @@ const ExperimentList = ({
           onDelete={onDelete}
           onViewDetail={onViewDetail}
           refreshData={refreshData}
+          isGrowthExperiment={isGrowthExperiment}
         />
       ))}
     </div>

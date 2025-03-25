@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Experiment, Hypothesis } from '@/types/database';
+import { Experiment, Hypothesis, GrowthExperiment } from '@/types/database';
 import ExperimentForm from './forms/ExperimentForm';
 import ExperimentsHeader from './experiments/ExperimentsHeader';
 import ExperimentList from './experiments/ExperimentList';
@@ -11,6 +11,12 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  updateGrowthExperimentFromExperiment, 
+  adaptGrowthExperimentToExperiment 
+} from '@/utils/experiment-adapters';
 
 interface ExperimentsSectionProps {
   experiments: Experiment[];
@@ -18,6 +24,7 @@ interface ExperimentsSectionProps {
   projectId: string;
   isLoading?: boolean;
   experimentType?: 'problem' | 'solution' | 'business-model';
+  isGrowthExperiment?: boolean;
 }
 
 const ExperimentsSection = ({ 
@@ -25,7 +32,8 @@ const ExperimentsSection = ({
   refreshData, 
   projectId,
   isLoading = false,
-  experimentType = 'problem'
+  experimentType = 'problem',
+  isGrowthExperiment = false
 }: ExperimentsSectionProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
@@ -34,6 +42,7 @@ const ExperimentsSection = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const [relatedHypothesis, setRelatedHypothesis] = useState<Hypothesis | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const { toast } = useToast();
 
   useEffect(() => {
     const experimentId = searchParams.get('id');
@@ -63,6 +72,13 @@ const ExperimentsSection = ({
     // Explicitly set selectedExperiment to null to ensure a clean form
     setSelectedExperiment(null);
     setIsFormOpen(true);
+
+    // Set the experiment type in the URL if it's a growth experiment
+    if (isGrowthExperiment) {
+      const params = new URLSearchParams(searchParams);
+      params.set('type', 'growth');
+      setSearchParams(params);
+    }
   };
 
   const handleEdit = (experiment: Experiment) => {
@@ -79,7 +95,14 @@ const ExperimentsSection = ({
   const handleViewDetail = (experiment: Experiment) => {
     setSelectedExperiment(experiment);
     setViewMode('detail');
-    setSearchParams({ id: experiment.id });
+    
+    // Update URL with experiment ID and type
+    const params = new URLSearchParams(searchParams);
+    params.set('id', experiment.id);
+    if (isGrowthExperiment) {
+      params.set('type', 'growth');
+    }
+    setSearchParams(params);
   };
 
   const handleBackToList = () => {
@@ -100,6 +123,51 @@ const ExperimentsSection = ({
     setSelectedExperiment(null);
   };
 
+  const handleFormSave = async (savedExperiment: Experiment) => {
+    // For growth experiments, we need to handle the save differently
+    if (isGrowthExperiment && savedExperiment.originalGrowthExperiment) {
+      try {
+        // Get the original growth experiment data and update it
+        const updatedGrowthExperiment = updateGrowthExperimentFromExperiment(
+          savedExperiment, 
+          savedExperiment.originalGrowthExperiment as GrowthExperiment
+        );
+        
+        // Update the growth experiment in the database
+        const { error } = await supabase
+          .from('growth_experiments')
+          .update({
+            title: updatedGrowthExperiment.title,
+            hypothesis: updatedGrowthExperiment.hypothesis,
+            status: updatedGrowthExperiment.status,
+            notes: updatedGrowthExperiment.notes,
+            updated_at: updatedGrowthExperiment.updated_at
+          })
+          .eq('id', updatedGrowthExperiment.id);
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Growth experiment updated',
+          description: 'The growth experiment has been successfully updated.',
+        });
+        
+        // Refresh data to show the updated experiment
+        refreshData();
+      } catch (error: any) {
+        console.error('Error updating growth experiment:', error);
+        toast({
+          title: 'Error',
+          description: error.message || 'An error occurred while updating the growth experiment.',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      // For regular experiments, just refresh the data
+      refreshData();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 animate-pulse">
@@ -114,17 +182,19 @@ const ExperimentsSection = ({
       {viewMode === 'list' ? (
         <>
           <ExperimentsHeader 
-            onCreateNew={handleCreateNew} 
+            onCreateNew={isGrowthExperiment ? undefined : handleCreateNew} 
             experimentType={experimentType}
+            isGrowthExperiment={isGrowthExperiment}
           />
           
           <ExperimentList 
             experiments={experiments}
             refreshData={refreshData}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={isGrowthExperiment ? undefined : handleDelete}
             onCreateNew={handleCreateNew}
             onViewDetail={handleViewDetail}
+            isGrowthExperiment={isGrowthExperiment}
           />
         </>
       ) : (
@@ -142,11 +212,13 @@ const ExperimentsSection = ({
           
           {selectedExperiment && (
             <>
-              <ExperimentHypothesisLink 
-                experiment={selectedExperiment}
-                projectId={projectId}
-                onHypothesisFound={handleHypothesisFound}
-              />
+              {!isGrowthExperiment && (
+                <ExperimentHypothesisLink 
+                  experiment={selectedExperiment}
+                  projectId={projectId}
+                  onHypothesisFound={handleHypothesisFound}
+                />
+              )}
               
               <ExperimentDetailView 
                 experiment={selectedExperiment}
@@ -155,6 +227,7 @@ const ExperimentsSection = ({
                 onClose={handleBackToList}
                 onRefresh={refreshData}
                 projectId={projectId}
+                isGrowthExperiment={isGrowthExperiment}
               />
             </>
           )}
@@ -164,10 +237,11 @@ const ExperimentsSection = ({
       <ExperimentForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
-        onSave={refreshData}
+        onSave={handleFormSave}
         experiment={selectedExperiment}
         projectId={projectId}
         experimentType={experimentType}
+        isGrowthExperiment={isGrowthExperiment}
         key={selectedExperiment ? selectedExperiment.id : 'new-experiment'} 
       />
 

@@ -1,63 +1,73 @@
 
 import React from 'react';
-import { Plus, Beaker, Lightbulb, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PlusCircle, TrendingUp, Beaker } from 'lucide-react';
 
 interface ExperimentsHeaderProps {
-  onCreateNew: () => void;
+  onCreateNew?: () => void;
   experimentType?: 'problem' | 'solution' | 'business-model';
+  isGrowthExperiment?: boolean;
 }
 
 const ExperimentsHeader = ({ 
-  onCreateNew,
-  experimentType = 'problem'
+  onCreateNew, 
+  experimentType = 'problem',
+  isGrowthExperiment = false
 }: ExperimentsHeaderProps) => {
-  // Get the appropriate icon and title based on experiment type
-  const getHeaderContent = () => {
+  const Icon = isGrowthExperiment ? TrendingUp : Beaker;
+  
+  const getTitle = () => {
+    if (isGrowthExperiment) {
+      return 'Growth Experiments';
+    }
+    
     switch(experimentType) {
       case 'problem':
-        return {
-          icon: <Lightbulb className="h-5 w-5 mr-2 text-blue-500" />,
-          title: 'Problem Experiments',
-          buttonText: 'Add Problem Experiment'
-        };
+        return 'Problem Validation Experiments';
       case 'solution':
-        return {
-          icon: <Beaker className="h-5 w-5 mr-2 text-green-500" />,
-          title: 'Solution Experiments',
-          buttonText: 'Add Solution Experiment'
-        };
+        return 'Solution Validation Experiments';
       case 'business-model':
-        return {
-          icon: <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />,
-          title: 'Business Model Experiments',
-          buttonText: 'Add Business Model Experiment'
-        };
+        return 'Business Model Validation Experiments';
       default:
-        return {
-          icon: <Beaker className="h-5 w-5 mr-2 text-blue-500" />,
-          title: 'Experiments',
-          buttonText: 'Add New Experiment'
-        };
+        return 'Experiments';
     }
   };
-
-  const { icon, title, buttonText } = getHeaderContent();
+  
+  const getDescription = () => {
+    if (isGrowthExperiment) {
+      return 'Design and run experiments to optimize your growth metrics and scale your business.';
+    }
+    
+    switch(experimentType) {
+      case 'problem':
+        return 'Validate that the problem exists and is worth solving.';
+      case 'solution':
+        return 'Test that your solution effectively addresses the problem.';
+      case 'business-model':
+        return 'Verify that customers will pay for your solution.';
+      default:
+        return 'Run experiments to validate your hypotheses.';
+    }
+  };
   
   return (
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-bold text-validation-gray-900 flex items-center">
-        {icon}
-        {title}
-      </h2>
-      <Button 
-        id="create-experiment-button"
-        className="bg-validation-blue-600 hover:bg-validation-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors duration-300 shadow-subtle"
-        onClick={onCreateNew}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        {buttonText}
-      </Button>
+    <div className="flex justify-between items-start mb-6">
+      <div>
+        <div className="flex items-center">
+          <Icon className="h-5 w-5 text-blue-500 mr-2" />
+          <h2 className="text-xl font-semibold">{getTitle()}</h2>
+        </div>
+        <p className="text-gray-600 mt-1">
+          {getDescription()}
+        </p>
+      </div>
+      
+      {onCreateNew && (
+        <Button onClick={onCreateNew} className="flex items-center gap-2">
+          <PlusCircle className="h-4 w-4" />
+          {isGrowthExperiment ? 'New Growth Experiment' : 'New Experiment'}
+        </Button>
+      )}
     </div>
   );
 };

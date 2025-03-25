@@ -1,16 +1,20 @@
 
 import React from 'react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { UseFormReturn } from 'react-hook-form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { UseFormReturn } from 'react-hook-form';
-import { Experiment } from '@/types/database';
+import { FormData } from '@/components/forms/ExperimentForm';
 
 interface TextFieldGroupProps {
-  form: UseFormReturn<Experiment>;
+  form: UseFormReturn<FormData>;
+  isGrowthExperiment?: boolean;
 }
 
-const TextFieldGroup = ({ form }: TextFieldGroupProps) => {
+const TextFieldGroup: React.FC<TextFieldGroupProps> = ({ 
+  form,
+  isGrowthExperiment = false
+}) => {
   return (
     <>
       <FormField
@@ -20,7 +24,7 @@ const TextFieldGroup = ({ form }: TextFieldGroupProps) => {
           <FormItem>
             <FormLabel>Title</FormLabel>
             <FormControl>
-              <Input placeholder="A descriptive title for your experiment" {...field} />
+              <Input placeholder="Experiment title" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -32,12 +36,17 @@ const TextFieldGroup = ({ form }: TextFieldGroupProps) => {
         name="hypothesis"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Hypothesis</FormLabel>
+            <FormLabel>
+              {isGrowthExperiment ? 'Growth Hypothesis' : 'Hypothesis'}
+            </FormLabel>
             <FormControl>
-              <Textarea 
-                placeholder="What are you trying to validate?" 
-                className="min-h-[80px]"
-                {...field} 
+              <Textarea
+                placeholder={isGrowthExperiment 
+                  ? "Our action will lead to X% improvement in metric Y"
+                  : "We believe that..."
+                }
+                className="min-h-[80px] resize-y"
+                {...field}
               />
             </FormControl>
             <FormMessage />
@@ -45,41 +54,45 @@ const TextFieldGroup = ({ form }: TextFieldGroupProps) => {
         )}
       />
       
-      <FormField
-        control={form.control}
-        name="method"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Method</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="How will you conduct this experiment?" 
-                className="min-h-[80px]"
-                {...field} 
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      
-      <FormField
-        control={form.control}
-        name="metrics"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Metrics</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="What data will you collect? How will you measure success?" 
-                className="min-h-[80px]"
-                {...field} 
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {!isGrowthExperiment && (
+        <>
+          <FormField
+            control={form.control}
+            name="method"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Method</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="How will you run the experiment?"
+                    className="min-h-[80px] resize-y"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="metrics"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Metrics</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="What metrics will you measure?"
+                    className="min-h-[80px] resize-y"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
     </>
   );
 };

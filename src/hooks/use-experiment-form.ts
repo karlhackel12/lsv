@@ -1,16 +1,21 @@
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Experiment } from '@/types/database';
-import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Experiment } from '@/types/database';
+import { FormData } from '@/components/forms/ExperimentForm';
 
 interface UseExperimentFormProps {
-  experiment?: Experiment | null;
+  experiment: Experiment | null | undefined;
   projectId: string;
-  hypothesisId?: string;
-  onSave: () => void;
+  hypothesisId?: string | null;
+  onSave: (experiment: Experiment) => void;
   onClose: () => void;
   experimentType?: 'problem' | 'solution' | 'business-model';
+  isGrowthExperiment?: boolean;
 }
 
 export function useExperimentForm({
@@ -19,57 +24,75 @@ export function useExperimentForm({
   hypothesisId,
   onSave,
   onClose,
-  experimentType = 'problem'
+  experimentType = 'problem',
+  isGrowthExperiment = false
 }: UseExperimentFormProps) {
   const { toast } = useToast();
   const isEditing = !!experiment;
-
-  console.log("useExperimentForm initializing with:", { 
-    isEditing, 
-    experimentId: experiment?.id,
-    experimentType,
-    projectId,
-    hypothesisId
+  
+  // Form validation schema
+  const formSchema = z.object({
+    id: z.string().optional(),
+    title: z.string().min(1, 'Title is required'),
+    hypothesis: z.string().min(1, 'Hypothesis is required'),
+    method: z.string().min(1, 'Method is required'),
+    metrics: z.string().min(1, 'Metrics are required'),
+    status: z.string(),
+    category: z.string(),
+    results: z.string().optional(),
+    insights: z.string().optional(),
+    decisions: z.string().optional(),
+    project_id: z.string(),
+    hypothesis_id: z.string().nullable().optional(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+    // Allow additional properties for growth experiments
+    isGrowthExperiment: z.boolean().optional(),
+    originalGrowthExperiment: z.any().optional(),
+    originalId: z.string().optional(),
   });
 
-  // Initialize form with proper defaults for new experiments or existing data for edits
-  const form = useForm<Experiment>({
-    defaultValues: isEditing && experiment 
-      ? {
-          ...experiment,
-          // Convert null values to empty strings to avoid controlled/uncontrolled component warnings
-          title: experiment.title || '',
-          hypothesis: experiment.hypothesis || '',
-          method: experiment.method || '',
-          metrics: experiment.metrics || '',
-          status: experiment.status || 'planned',
-          category: experiment.category || experimentType || 'problem',
-          results: experiment.results || '',
-          insights: experiment.insights || '',
-          decisions: experiment.decisions || '',
-          hypothesis_id: experiment.hypothesis_id || null,
-        }
-      : {
-          title: '',
-          hypothesis: '',
-          method: '',
-          metrics: '',
-          status: 'planned',
-          category: experimentType || 'problem',
-          results: '',
-          insights: '',
-          decisions: '',
-          project_id: projectId,
-          hypothesis_id: hypothesisId || null,
-        },
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      id: experiment?.id,
+      title: experiment?.title || '',
+      hypothesis: experiment?.hypothesis || '',
+      method: experiment?.method || '',
+      metrics: experiment?.metrics || '',
+      status: experiment?.status || 'planned',
+      category: experiment?.category || experimentType,
+      results: experiment?.results || '',
+      insights: experiment?.insights || '',
+      decisions: experiment?.decisions || '',
+      project_id: projectId,
+      hypothesis_id: hypothesisId || experiment?.hypothesis_id || null,
+      created_at: experiment?.created_at,
+      updated_at: experiment?.updated_at,
+      isGrowthExperiment: isGrowthExperiment,
+      originalGrowthExperiment: experiment?.originalGrowthExperiment,
+      originalId: experiment?.originalId,
+    },
   });
 
-  const handleSubmit = async (data: Experiment) => {
+  const handleSubmit = async (data: FormData) => {
     try {
-      console.log("Submitting experiment data:", { isEditing, data });
+      console.log("Form submitted with data:", data);
       
-      if (isEditing && experiment?.id) {
-        // Update existing experiment
+      // If this is a growth experiment, we just pass the data back
+      // to be handled by the parent component
+      if (isGrowthExperiment) {
+        onSave({
+          ...data,
+          isGrowthExperiment: true,
+          originalGrowthExperiment: experiment?.originalGrowthExperiment
+        });
+        onClose();
+        return;
+      }
+      
+      // For regular experiments, handle the database operations here
+      if (isEditing && experiment) {
         const { error } = await supabase
           .from('experiments')
           .update({
@@ -79,36 +102,21 @@ export function useExperimentForm({
             metrics: data.metrics,
             status: data.status,
             category: data.category,
-            results: data.results || null, // Convert empty string to null for DB
+            results: data.results || null,
             insights: data.insights || null,
             decisions: data.decisions || null,
-            hypothesis_id: data.hypothesis_id || null,
-            updated_at: new Date().toISOString(),
+            hypothesis_id: data.hypothesis_id,
+            updated_at: new Date().toISOString()
           })
           .eq('id', experiment.id);
           
-        if (error) {
-          console.error("Supabase update error:", error);
-          throw error;
-        }
+        if (error) throw error;
         
         toast({
-          title: 'Success',
-          description: 'Experiment updated successfully',
+          title: 'Experiment updated',
+          description: 'The experiment has been successfully updated.',
         });
       } else {
-        // Create new experiment
-        console.log("Creating new experiment with data:", {
-          title: data.title,
-          hypothesis: data.hypothesis,
-          method: data.method,
-          metrics: data.metrics,
-          status: data.status || 'planned',
-          category: data.category || experimentType || 'problem',
-          project_id: projectId,
-          hypothesis_id: data.hypothesis_id || null,
-        });
-        
         const { error } = await supabase
           .from('experiments')
           .insert({
@@ -116,30 +124,30 @@ export function useExperimentForm({
             hypothesis: data.hypothesis,
             method: data.method,
             metrics: data.metrics,
-            status: data.status || 'planned',
-            category: data.category || experimentType || 'problem',
+            status: data.status,
+            category: data.category,
+            results: data.results || null,
+            insights: data.insights || null,
+            decisions: data.decisions || null,
             project_id: projectId,
-            hypothesis_id: data.hypothesis_id || null,
+            hypothesis_id: data.hypothesis_id,
           });
           
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw error;
-        }
+        if (error) throw error;
         
         toast({
-          title: 'Success',
-          description: 'New experiment created successfully',
+          title: 'Experiment created',
+          description: 'The experiment has been successfully created.',
         });
       }
       
-      onSave();
+      onSave(data);
       onClose();
-    } catch (err) {
-      console.error('Error saving experiment:', err);
+    } catch (error: any) {
+      console.error('Error saving experiment:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save experiment',
+        description: error.message || 'An error occurred while saving the experiment.',
         variant: 'destructive',
       });
     }
