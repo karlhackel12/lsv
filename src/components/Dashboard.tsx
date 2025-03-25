@@ -5,13 +5,15 @@ import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
+import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import LeanStartupBanner from '@/components/dashboard/LeanStartupBanner';
 import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
 import InfoTooltip from '@/components/InfoTooltip';
 import { adaptGrowthExperimentToExperiment } from '@/utils/experiment-adapters';
 import { GrowthExperiment } from '@/types/database';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
   const {
@@ -23,6 +25,7 @@ const Dashboard = () => {
   const [metrics, setMetrics] = useState<any[]>([]);
   const [mvpFeatures, setMvpFeatures] = useState<any[]>([]);
   const [growthExperiments, setGrowthExperiments] = useState<any[]>([]);
+  const [scalingMetrics, setScalingMetrics] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -78,16 +81,50 @@ const Dashboard = () => {
       }).limit(5);
       if (growthExperimentsError) throw growthExperimentsError;
 
+      // Fetch scaling readiness metrics
+      const {
+        data: scalingMetricsData,
+        error: scalingMetricsError
+      } = await supabase.from('scaling_readiness_metrics').select('*').eq('project_id', currentProject?.id).order('importance', {
+        ascending: false
+      }).limit(5);
+      if (scalingMetricsError) throw scalingMetricsError;
+
       setHypotheses(hypothesesData || []);
       setExperiments(experimentsData || []);
       setMetrics(metricsData || []);
       setMvpFeatures(mvpData || []);
       setGrowthExperiments(growthExperimentsData || []);
+      setScalingMetrics(scalingMetricsData || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Calculate scaling readiness score based on metrics
+  const calculateReadinessScore = () => {
+    if (scalingMetrics.length === 0) return 0;
+    
+    let totalWeight = 0;
+    let achievedWeight = 0;
+    
+    scalingMetrics.forEach(metric => {
+      const weight = metric.importance || 1;
+      totalWeight += weight;
+      
+      if (metric.status === 'achieved') {
+        achievedWeight += weight;
+      } else if (metric.status === 'on-track') {
+        achievedWeight += (weight * 0.75);
+      } else if (metric.status === 'needs-improvement') {
+        achievedWeight += (weight * 0.25);
+      }
+      // critical and pending contribute 0
+    });
+    
+    return Math.round((achievedWeight / totalWeight) * 100);
   };
   
   if (!currentProject) {
@@ -234,6 +271,59 @@ const Dashboard = () => {
         <CardFooter>
           <Button variant="outline" className="w-full text-purple-600" onClick={() => navigate('/experiments?type=growth')}>
             View Growth Experiments
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center">
+            <CheckCircle2 className="mr-2 h-5 w-5 text-teal-500" />
+            Scaling Readiness
+            <InfoTooltip text="Track your startup's readiness to scale" link="/growth?tab=scaling_readiness" className="ml-2" />
+          </CardTitle>
+          <CardDescription>Evaluate your scaling readiness</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <div className="text-2xl font-bold">{calculateReadinessScore()}%</div>
+            <p className="text-sm text-muted-foreground">Overall readiness</p>
+          </div>
+          
+          <div className="mt-2">
+            <Progress value={calculateReadinessScore()} className="h-2" />
+          </div>
+          
+          {scalingMetrics.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {scalingMetrics.slice(0, 3).map(metric => {
+                const statusColor = metric.status === 'achieved' ? 'bg-green-100 text-green-800 border-green-200' : 
+                                   metric.status === 'on-track' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                                   metric.status === 'needs-improvement' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                                   metric.status === 'critical' ? 'bg-red-100 text-red-800 border-red-200' :
+                                   'bg-gray-100 text-gray-800 border-gray-200';
+                                   
+                return (
+                  <div key={metric.id} className="flex items-center justify-between">
+                    <div className="flex items-start flex-1">
+                      <div className="text-sm line-clamp-1">{metric.name}</div>
+                    </div>
+                    <Badge variant="outline" className={statusColor}>
+                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1).replace('-', ' ')}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+              No scaling metrics defined yet
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" className="w-full text-teal-600" onClick={() => navigate('/growth?tab=scaling_readiness')}>
+            View Scaling Readiness
           </Button>
         </CardFooter>
       </Card>
