@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from '@/components/ui/card';
+import { FormSheet } from '@/components/ui/form-sheet';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -44,22 +44,25 @@ const formSchema = z.object({
 });
 
 interface GrowthExperimentFormProps {
+  isOpen: boolean;
+  onClose: () => void;
   experiment?: ExtendedGrowthExperiment | null;
   projectId: string;
   growthModelId: string;
   onSave: () => Promise<void>;
-  onClose: () => void;
 }
 
 const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
+  isOpen,
+  onClose,
   experiment,
   projectId,
   growthModelId,
-  onSave,
-  onClose
+  onSave
 }) => {
   const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const isEditing = !!experiment;
 
@@ -90,8 +93,10 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
   });
 
   useEffect(() => {
-    fetchScalingMetrics();
-  }, [projectId]);
+    if (isOpen) {
+      fetchScalingMetrics();
+    }
+  }, [isOpen, projectId]);
 
   const fetchScalingMetrics = async () => {
     setIsLoading(true);
@@ -112,6 +117,7 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
   };
 
   const handleSubmit = async (data: ExtendedGrowthExperiment) => {
+    setIsSubmitting(true);
     try {
       // Ensure expected_lift is a number and not null
       const expectedLift = Number(data.expected_lift) || 0;
@@ -199,182 +205,55 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
         description: 'Failed to save experiment',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+    <FormSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? 'Edit Growth Experiment' : 'Create Growth Experiment'}
+      description="Design experiments to test hypotheses about your growth model"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Experiment Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="e.g., Multi-channel acquisition test" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="title"
+              name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Experiment Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g., Multi-channel acquisition test" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="planned">Planned</SelectItem>
-                        <SelectItem value="running">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="failed">Abandoned</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="expected_lift"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expected Lift (%)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
-                        value={field.value?.toString() || '0'} 
-                        placeholder="e.g., 10" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="hypothesis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hypothesis</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="What do you expect to happen?" 
-                      className="min-h-[100px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field}
-                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : today}
-                        onChange={(e) => {
-                          const date = new Date(e.target.value);
-                          field.onChange(date.toISOString());
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field}
-                        value={field.value ? new Date(field.value).toISOString().split('T')[0] : defaultEndDate}
-                        onChange={(e) => {
-                          const date = new Date(e.target.value);
-                          field.onChange(date.toISOString());
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="Additional notes about this experiment" 
-                      className="min-h-[80px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="scaling_metric_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Related Scaling Metric</FormLabel>
+                  <FormLabel>Status</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value === "none" ? null : value)}
-                    value={field.value || "none"}
-                    defaultValue={field.value || "none"}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a scaling metric" />
+                        <SelectValue placeholder="Select a status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {scalingMetrics.map(metric => (
-                        <SelectItem key={metric.id} value={metric.id}>
-                          {metric.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="planned">Planned</SelectItem>
+                      <SelectItem value="running">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="failed">Abandoned</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -382,40 +261,150 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
               )}
             />
             
-            {form.watch('status') === 'completed' && (
-              <FormField
-                control={form.control}
-                name="actual_lift"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Actual Lift (%)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                        value={field.value?.toString() || ''} 
-                        placeholder="e.g., 5.2" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="expected_lift"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expected Lift (%)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      {...field} 
+                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                      value={field.value?.toString() || '0'} 
+                      placeholder="e.g., 10" 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="hypothesis"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hypothesis</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="What do you expect to happen?" 
+                    className="min-h-[100px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="start_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date" 
+                      {...field}
+                      value={field.value ? new Date(field.value).toISOString().split('T')[0] : today}
+                      onChange={(e) => {
+                        const date = new Date(e.target.value);
+                        field.onChange(date.toISOString());
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {isEditing ? 'Update Experiment' : 'Create Experiment'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <FormField
+              control={form.control}
+              name="end_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="date" 
+                      {...field}
+                      value={field.value ? new Date(field.value).toISOString().split('T')[0] : defaultEndDate}
+                      onChange={(e) => {
+                        const date = new Date(e.target.value);
+                        field.onChange(date.toISOString());
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="Additional notes about this experiment" 
+                    className="min-h-[80px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="scaling_metric_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Related Scaling Metric</FormLabel>
+                <Select
+                  onValueChange={(value) => field.onChange(value === "none" ? null : value)}
+                  value={field.value || "none"}
+                  defaultValue={field.value || "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a scaling metric" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {scalingMetrics.map(metric => (
+                      <SelectItem key={metric.id} value={metric.id}>
+                        {metric.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : isEditing ? 'Update Experiment' : 'Create Experiment'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </FormSheet>
   );
 };
 

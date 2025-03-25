@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FlaskConical, TrendingUp } from 'lucide-react';
 import { Experiment, Hypothesis } from '@/types/database';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useExperimentForm } from '@/hooks/use-experiment-form';
+import { FormSheet } from '@/components/ui/form-sheet';
 import CategorySelect from './experiment/CategorySelect';
 import StatusRadioGroup from './experiment/StatusRadioGroup';
 import TextFieldGroup from './experiment/TextFieldGroup';
@@ -117,54 +117,58 @@ const ExperimentForm = ({
     return isEditing ? 'Edit Experiment' : hypothesisId ? 'Create Experiment from Hypothesis' : 'Create New Experiment';
   };
 
+  // Get form description
+  const getFormDescription = () => {
+    if (isGrowthExperiment) {
+      return 'Design an experiment to test your growth hypothesis';
+    }
+    return 'Define an experiment to validate your hypothesis with real-world data';
+  };
+
   // Get form icon based on experiment type
   const FormIcon = isGrowthExperiment ? TrendingUp : FlaskConical;
 
   return (
-    <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FormIcon className="h-5 w-5 text-blue-500" />
-            {getFormTitle()}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
-            {!isGrowthExperiment && (
-              <HypothesisSelect 
-                form={form}
-                projectId={projectId}
-                experimentType={experimentType}
-                onHypothesisSelected={handleHypothesisSelected}
-              />
-            )}
-            
-            <TextFieldGroup form={form} isGrowthExperiment={isGrowthExperiment} />
-            
-            {!isGrowthExperiment && (
-              <CategorySelect form={form} />
-            )}
-            
-            <StatusRadioGroup 
-              form={form} 
-              isGrowthExperiment={isGrowthExperiment} 
+    <FormSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={getFormTitle()}
+      description={getFormDescription()}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+          {!isGrowthExperiment && (
+            <HypothesisSelect 
+              form={form}
+              projectId={projectId}
+              experimentType={experimentType}
+              onHypothesisSelected={handleHypothesisSelected}
             />
-            
-            {/* Results, Decisions and Insights sections - shown only for in-progress or completed experiments */}
-            {(form.watch('status') === 'in-progress' || form.watch('status') === 'completed') && (
-              <ResultsFields form={form} isGrowthExperiment={isGrowthExperiment} />
-            )}
-            
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          )}
+          
+          <TextFieldGroup form={form} isGrowthExperiment={isGrowthExperiment} />
+          
+          {!isGrowthExperiment && (
+            <CategorySelect form={form} />
+          )}
+          
+          <StatusRadioGroup 
+            form={form} 
+            isGrowthExperiment={isGrowthExperiment} 
+          />
+          
+          {/* Results, Decisions and Insights sections - shown only for in-progress or completed experiments */}
+          {(form.watch('status') === 'in-progress' || form.watch('status') === 'completed') && (
+            <ResultsFields form={form} isGrowthExperiment={isGrowthExperiment} />
+          )}
+          
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
+          </div>
+        </form>
+      </Form>
+    </FormSheet>
   );
 };
 

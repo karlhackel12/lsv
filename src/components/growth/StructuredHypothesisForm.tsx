@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Form, 
@@ -10,7 +9,6 @@ import {
   FormLabel, 
   FormMessage 
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
@@ -24,13 +22,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
+import { FormSheet } from '@/components/ui/form-sheet';
 
 interface StructuredHypothesisFormProps {
+  isOpen: boolean;
+  onClose: () => void;
   growthModel: GrowthModel;
   projectId: string;
   metrics: GrowthMetric[];
   onSave: () => Promise<void>;
-  onClose: () => void;
   hypothesis?: GrowthHypothesis | null;
 }
 
@@ -46,16 +46,18 @@ interface HypothesisFormValues {
 }
 
 const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({ 
+  isOpen,
+  onClose,
   growthModel, 
   projectId, 
   metrics,
-  onSave, 
-  onClose,
+  onSave,
   hypothesis
 }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isEditing = !!hypothesis;
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<HypothesisFormValues>({
     defaultValues: hypothesis || {
@@ -70,6 +72,7 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
   });
 
   const handleSubmit = async (data: HypothesisFormValues) => {
+    setIsSubmitting(true);
     try {
       console.log('Submitting hypothesis data:', data);
       
@@ -171,6 +174,8 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
         description: 'Failed to save hypothesis. Please try again.',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -208,165 +213,178 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
     return formattedStatement;
   };
 
+  const formTitle = isEditing ? 'Edit Growth Hypothesis' : 'Create Growth Hypothesis';
+  const formDescription = 'Create a structured hypothesis to test growth strategies';
+
+  const customFooter = (
+    <>
+      <Button type="button" variant="outline" onClick={onClose}>
+        Cancel
+      </Button>
+      {isEditing && (
+        <Button 
+          type="button" 
+          variant="outline"
+          onClick={handleCreateExperiment}
+        >
+          Create Experiment
+        </Button>
+      )}
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Saving...' : isEditing ? 'Update Hypothesis' : 'Create Hypothesis'}
+      </Button>
+    </>
+  );
+
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium mb-2">Structured Growth Hypothesis</h2>
-              
-              <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
-                <p className="font-medium text-sm text-gray-900 mb-1">Format:</p>
-                <p className="text-sm text-gray-700">
-                  We believe that [specific action/feature] will result in [specific measurable outcome].<br />
-                  We'll know we're right when we see [specific success criteria].
+    <FormSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={formTitle}
+      description={formDescription}
+      footer={
+        <div className="flex justify-end space-x-2">
+          {customFooter}
+        </div>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium mb-2">Structured Growth Hypothesis</h2>
+            
+            <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
+              <p className="font-medium text-sm text-gray-900 mb-1">Format:</p>
+              <p className="text-sm text-gray-700">
+                We believe that [specific action/feature] will result in [specific measurable outcome].<br />
+                We'll know we're right when we see [specific success criteria].
+              </p>
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="stage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Growth Stage</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a stage" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="channel">Channel Validation</SelectItem>
+                      <SelectItem value="activation">Activation Optimization</SelectItem>
+                      <SelectItem value="retention">Retention Improvement</SelectItem>
+                      <SelectItem value="revenue">Revenue Optimization</SelectItem>
+                      <SelectItem value="referral">Referral Growth</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="action"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action or Feature (We believe that...)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="E.g., implementing a personalized onboarding flow" 
+                      className="h-20"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="outcome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expected Outcome (will result in...)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="E.g., a 15% increase in user activation rate" 
+                      className="h-20"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="success_criteria"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Success Criteria (We'll know we're right when...)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="E.g., the 7-day activation rate increases from 40% to 55% within 30 days" 
+                      className="h-20"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="metric_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Related Metric</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value || null)}
+                    value={field.value || "null"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a metric" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="null">None</SelectItem>
+                      {metrics.map((metric) => (
+                        <SelectItem key={metric.id} value={metric.id}>
+                          {metric.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Preview hypothesis */}
+            {(form.watch('action') && form.watch('outcome')) && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
+                <p className="text-sm font-medium text-blue-800 mb-1">Preview:</p>
+                <p className="text-sm text-blue-700 whitespace-pre-line">
+                  {generateFormattedHypothesis()}
                 </p>
               </div>
-              
-              <FormField
-                control={form.control}
-                name="stage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Growth Stage</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a stage" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="channel">Channel Validation</SelectItem>
-                        <SelectItem value="activation">Activation Optimization</SelectItem>
-                        <SelectItem value="retention">Retention Improvement</SelectItem>
-                        <SelectItem value="revenue">Revenue Optimization</SelectItem>
-                        <SelectItem value="referral">Referral Growth</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="action"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Action or Feature (We believe that...)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="E.g., implementing a personalized onboarding flow" 
-                        className="h-20"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="outcome"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expected Outcome (will result in...)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="E.g., a 15% increase in user activation rate" 
-                        className="h-20"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="success_criteria"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Success Criteria (We'll know we're right when...)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="E.g., the 7-day activation rate increases from 40% to 55% within 30 days" 
-                        className="h-20"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="metric_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Metric</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(value || null)}
-                      value={field.value || "null"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a metric" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="null">None</SelectItem>
-                        {metrics.map((metric) => (
-                          <SelectItem key={metric.id} value={metric.id}>
-                            {metric.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Preview hypothesis */}
-              {(form.watch('action') && form.watch('outcome')) && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
-                  <p className="text-sm font-medium text-blue-800 mb-1">Preview:</p>
-                  <p className="text-sm text-blue-700 whitespace-pre-line">
-                    {generateFormattedHypothesis()}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              {isEditing && (
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={handleCreateExperiment}
-                >
-                  Create Experiment
-                </Button>
-              )}
-              <Button type="submit">
-                {isEditing ? 'Update' : 'Create'} Hypothesis
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            )}
+          </div>
+        </form>
+      </Form>
+    </FormSheet>
   );
 };
 
