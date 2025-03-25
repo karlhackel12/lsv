@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -179,7 +178,6 @@ const ExperimentsPage = () => {
             <TabsList className="mb-6">
               <TabsTrigger value="problem">Problem Experiments</TabsTrigger>
               <TabsTrigger value="solution">Solution Experiments</TabsTrigger>
-              <TabsTrigger value="business-model">Business Model Experiments</TabsTrigger>
             </TabsList>
             
             {showSummary && (
@@ -210,16 +208,6 @@ const ExperimentsPage = () => {
                     experimentType="solution"
                   />
                 </TabsContent>
-                
-                <TabsContent value="business-model">
-                  <ExperimentsSection 
-                    experiments={experiments}
-                    refreshData={fetchExperiments}
-                    projectId={currentProject.id}
-                    isLoading={isLoading}
-                    experimentType="business-model"
-                  />
-                </TabsContent>
               </>
             )}
           </Tabs>
@@ -232,7 +220,7 @@ const ExperimentsPage = () => {
             refreshData={fetchGrowthExperiments}
             projectId={currentProject.id}
             isLoading={isLoadingGrowth}
-            experimentType="business-model"
+            experimentType="solution"
             isGrowthExperiment={true}
           />
         </TabsContent>
