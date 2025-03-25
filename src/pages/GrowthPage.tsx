@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Lightbulb, GitFork } from 'lucide-react';
+import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Lightbulb, GitFork, FlaskConical } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
-import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
 import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessChecklist';
 import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
@@ -101,6 +100,10 @@ const GrowthPage = () => {
     navigate(`/growth?tab=${value}`, { replace: true });
   };
 
+  const navigateToGrowthExperiments = () => {
+    navigate('/experiments?type=growth');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -154,7 +157,7 @@ const GrowthPage = () => {
                     <span>Channels</span>
                   </TabsTrigger>
                   <TabsTrigger value="experiments" className="flex items-center gap-2">
-                    <Layers className="h-4 w-4" />
+                    <FlaskConical className="h-4 w-4" />
                     <span>Experiments</span>
                   </TabsTrigger>
                   <TabsTrigger value="pivot" className="flex items-center gap-2">
@@ -175,7 +178,8 @@ const GrowthPage = () => {
                           {activeTab === 'metrics' ? 'Growth Metrics' : 
                            activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
                            activeTab === 'channels' ? 'Acquisition Channels' : 
-                           activeTab === 'pivot' ? 'Pivot Decision' : 'Growth Experiments'}
+                           activeTab === 'experiments' ? 'Growth Experiments' :
+                           'Pivot Decision'}
                         </BreadcrumbLink>
                       </BreadcrumbItem>
                     </BreadcrumbList>
@@ -208,13 +212,22 @@ const GrowthPage = () => {
                   </TabsContent>
                   
                   <TabsContent value="experiments" className="mt-0">
-                    <GrowthExperimentsSection 
-                      experiments={growthExperiments} 
-                      metrics={growthMetrics}
-                      projectId={currentProject.id}
-                      growthModelId={defaultGrowthModelId || ''} 
-                      refreshData={() => fetchModelData(currentProject.id)} 
-                    />
+                    <div className="space-y-6">
+                      <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 flex flex-col items-center text-center">
+                        <FlaskConical className="h-12 w-12 text-blue-500 mb-4" />
+                        <h3 className="text-xl font-bold mb-2">Growth Experiments</h3>
+                        <p className="text-gray-600 mb-6 max-w-lg">
+                          Growth experiments help you optimize your key metrics and acquisition channels. 
+                          They are now managed in the centralized experiments section.
+                        </p>
+                        <Button 
+                          onClick={navigateToGrowthExperiments}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          Go to Growth Experiments
+                        </Button>
+                      </div>
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="pivot" className="mt-0">
