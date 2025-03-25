@@ -49,7 +49,7 @@ const phaseData: Record<string, PhaseInfo> = {
     description: 'Evaluate when a strategic change in direction is needed based on validated learning and systematic experimentation.',
     icon: <GitBranch className="h-6 w-6" />,
     color: 'orange',
-    graduationCriteria: ['Defined clear pivot triggers based on key metrics', 'Evaluated multiple pivot options with evidence', 'Maintained what's working while changing direction', 'Developed hypothesis and experiment plan for new direction']
+    graduationCriteria: ['Defined clear pivot triggers based on key metrics', 'Evaluated multiple pivot options with evidence', 'Maintained what\'s working while changing direction', 'Developed hypothesis and experiment plan for new direction']
   }
 };
 
