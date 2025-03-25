@@ -1,21 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ScalingReadinessMetric, SCALING_METRIC_CATEGORIES } from '@/types/database';
-import { AlertTriangle, Check, PlusCircle, AlertCircle, BarChart3 } from 'lucide-react';
-import ScalingMetricForm from './ScalingMetricForm';
+import { ScalingReadinessMetric } from '@/types/database';
+import { AlertTriangle, Check, PlusCircle, AlertCircle, BarChart3, Plus } from 'lucide-react';
+import ScalingReadinessMetricForm from '@/components/forms/ScalingReadinessMetricForm';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from '@/components/ui/sheet';
 
@@ -24,6 +24,17 @@ interface ScalingReadinessMetricsProps {
   refreshData: () => Promise<void>;
   growthMetrics: any[];
 }
+
+// Map for readable labels of the 7 scaling readiness metric types
+const METRIC_TYPE_LABELS = {
+  'product_market_fit': 'Product-Market Fit',
+  'unit_economics': 'Unit Economics',
+  'growth_engine': 'Growth Engine',
+  'team_capacity': 'Team Capacity',
+  'operational_scalability': 'Operational Scalability',
+  'financial_readiness': 'Financial Readiness',
+  'market_opportunity': 'Market Opportunity'
+};
 
 const STATUS_ICONS = {
   'achieved': <Check className="h-5 w-5 text-green-500" />,
@@ -44,35 +55,12 @@ const STATUS_CLASSES = {
 const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ projectId, refreshData, growthMetrics }) => {
   const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoryBreakdown, setCategoryBreakdown] = useState<{ [key: string]: { achieved: number, total: number } }>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<ScalingReadinessMetric | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState<ScalingReadinessMetric | null>(null);
-  const [relatedEntities, setRelatedEntities] = useState<any[]>([]);
   const { toast } = useToast();
 
-  const calculateCategoryBreakdown = (metrics: ScalingReadinessMetric[]) => {
-    const breakdown: { [key: string]: { achieved: number, total: number } } = {};
-    
-    // Initialize categories
-    Object.keys(SCALING_METRIC_CATEGORIES).forEach(category => {
-      breakdown[category] = { achieved: 0, total: 0 };
-    });
-    
-    // Count metrics by category
-    metrics.forEach(metric => {
-      if (metric.category && breakdown[metric.category]) {
-        breakdown[metric.category].total += 1;
-        if (metric.status === 'achieved') {
-          breakdown[metric.category].achieved += 1;
-        }
-      }
-    });
-    
-    setCategoryBreakdown(breakdown);
-  };
-  
   const fetchScalingMetrics = async () => {
     try {
       setIsLoading(true);
@@ -88,7 +76,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
       if (error) throw error;
       
       setScalingMetrics(data as ScalingReadinessMetric[]);
-      calculateCategoryBreakdown(data as ScalingReadinessMetric[]);
     } catch (err) {
       console.error('Error fetching scaling metrics:', err);
       toast({
@@ -98,85 +85,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-  
-  const fetchRelatedEntities = async (metricId: string) => {
-    try {
-      // Get entity dependencies where this metric is the target
-      const { data: dependencies, error } = await supabase
-        .from('entity_dependencies')
-        .select('*')
-        .eq('target_id', metricId);
-        
-      if (error) throw error;
-      
-      if (dependencies && dependencies.length > 0) {
-        const relatedItems = [];
-        
-        // Fetch related entities based on their type
-        for (const dep of dependencies) {
-          let entityData;
-          
-          if (dep.source_type === 'mvp_feature') {
-            const { data, error } = await supabase
-              .from('mvp_features')
-              .select('*')
-              .eq('id', dep.source_id)
-              .single();
-              
-            if (!error && data) {
-              entityData = {
-                ...data,
-                type: 'MVP Feature',
-                typeIcon: 'puzzle-piece',
-                relationshipStrength: dep.strength
-              };
-            }
-          } else if (dep.source_type === 'growth_metric') {
-            const { data, error } = await supabase
-              .from('growth_metrics')
-              .select('*')
-              .eq('id', dep.source_id)
-              .single();
-              
-            if (!error && data) {
-              entityData = {
-                ...data,
-                type: 'Growth Metric',
-                typeIcon: 'chart-line',
-                relationshipStrength: dep.strength
-              };
-            }
-          } else if (dep.source_type === 'growth_experiment') {
-            const { data, error } = await supabase
-              .from('growth_experiments')
-              .select('*')
-              .eq('id', dep.source_id)
-              .single();
-              
-            if (!error && data) {
-              entityData = {
-                ...data,
-                type: 'Growth Experiment',
-                typeIcon: 'flask',
-                relationshipStrength: dep.strength
-              };
-            }
-          }
-          
-          if (entityData) {
-            relatedItems.push(entityData);
-          }
-        }
-        
-        setRelatedEntities(relatedItems);
-      } else {
-        setRelatedEntities([]);
-      }
-    } catch (err) {
-      console.error('Error fetching related entities:', err);
-      setRelatedEntities([]);
     }
   };
   
@@ -205,13 +113,7 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
   
   const handleDeleteMetric = async (id: string) => {
     try {
-      // First, delete any dependencies
-      await supabase
-        .from('entity_dependencies')
-        .delete()
-        .or(`source_id.eq.${id},target_id.eq.${id}`);
-      
-      // Then delete the metric
+      // Delete the metric
       const { error } = await supabase
         .from('scaling_readiness_metrics')
         .delete()
@@ -228,6 +130,11 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
       if (refreshData) {
         await refreshData();
       }
+      
+      // Close the details sheet if it's open
+      if (isDetailsOpen) {
+        setIsDetailsOpen(false);
+      }
     } catch (err) {
       console.error('Error deleting metric:', err);
       toast({
@@ -240,7 +147,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
   
   const openMetricDetails = async (metric: ScalingReadinessMetric) => {
     setSelectedDetails(metric);
-    await fetchRelatedEntities(metric.id);
     setIsDetailsOpen(true);
   };
   
@@ -294,12 +200,11 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Scaling Readiness Assessment</h2>
           <Button 
-            variant="outline"
             onClick={() => handleOpenForm()}
             className="flex items-center gap-1"
           >
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Metric</span>
+            <Plus className="h-4 w-4" />
+            <span>Add Readiness Metric</span>
           </Button>
         </div>
 
@@ -310,26 +215,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
               <h3 className="text-lg font-medium mb-1">Overall Scaling Readiness</h3>
               <div className="text-4xl font-bold mb-2">{calculateReadinessScore()}%</div>
               <Progress value={calculateReadinessScore()} className="w-full h-3" />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-              {Object.entries(categoryBreakdown).map(([category, data]) => (
-                <div key={category} className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                  <div className="text-sm font-medium mb-1">{SCALING_METRIC_CATEGORIES[category]}</div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold">
-                      {data.achieved}/{data.total}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {data.total > 0 ? Math.round((data.achieved / data.total) * 100) : 0}%
-                    </span>
-                  </div>
-                  <Progress 
-                    value={data.total > 0 ? (data.achieved / data.total) * 100 : 0} 
-                    className="h-2 mt-1" 
-                  />
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>
@@ -360,7 +245,7 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
                   <p className="text-gray-500 mb-4">
                     No scaling readiness metrics defined yet. Add metrics to track your startup's readiness to scale.
                   </p>
-                  <Button onClick={() => handleOpenForm()}>Add Your First Metric</Button>
+                  <Button onClick={() => handleOpenForm()}>Add Your First Readiness Metric</Button>
                 </CardContent>
               </Card>
             ) : (
@@ -374,7 +259,7 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
                             {metric.status.charAt(0).toUpperCase() + metric.status.slice(1).replace('-', ' ')}
                           </Badge>
                           <Badge variant="outline">
-                            {SCALING_METRIC_CATEGORIES[metric.category]}
+                            {METRIC_TYPE_LABELS[metric.category] || metric.category}
                           </Badge>
                         </div>
                         <h3 className="text-lg font-medium">{metric.name}</h3>
@@ -390,16 +275,17 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => openMetricDetails(metric)}
+                            onClick={() => handleOpenForm(metric)}
                           >
-                            Details
+                            Edit
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => handleOpenForm(metric)}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => handleDeleteMetric(metric.id)}
                           >
-                            Edit
+                            Delete
                           </Button>
                         </div>
                       </div>
@@ -423,119 +309,26 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
         )}
       </div>
 
-      {/* Metric Detail Sheet */}
-      <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <SheetContent className="w-full sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>{selectedDetails?.name}</SheetTitle>
-            <SheetDescription>
-              {selectedDetails?.description}
-            </SheetDescription>
-          </SheetHeader>
-          
-          <div className="py-6">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                <div className="text-sm text-gray-500 mb-1">Category</div>
-                <div className="font-medium">
-                  {selectedDetails && SCALING_METRIC_CATEGORIES[selectedDetails.category]}
-                </div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                <div className="text-sm text-gray-500 mb-1">Status</div>
-                <div className="font-medium flex items-center gap-2">
-                  {selectedDetails && STATUS_ICONS[selectedDetails.status]}
-                  <span>
-                    {selectedDetails && selectedDetails.status.charAt(0).toUpperCase() + selectedDetails.status.slice(1).replace('-', ' ')}
-                  </span>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                <div className="text-sm text-gray-500 mb-1">Current Value</div>
-                <div className="font-medium">
-                  {selectedDetails?.current_value}
-                  {selectedDetails?.unit === 'percentage' ? '%' : 
-                   selectedDetails?.unit === 'currency' ? '$' : 
-                   selectedDetails?.unit === 'ratio' ? ':1' : ''}
-                </div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                <div className="text-sm text-gray-500 mb-1">Target Value</div>
-                <div className="font-medium">
-                  {selectedDetails?.target_value}
-                  {selectedDetails?.unit === 'percentage' ? '%' : 
-                   selectedDetails?.unit === 'currency' ? '$' : 
-                   selectedDetails?.unit === 'ratio' ? ':1' : ''}
-                </div>
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-3">Related Entities</h3>
-              
-              {relatedEntities.length === 0 ? (
-                <div className="bg-gray-50 p-4 rounded-md text-center text-gray-500 border border-gray-200">
-                  No related entities found for this metric
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {relatedEntities.map(entity => (
-                    <div key={entity.id} className="border rounded-md p-3">
-                      <div className="flex justify-between">
-                        <div>
-                          <Badge variant="outline">
-                            {entity.type}
-                          </Badge>
-                          <div className="font-medium mt-1">
-                            {entity.name || entity.title || entity.feature}
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Impact: {entity.relationshipStrength >= 3 ? 'High' : 
-                                entity.relationshipStrength >= 2 ? 'Medium' : 'Low'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button 
-                variant="destructive" 
-                onClick={() => {
-                  if (selectedDetails) {
-                    handleDeleteMetric(selectedDetails.id);
-                    setIsDetailsOpen(false);
-                  }
-                }}
-              >
-                Delete Metric
-              </Button>
-              <Button 
-                onClick={() => {
-                  setIsDetailsOpen(false);
-                  if (selectedDetails) {
-                    handleOpenForm(selectedDetails);
-                  }
-                }}
-              >
-                Edit Metric
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
       {/* Metric Form */}
       {isFormOpen && (
-        <ScalingMetricForm
-          projectId={projectId}
-          metric={selectedMetric}
-          onSave={handleSaveMetric}
-          onClose={handleCloseForm}
-        />
+        <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{selectedMetric ? 'Edit Readiness Metric' : 'Add Readiness Metric'}</SheetTitle>
+              <SheetDescription>
+                Track metrics that indicate your startup's readiness to scale.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <ScalingReadinessMetricForm
+                projectId={projectId}
+                metric={selectedMetric}
+                onSave={handleSaveMetric}
+                onClose={handleCloseForm}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
       )}
     </>
   );

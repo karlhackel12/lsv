@@ -25,15 +25,43 @@ interface ScalingReadinessMetricFormProps {
   growthModelId?: string;
 }
 
-// Categories for scaling readiness metrics
-const METRIC_CATEGORIES = [
-  'unit_economics',
-  'acquisition',
-  'retention',
-  'growth_model',
-  'team',
-  'infrastructure',
-  'custom'
+// Define the 7 types of readiness metrics validation
+const READINESS_METRIC_TYPES = [
+  {
+    value: 'product_market_fit',
+    label: 'Product-Market Fit',
+    description: 'Measures how well your product satisfies market demand.'
+  },
+  {
+    value: 'unit_economics',
+    label: 'Unit Economics',
+    description: 'Focuses on profitability metrics like LTV:CAC ratio.'
+  },
+  {
+    value: 'growth_engine',
+    label: 'Growth Engine',
+    description: 'Assesses the effectiveness of your acquisition channels.'
+  },
+  {
+    value: 'team_capacity',
+    label: 'Team Capacity',
+    description: 'Evaluates if your team is ready to handle scaling operations.'
+  },
+  {
+    value: 'operational_scalability',
+    label: 'Operational Scalability',
+    description: 'Measures how well your operations can scale without breaking.'
+  },
+  {
+    value: 'financial_readiness',
+    label: 'Financial Readiness',
+    description: 'Evaluates if you have sufficient capital to fund growth.'
+  },
+  {
+    value: 'market_opportunity',
+    label: 'Market Opportunity',
+    description: 'Assesses the size and growth potential of your target market.'
+  }
 ];
 
 // The unit options we support
@@ -49,9 +77,10 @@ const UNIT_OPTIONS = [
 
 // Status options for metrics
 const STATUS_OPTIONS = [
-  'passed',
-  'warning',
-  'failed',
+  'achieved',
+  'on-track',
+  'needs-improvement',
+  'critical',
   'pending'
 ];
 
@@ -175,22 +204,25 @@ const ScalingReadinessMetricForm = ({
             </div>
             
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">Metric Type</Label>
               <Select 
                 value={category} 
                 onValueChange={(value) => setCategory(value)}
               >
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Select metric category" />
+                  <SelectValue placeholder="Select metric type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {METRIC_CATEGORIES.map(cat => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  {READINESS_METRIC_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                {READINESS_METRIC_TYPES.find(type => type.value === category)?.description}
+              </p>
             </div>
             
             <div>
@@ -246,7 +278,7 @@ const ScalingReadinessMetricForm = ({
                 <SelectContent>
                   {STATUS_OPTIONS.map(statusOption => (
                     <SelectItem key={statusOption} value={statusOption}>
-                      {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                      {statusOption.charAt(0).toUpperCase() + statusOption.slice(1).replace('-', ' ')}
                     </SelectItem>
                   ))}
                 </SelectContent>

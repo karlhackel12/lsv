@@ -6,7 +6,6 @@ import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Light
 import PageIntroduction from '@/components/PageIntroduction';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessChecklist';
-import GrowthMetricsSection from '@/components/growth/GrowthMetricsSection';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -24,7 +23,7 @@ const GrowthPage = () => {
   } = useProject();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'metrics');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'scaling_readiness');
   const [defaultGrowthModelId, setDefaultGrowthModelId] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
@@ -130,7 +129,7 @@ const GrowthPage = () => {
         icon={<TrendingUp className="h-5 w-5 text-blue-500" />} 
         description={
           <p>
-            Track key metrics, optimize acquisition channels, and evaluate your startup's readiness to scale using Lean Startup principles.
+            Track acquisition channels, and evaluate your startup's readiness to scale using Lean Startup principles.
           </p>
         }
         storageKey="growth-page"
@@ -144,10 +143,6 @@ const GrowthPage = () => {
             <CardContent className="p-0">
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full flex justify-start p-1">
-                  <TabsTrigger value="metrics" className="flex items-center gap-2">
-                    <BarChart2 className="h-4 w-4" />
-                    <span>Metrics</span>
-                  </TabsTrigger>
                   <TabsTrigger value="scaling_readiness" className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
                     <span>Scaling Readiness</span>
@@ -175,8 +170,7 @@ const GrowthPage = () => {
                       <BreadcrumbSeparator />
                       <BreadcrumbItem>
                         <BreadcrumbLink>
-                          {activeTab === 'metrics' ? 'Growth Metrics' : 
-                           activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
+                          {activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
                            activeTab === 'channels' ? 'Acquisition Channels' : 
                            activeTab === 'experiments' ? 'Growth Experiments' :
                            'Pivot Decision'}
@@ -184,14 +178,6 @@ const GrowthPage = () => {
                       </BreadcrumbItem>
                     </BreadcrumbList>
                   </Breadcrumb>
-                  
-                  <TabsContent value="metrics" className="mt-0">
-                    <GrowthMetricsSection 
-                      metrics={growthMetrics} 
-                      projectId={currentProject.id} 
-                      refreshData={() => fetchModelData(currentProject.id)} 
-                    />
-                  </TabsContent>
                   
                   <TabsContent value="scaling_readiness" className="mt-0">
                     <ScalingReadinessChecklist 

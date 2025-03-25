@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -6,10 +7,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight } from 'lucide-react';
 import { Layers } from 'lucide-react';
-import GrowthMetricsPanel from './dashboard/GrowthMetricsPanel';
 import LeanStartupBanner from '@/components/dashboard/LeanStartupBanner';
 import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
 import InfoTooltip from '@/components/InfoTooltip';
+
 const Dashboard = () => {
   const {
     currentProject
@@ -20,11 +21,13 @@ const Dashboard = () => {
   const [metrics, setMetrics] = useState<any[]>([]);
   const [mvpFeatures, setMvpFeatures] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
     if (currentProject) {
       fetchDashboardData();
     }
   }, [currentProject]);
+  
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -72,15 +75,14 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
+  
   if (!currentProject) {
     return <div>Please select a project to view the dashboard.</div>;
   }
+  
   return <div className="space-y-6">
       <LeanStartupBanner />
       <BusinessPlanBanner />
-      
-      {/* Growth Metrics Panel */}
-      <GrowthMetricsPanel />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
