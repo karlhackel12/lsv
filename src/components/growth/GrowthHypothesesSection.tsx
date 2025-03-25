@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -69,7 +68,6 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
     try {
       setIsLoading(true);
       
-      // First get all hypotheses for this growth model
       const { data, error } = await supabase
         .from('growth_hypotheses')
         .select('*')
@@ -78,12 +76,10 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
         
       if (error) throw error;
       
-      // Enrich with metric names
       const enrichedData = await Promise.all(data.map(async (hypothesis) => {
         let metricName = 'Unknown Metric';
         let experimentCount = 0;
         
-        // Get metric name if there's a metric ID
         if (hypothesis.metric_id) {
           const { data: metricData } = await supabase
             .from('growth_metrics')
@@ -95,9 +91,6 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
             metricName = metricData.name;
           }
         }
-        
-        // Get count of linked experiments (future enhancement)
-        // This would require a relation between experiments and growth hypotheses
         
         return {
           ...hypothesis,
@@ -150,7 +143,6 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
     });
   };
 
-  // Filter hypotheses based on the active tab
   const filteredHypotheses = activeTab === 'all' 
     ? hypotheses 
     : hypotheses.filter(h => h.stage === activeTab);
@@ -217,17 +209,17 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
 
   return (
     <div className="space-y-6">
-      {showForm ? (
-        <StructuredHypothesisForm
-          isOpen={showForm}
-          growthModel={growthModel}
-          projectId={projectId}
-          metrics={metrics}
-          onSave={handleSave}
-          onClose={handleCloseForm}
-          hypothesis={editingHypothesis}
-        />
-      ) : (
+      <StructuredHypothesisForm
+        isOpen={showForm}
+        growthModel={growthModel}
+        projectId={projectId}
+        metrics={metrics}
+        onSave={handleSave}
+        onClose={handleCloseForm}
+        hypothesis={editingHypothesis}
+      />
+
+      {!showForm && (
         <>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Growth Hypotheses</h2>
