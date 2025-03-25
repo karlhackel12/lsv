@@ -1,4 +1,3 @@
-
 export interface PivotTrigger {
   id: string;
   metric_id: string;
@@ -119,3 +118,22 @@ export const TEMPLATE_BUSINESS_MODEL_CRITERIA = [
   ">60% retention at 60 days",
   ">0.5 viral coefficient (referrals per user)"
 ];
+
+export const PIVOT_TYPE_DESCRIPTIONS = {
+  "zoom-in": "A single feature becomes the whole product",
+  "zoom-out": "The product becomes a feature of a larger solution",
+  "customer-segment": "Changing which customers you're serving",
+  "customer-need": "Solving a different problem for the same customers",
+  "platform": "Changing from an application to a platform or vice versa",
+  "business-architecture": "Switching between high margin/low volume and low margin/high volume",
+  "value-capture": "Changing your revenue model or monetization strategy",
+  "engine-of-growth": "Changing your customer acquisition strategy",
+  "channel": "Changing how you deliver your product to customers",
+  "technology": "Using a different technology to solve the same problem"
+};
+
+export const PIVOT_TYPES = Object.entries(PIVOT_TYPE_DESCRIPTIONS).map(([value, description]) => ({
+  value,
+  label: value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+  description
+}));
