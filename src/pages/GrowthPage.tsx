@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, BarChart2, Layers, ArrowRight, CheckCircle2, Lightbulb, GitFork, FlaskConical } from 'lucide-react';
+import { Loader2, TrendingUp, Layers, ArrowRight, CheckCircle2, Lightbulb, GitFork, FlaskConical } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessChecklist';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';

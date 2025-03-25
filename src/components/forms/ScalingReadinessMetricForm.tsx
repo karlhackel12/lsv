@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ScalingReadinessMetric } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,13 +64,61 @@ const READINESS_METRIC_TYPES = [
   }
 ];
 
+// Predefined metric templates for each category
+const METRIC_TEMPLATES = {
+  product_market_fit: [
+    { label: 'Net Promoter Score (NPS)', value: 'nps', unit: 'number', target: '40', description: 'Measures customer satisfaction and likelihood to recommend your product' },
+    { label: 'Customer Satisfaction Score', value: 'csat', unit: 'percentage', target: '85', description: 'Percentage of users who report being satisfied with your product' },
+    { label: 'User Retention Rate', value: 'retention', unit: 'percentage', target: '75', description: 'Percentage of users who continue using your product after 30 days' },
+    { label: 'Feature Adoption Rate', value: 'feature_adoption', unit: 'percentage', target: '60', description: 'Percentage of users actively using your core features' }
+  ],
+  unit_economics: [
+    { label: 'LTV:CAC Ratio', value: 'ltv_cac', unit: 'ratio', target: '3', description: 'Ratio of customer lifetime value to customer acquisition cost' },
+    { label: 'Customer Acquisition Cost', value: 'cac', unit: 'currency', target: '50', description: 'Cost to acquire a new customer' },
+    { label: 'Gross Margin', value: 'gross_margin', unit: 'percentage', target: '70', description: 'Percentage of revenue remaining after direct costs' },
+    { label: 'Payback Period', value: 'payback', unit: 'months', target: '6', description: 'Time to recover the cost of acquiring a new customer' }
+  ],
+  growth_engine: [
+    { label: 'Growth Rate', value: 'growth_rate', unit: 'percentage', target: '15', description: 'Monthly growth rate in users or revenue' },
+    { label: 'Conversion Rate', value: 'conversion', unit: 'percentage', target: '5', description: 'Percentage of website visitors who become customers' },
+    { label: 'Viral Coefficient', value: 'viral', unit: 'ratio', target: '1.2', description: 'Number of new users each current user brings in' },
+    { label: 'Channel Diversification', value: 'channels', unit: 'number', target: '3', description: 'Number of effective acquisition channels' }
+  ],
+  team_capacity: [
+    { label: 'Team Growth Rate', value: 'team_growth', unit: 'percentage', target: '20', description: 'Rate at which you can grow your team while maintaining culture' },
+    { label: 'Key Roles Filled', value: 'key_roles', unit: 'percentage', target: '90', description: 'Percentage of critical roles filled for scaling' },
+    { label: 'Employee Productivity', value: 'productivity', unit: 'ratio', target: '85', description: 'Ratio of output to team size compared to industry benchmark' },
+    { label: 'Knowledge Documentation', value: 'documentation', unit: 'percentage', target: '80', description: 'Percentage of critical processes documented' }
+  ],
+  operational_scalability: [
+    { label: 'Infrastructure Scalability', value: 'infrastructure', unit: 'percentage', target: '95', description: 'Infrastructure capacity to handle 10x current load' },
+    { label: 'Process Automation', value: 'automation', unit: 'percentage', target: '70', description: 'Percentage of repeatable processes that are automated' },
+    { label: 'System Uptime', value: 'uptime', unit: 'percentage', target: '99.9', description: 'Percentage of time your systems are operational' },
+    { label: 'Support Ticket Resolution Time', value: 'support_time', unit: 'hours', target: '4', description: 'Average time to resolve customer support tickets' }
+  ],
+  financial_readiness: [
+    { label: 'Runway', value: 'runway', unit: 'months', target: '18', description: 'Number of months before additional funding is needed' },
+    { label: 'Operating Cash Flow', value: 'cash_flow', unit: 'currency', target: '50000', description: 'Monthly net cash from operations' },
+    { label: 'Revenue Growth Rate', value: 'revenue_growth', unit: 'percentage', target: '20', description: 'Monthly growth rate in revenue' },
+    { label: 'Burn Multiple', value: 'burn_multiple', unit: 'ratio', target: '1.5', description: 'Amount of cash burned per unit of ARR added' }
+  ],
+  market_opportunity: [
+    { label: 'Total Addressable Market', value: 'tam', unit: 'currency', target: '1000000000', description: 'Total market opportunity for your product' },
+    { label: 'Market Growth Rate', value: 'market_growth', unit: 'percentage', target: '15', description: 'Annual growth rate of your target market' },
+    { label: 'Market Share', value: 'market_share', unit: 'percentage', target: '5', description: 'Your current percentage of the total market' },
+    { label: 'Competitive Density', value: 'competition', unit: 'ratio', target: '0.3', description: 'Ratio of your share to top competitors (lower is better)' }
+  ]
+};
+
 // The unit options we support
 const UNIT_OPTIONS = [
   'percentage',
   'number',
   'currency',
   'users',
+  'months',
   'days',
+  'hours',
   'ratio',
   'custom'
 ];
@@ -99,8 +147,39 @@ const ScalingReadinessMetricForm = ({
   const [unit, setUnit] = useState(metric?.unit || 'ratio');
   const [status, setStatus] = useState(metric?.status || 'pending');
   const [importance, setImportance] = useState((metric?.importance || 1).toString());
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Update available templates when category changes
+  useEffect(() => {
+    if (category && METRIC_TEMPLATES[category as keyof typeof METRIC_TEMPLATES]) {
+      setAvailableTemplates(METRIC_TEMPLATES[category as keyof typeof METRIC_TEMPLATES]);
+    } else {
+      setAvailableTemplates([]);
+    }
+    setSelectedTemplate('');
+  }, [category]);
+
+  // Handle template selection
+  const handleTemplateChange = (templateValue: string) => {
+    if (templateValue === 'custom') {
+      setSelectedTemplate('custom');
+      return;
+    }
+
+    setSelectedTemplate(templateValue);
+    
+    const selectedMetricTemplate = availableTemplates.find(template => template.value === templateValue);
+    
+    if (selectedMetricTemplate) {
+      setName(selectedMetricTemplate.label);
+      setDescription(selectedMetricTemplate.description);
+      setUnit(selectedMetricTemplate.unit);
+      setTargetValue(selectedMetricTemplate.target);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,28 +261,6 @@ const ScalingReadinessMetricForm = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Metric Name</Label>
-              <Input 
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="E.g., LTV:CAC Ratio"
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea 
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what this scaling readiness metric measures"
-                rows={3}
-              />
-            </div>
-            
-            <div>
               <Label htmlFor="category">Metric Type</Label>
               <Select 
                 value={category} 
@@ -223,6 +280,48 @@ const ScalingReadinessMetricForm = ({
               <p className="text-xs text-gray-500 mt-1">
                 {READINESS_METRIC_TYPES.find(type => type.value === category)?.description}
               </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="metricTemplate">Select Metric</Label>
+              <Select 
+                value={selectedTemplate} 
+                onValueChange={handleTemplateChange}
+              >
+                <SelectTrigger id="metricTemplate">
+                  <SelectValue placeholder="Choose a predefined metric or create custom" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom Metric</SelectItem>
+                  {availableTemplates.map(template => (
+                    <SelectItem key={template.value} value={template.value}>
+                      {template.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="name">Metric Name</Label>
+              <Input 
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="E.g., LTV:CAC Ratio"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea 
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe what this scaling readiness metric measures"
+                rows={3}
+              />
             </div>
             
             <div>
