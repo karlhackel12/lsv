@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LinkIcon } from 'lucide-react';
+import { LinkIcon, TrendingUp } from 'lucide-react';
 import { Hypothesis, Experiment } from '@/types/database';
 import StatusBadge from '@/components/StatusBadge';
 import ExperimentConnectionsPanel from '../ExperimentConnectionsPanel';
@@ -13,6 +13,7 @@ interface ExperimentOverviewTabProps {
   projectId?: string;
   onRefresh?: () => void;
   navigateToHypothesis: () => void;
+  isGrowthExperiment?: boolean;
 }
 
 const ExperimentOverviewTab = ({ 
@@ -20,15 +21,19 @@ const ExperimentOverviewTab = ({
   relatedHypothesis, 
   projectId,
   onRefresh,
-  navigateToHypothesis
+  navigateToHypothesis,
+  isGrowthExperiment = false
 }: ExperimentOverviewTabProps) => {
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Hypothesis</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {isGrowthExperiment && <TrendingUp className="h-4 w-4 text-blue-500 inline mr-2" />}
+          Hypothesis
+        </h2>
         <p className="text-gray-700 mb-4">{experiment.hypothesis}</p>
         
-        {relatedHypothesis && (
+        {relatedHypothesis && !isGrowthExperiment && (
           <div className="mt-4 p-4 bg-blue-50 rounded-md border border-blue-100">
             <div className="flex justify-between items-start">
               <div className="flex items-center">
@@ -69,7 +74,7 @@ const ExperimentOverviewTab = ({
         </Card>
       </div>
       
-      {projectId && onRefresh && (
+      {projectId && onRefresh && !isGrowthExperiment && (
         <ExperimentConnectionsPanel
           experiment={experiment}
           projectId={projectId}

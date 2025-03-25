@@ -13,7 +13,11 @@ interface TypeformEmbedProps {
 }
 
 const TypeformEmbed = ({ experiment, onRefresh }: TypeformEmbedProps) => {
-  const { typeform_id, typeform_url, typeform_responses_count } = experiment;
+  // Use optional chaining to safely access properties that might not exist
+  const typeform_id = (experiment as any).typeform_id; 
+  const typeform_url = (experiment as any).typeform_url;
+  const typeform_responses_count = (experiment as any).typeform_responses_count;
+  
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
   

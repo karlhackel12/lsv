@@ -4,19 +4,28 @@ import { Experiment } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/StatusBadge';
 import { Badge } from '@/components/ui/badge';
-import { Edit, CalendarClock, Link as LinkIcon } from 'lucide-react';
+import { Edit, CalendarClock, Link as LinkIcon, TrendingUp, Beaker } from 'lucide-react';
 
 interface ExperimentHeaderProps {
   experiment: Experiment;
   onEdit: () => void;
   hasRelatedHypothesis?: boolean;
+  isGrowthExperiment?: boolean;
 }
 
-const ExperimentHeader = ({ experiment, onEdit, hasRelatedHypothesis = false }: ExperimentHeaderProps) => {
+const ExperimentHeader = ({ 
+  experiment, 
+  onEdit, 
+  hasRelatedHypothesis = false,
+  isGrowthExperiment = false
+}: ExperimentHeaderProps) => {
+  const Icon = isGrowthExperiment ? TrendingUp : Beaker;
+  
   return (
     <div className="flex justify-between items-start mb-4">
       <div>
         <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-blue-500 mr-1" />
           <h1 className="text-xl font-bold text-gray-900">{experiment.title}</h1>
           {hasRelatedHypothesis && (
             <Badge variant="outline" className="bg-blue-50 border-blue-200">
@@ -42,7 +51,7 @@ const ExperimentHeader = ({ experiment, onEdit, hasRelatedHypothesis = false }: 
         className="flex items-center"
       >
         <Edit className="h-4 w-4 mr-2" />
-        Edit Experiment
+        Edit {isGrowthExperiment ? 'Growth ' : ''}Experiment
       </Button>
     </div>
   );

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit, Trash2, Eye } from 'lucide-react';
+import { Edit, Trash2, Eye, TrendingUp, Beaker } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Card from '@/components/Card';
 import StatusBadge from '@/components/StatusBadge';
@@ -11,9 +11,10 @@ interface ExperimentCardProps {
   experiment: Experiment;
   index: number;
   onEdit: (experiment: Experiment) => void;
-  onDelete: (experiment: Experiment) => void;
+  onDelete?: (experiment: Experiment) => void;
   onViewDetail: (experiment: Experiment) => void;
   refreshData: () => void;
+  isGrowthExperiment?: boolean;
 }
 
 const ExperimentCard = ({ 
@@ -22,8 +23,11 @@ const ExperimentCard = ({
   onEdit, 
   onDelete, 
   onViewDetail,
-  refreshData 
+  refreshData,
+  isGrowthExperiment = false
 }: ExperimentCardProps) => {
+  const Icon = isGrowthExperiment ? TrendingUp : Beaker;
+  
   return (
     <Card 
       key={experiment.id} 
@@ -33,7 +37,10 @@ const ExperimentCard = ({
     >
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="text-lg font-semibold text-validation-gray-900">{experiment.title}</h3>
+          <div className="flex items-center">
+            <Icon className="h-4 w-4 text-blue-500 mr-2" />
+            <h3 className="text-lg font-semibold text-validation-gray-900">{experiment.title}</h3>
+          </div>
           <p className="text-validation-gray-600 italic mb-2">Testing: {experiment.hypothesis}</p>
         </div>
         <div className="flex space-x-2">
@@ -56,15 +63,17 @@ const ExperimentCard = ({
             <Edit className="h-3.5 w-3.5" />
             <span className="sr-only">Edit</span>
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="h-7 w-7 p-0 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
-            onClick={() => onDelete(experiment)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="sr-only">Delete</span>
-          </Button>
+          {onDelete && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="h-7 w-7 p-0 text-validation-red-500 hover:text-validation-red-600 hover:bg-validation-red-50"
+              onClick={() => onDelete(experiment)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="sr-only">Delete</span>
+            </Button>
+          )}
         </div>
       </div>
       
@@ -120,6 +129,7 @@ const ExperimentCard = ({
               experiment={experiment} 
               refreshData={refreshData}
               onEdit={onEdit}
+              isGrowthExperiment={isGrowthExperiment}
             />
           </div>
         </div>
