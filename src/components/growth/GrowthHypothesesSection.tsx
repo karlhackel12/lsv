@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -223,7 +224,11 @@ const GrowthHypothesesSection: React.FC<GrowthHypothesesSectionProps> = ({
         <>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Growth Hypotheses</h2>
-            <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
+            <Button 
+              onClick={() => handleOpenForm()} 
+              className="flex items-center gap-2"
+              id="create-hypothesis-button"
+            >
               <PlusCircle className="h-4 w-4" />
               New Hypothesis
             </Button>

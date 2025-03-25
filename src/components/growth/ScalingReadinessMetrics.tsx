@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,11 +22,12 @@ interface ScalingReadinessMetricsProps {
   projectId: string;
   refreshData: () => Promise<void>;
   growthMetrics: any[];
+  isFormOpen?: boolean;
+  onFormClose?: () => void;
 }
 
-// Map for readable labels of the 7 scaling readiness metric types
 const METRIC_TYPE_LABELS = {
-  'product_market_fit': 'Product-Market Fit',
+  'product-market_fit': 'Product-Market Fit',
   'unit_economics': 'Unit Economics',
   'growth_engine': 'Growth Engine',
   'team_capacity': 'Team Capacity',
@@ -52,14 +52,24 @@ const STATUS_CLASSES = {
   'pending': 'bg-gray-100 text-gray-800 border-gray-200'
 };
 
-const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ projectId, refreshData, growthMetrics }) => {
+const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ 
+  projectId, 
+  refreshData, 
+  growthMetrics,
+  isFormOpen = false,
+  onFormClose = () => {}
+}) => {
   const [scalingMetrics, setScalingMetrics] = useState<ScalingReadinessMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpenInternal, setIsFormOpenInternal] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<ScalingReadinessMetric | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState<ScalingReadinessMetric | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsFormOpenInternal(isFormOpen);
+  }, [isFormOpen]);
 
   const fetchScalingMetrics = async () => {
     try {
@@ -96,12 +106,13 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
   
   const handleOpenForm = (metric?: ScalingReadinessMetric) => {
     setSelectedMetric(metric || null);
-    setIsFormOpen(true);
+    setIsFormOpenInternal(true);
   };
   
   const handleCloseForm = () => {
-    setIsFormOpen(false);
+    setIsFormOpenInternal(false);
     setSelectedMetric(null);
+    if (onFormClose) onFormClose();
   };
   
   const handleSaveMetric = async () => {
@@ -109,11 +120,11 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
     if (refreshData) {
       await refreshData();
     }
+    handleCloseForm();
   };
   
   const handleDeleteMetric = async (id: string) => {
     try {
-      // Delete the metric
       const { error } = await supabase
         .from('scaling_readiness_metrics')
         .delete()
@@ -131,7 +142,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
         await refreshData();
       }
       
-      // Close the details sheet if it's open
       if (isDetailsOpen) {
         setIsDetailsOpen(false);
       }
@@ -170,7 +180,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
     }
   };
   
-  // Calculate overall readiness score
   const calculateReadinessScore = () => {
     if (scalingMetrics.length === 0) return 0;
     
@@ -188,7 +197,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
       } else if (metric.status === 'needs-improvement') {
         achievedWeight += (weight * 0.25);
       }
-      // critical and pending contribute 0
     });
     
     return Math.round((achievedWeight / totalWeight) * 100);
@@ -202,13 +210,13 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
           <Button 
             onClick={() => handleOpenForm()}
             className="flex items-center gap-1"
+            id="add-scaling-metric-button"
           >
             <Plus className="h-4 w-4" />
             <span>Add Readiness Metric</span>
           </Button>
         </div>
 
-        {/* Overall readiness score */}
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center mb-2">
@@ -220,7 +228,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
         </Card>
 
         {isLoading ? (
-          // Skeleton loading state
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
               <Card key={i}>
@@ -309,26 +316,14 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({ proje
         )}
       </div>
 
-      {/* Metric Form */}
-      {isFormOpen && (
-        <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>{selectedMetric ? 'Edit Readiness Metric' : 'Add Readiness Metric'}</SheetTitle>
-              <SheetDescription>
-                Track metrics that indicate your startup's readiness to scale.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6">
-              <ScalingReadinessMetricForm
-                projectId={projectId}
-                metric={selectedMetric}
-                onSave={handleSaveMetric}
-                onClose={handleCloseForm}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
+      {(isFormOpenInternal || isFormOpen) && (
+        <ScalingReadinessMetricForm
+          projectId={projectId}
+          metric={selectedMetric}
+          onSave={handleSaveMetric}
+          onClose={handleCloseForm}
+          isOpen={isFormOpenInternal || isFormOpen}
+        />
       )}
     </>
   );

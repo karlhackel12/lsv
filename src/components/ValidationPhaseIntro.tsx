@@ -110,7 +110,10 @@ const ValidationPhaseIntro = ({
             </Button>
             
             {onCreateNew && (
-              <Button onClick={onCreateNew}>
+              <Button 
+                onClick={onCreateNew}
+                id={`create-${phase}-button`} // Add an ID for easier access
+              >
                 {createButtonText}
               </Button>
             )}

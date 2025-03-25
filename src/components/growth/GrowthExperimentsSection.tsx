@@ -32,7 +32,7 @@ interface GrowthExperimentsProps {
   growthModelId: string;
 }
 
-const statusLabels = {
+const statusLabels: Record<string, { label: string, color: string }> = {
   'planned': { label: 'Planned', color: 'bg-blue-100 text-blue-800' },
   'running': { label: 'In Progress', color: 'bg-amber-100 text-amber-800' },
   'completed': { label: 'Completed', color: 'bg-green-100 text-green-800' },
@@ -169,7 +169,7 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
         <>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Growth Experiments</h2>
-            <Button onClick={() => handleOpenForm()} className="flex items-center gap-2">
+            <Button onClick={() => handleOpenForm()} className="flex items-center gap-2" id="create-experiment-button">
               <PlusCircle className="h-4 w-4" />
               New Experiment
             </Button>

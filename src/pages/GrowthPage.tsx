@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
@@ -26,20 +25,27 @@ const GrowthPage = () => {
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'scaling_readiness');
   const [defaultGrowthModelId, setDefaultGrowthModelId] = useState<string | null>(null);
+  const [showAddScalingMetricForm, setShowAddScalingMetricForm] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   const {
-    growthMetrics,
-    growthChannels,
-    growthExperiments,
-    scalingMetrics,
+    growthMetrics, 
+    growthChannels, 
+    growthExperiments, 
+    scalingMetrics, 
     isLoading: isLoadingData,
     fetchGrowthData,
     fetchModelData
   } = useGrowthModels(currentProject?.id || '');
   
-  // Fetch a default growth model ID when project loads
+  useEffect(() => {
+    if (location.state?.openForm) {
+      setShowAddScalingMetricForm(true);
+      navigate(location.pathname + location.search, { replace: true });
+    }
+  }, [location]);
+  
   useEffect(() => {
     const fetchDefaultGrowthModel = async () => {
       if (!currentProject?.id) return;
@@ -57,7 +63,6 @@ const GrowthPage = () => {
         if (data && data.length > 0) {
           setDefaultGrowthModelId(data[0].id);
         } else {
-          // Create a default growth model if none exists
           const { data: newModel, error: createError } = await supabase
             .from('growth_models')
             .insert({
@@ -88,7 +93,6 @@ const GrowthPage = () => {
     fetchDefaultGrowthModel();
   }, [currentProject?.id]);
 
-  // Use URL parameter for active tab
   useEffect(() => {
     if (tabFromUrl) {
       setActiveTab(tabFromUrl);
@@ -105,7 +109,7 @@ const GrowthPage = () => {
   };
 
   const handleAddScalingMetric = () => {
-    navigate('/growth?tab=scaling_readiness', { state: { openForm: true } });
+    setShowAddScalingMetricForm(true);
   };
 
   if (isLoading) {
@@ -197,6 +201,8 @@ const GrowthPage = () => {
                       growthMetrics={growthMetrics}
                       growthExperiments={growthExperiments}
                       growthChannels={growthChannels}
+                      isMetricFormOpen={showAddScalingMetricForm}
+                      onMetricFormClose={() => setShowAddScalingMetricForm(false)}
                     />
                   </TabsContent>
                   

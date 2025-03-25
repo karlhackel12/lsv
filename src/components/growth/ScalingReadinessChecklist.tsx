@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ScalingReadinessMetrics from './ScalingReadinessMetrics';
 
 interface ScalingReadinessChecklistProps {
@@ -9,6 +9,8 @@ interface ScalingReadinessChecklistProps {
   growthMetrics: any[];
   growthExperiments: any[];
   growthChannels: any[];
+  isMetricFormOpen?: boolean;
+  onMetricFormClose?: () => void;
 }
 
 const ScalingReadinessChecklist: React.FC<ScalingReadinessChecklistProps> = ({
@@ -16,30 +18,39 @@ const ScalingReadinessChecklist: React.FC<ScalingReadinessChecklistProps> = ({
   refreshData,
   growthMetrics,
   growthExperiments,
-  growthChannels
+  growthChannels,
+  isMetricFormOpen = false,
+  onMetricFormClose = () => {}
 }) => {
+  const [activeTab, setActiveTab] = useState<string>('metrics');
+
   return (
     <div className="space-y-6">
-      <div className="max-w-3xl mx-auto">
-        <Card className="border-none shadow-none mb-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Scaling Readiness Assessment</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Tabs defaultValue="metrics" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="metrics">Scaling Metrics</TabsTrigger>
+          <TabsTrigger value="resources">Resources</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="metrics" className="mt-6">
+          <ScalingReadinessMetrics 
+            projectId={projectId} 
+            refreshData={refreshData} 
+            growthMetrics={growthMetrics}
+            isFormOpen={isMetricFormOpen}
+            onFormClose={onMetricFormClose}
+          />
+        </TabsContent>
+        
+        <TabsContent value="resources" className="mt-6">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Scaling Readiness Resources</h3>
             <p className="text-gray-600">
-              Track key metrics that indicate your startup's readiness to scale. These metrics are organized into 
-              seven categories: Product-Market Fit, Unit Economics, Growth Engine, Team Capacity, 
-              Operational Scalability, Financial Readiness, and Market Opportunity.
+              Resources and recommendations to help your startup scale successfully will appear here.
             </p>
-          </CardContent>
-        </Card>
-
-        <ScalingReadinessMetrics 
-          projectId={projectId} 
-          refreshData={refreshData}
-          growthMetrics={growthMetrics}
-        />
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

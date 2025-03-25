@@ -11,6 +11,7 @@ const MVPPage = () => {
   const { currentProject } = useProject();
   const [mvpFeatures, setMvpFeatures] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMvpForm, setShowMvpForm] = useState(false);
   
   const fetchMVPFeatures = async () => {
     try {
@@ -51,6 +52,10 @@ const MVPPage = () => {
     }
   }, [currentProject]);
   
+  const handleOpenMvpForm = () => {
+    setShowMvpForm(true);
+  };
+  
   if (!currentProject) {
     return <div>Select a project to view MVP features</div>;
   }
@@ -65,7 +70,7 @@ const MVPPage = () => {
       
       <ValidationPhaseIntro 
         phase="mvp" 
-        onCreateNew={() => document.getElementById('create-mvp-feature-button')?.click()}
+        onCreateNew={handleOpenMvpForm}
         createButtonText="Add MVP Feature"
       />
       
@@ -73,6 +78,8 @@ const MVPPage = () => {
         mvpFeatures={mvpFeatures}
         refreshData={fetchMVPFeatures}
         projectId={currentProject.id}
+        isFormOpen={showMvpForm}
+        onFormClose={() => setShowMvpForm(false)}
       />
     </div>
   );
