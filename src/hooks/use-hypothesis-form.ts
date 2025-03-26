@@ -1,121 +1,162 @@
 
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Hypothesis } from '@/types/database';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import {
-  TEMPLATE_PROBLEM_HYPOTHESES,
-  TEMPLATE_SOLUTION_HYPOTHESES,
-  TEMPLATE_PROBLEM_CRITERIA,
-  TEMPLATE_SOLUTION_CRITERIA
-} from '@/types/pivot';
+import { Hypothesis } from '@/types/database';
 
-export const useHypothesisForm = (
-  hypothesis: Hypothesis | undefined, 
-  onSave: (data: Hypothesis) => Promise<void>, 
-  onClose: () => void,
-  phaseType: 'problem' | 'solution' = 'problem'
-) => {
+interface UseHypothesisFormProps {
+  hypothesis: Hypothesis | null | undefined;
+  projectId: string;
+  onSave: (hypothesis: Hypothesis) => void;
+  onClose: () => void;
+  phaseType?: 'problem' | 'solution';
+}
+
+export function useHypothesisForm({
+  hypothesis,
+  projectId,
+  onSave,
+  onClose,
+  phaseType = 'problem'
+}: UseHypothesisFormProps) {
   const { toast } = useToast();
   const isEditing = !!hypothesis;
-
-  // Create default values object with appropriate typing
-  const defaultValues: Partial<Hypothesis> = hypothesis || {
-    statement: '',
-    category: phaseType === 'problem' ? 'problem' : 'solution',
-    criteria: '',
-    experiment: '',
-    status: 'not-started',
-    evidence: '',
-    result: '',
-    phase: phaseType,
-  };
-
-  const form = useForm<Hypothesis>({
-    defaultValues,
-    mode: 'onChange',
+  
+  // Enhanced validation schema
+  const formSchema = z.object({
+    id: z.string().optional(),
+    statement: z.string().min(1, 'Statement is required'),
+    category: z.string(),
+    status: z.string(),
+    criteria: z.string().min(1, 'Success criteria is required'),
+    experiment: z.string().min(1, 'Experiment design is required'),
+    evidence: z.string().optional(),
+    result: z.string().optional(),
+    phase: z.enum(['problem', 'solution']),
+    project_id: z.string(),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
   });
 
-  const handleSubmit = async (data: Hypothesis) => {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      id: hypothesis?.id,
+      statement: hypothesis?.statement || '',
+      category: hypothesis?.category || 'customer',
+      status: hypothesis?.status || 'not-started',
+      criteria: hypothesis?.criteria || '',
+      experiment: hypothesis?.experiment || '',
+      evidence: hypothesis?.evidence || '',
+      result: hypothesis?.result || '',
+      phase: hypothesis?.phase || phaseType,
+      project_id: projectId,
+      created_at: hypothesis?.created_at,
+      updated_at: hypothesis?.updated_at,
+    },
+  });
+
+  // When the form opens, ensure it gets reset with the correct data
+  React.useEffect(() => {
+    if (hypothesis) {
+      console.log("Resetting hypothesis form with data:", hypothesis);
+      // Force a reset to ensure all fields are correctly populated
+      setTimeout(() => {
+        form.reset({
+          id: hypothesis.id,
+          statement: hypothesis.statement || '',
+          category: hypothesis.category || 'customer',
+          status: hypothesis.status || 'not-started',
+          criteria: hypothesis.criteria || '',
+          experiment: hypothesis.experiment || '',
+          evidence: hypothesis.evidence || '',
+          result: hypothesis.result || '',
+          phase: hypothesis.phase || phaseType,
+          project_id: projectId,
+          created_at: hypothesis.created_at,
+          updated_at: hypothesis.updated_at,
+        });
+      }, 0);
+    } else {
+      form.reset({
+        statement: '',
+        category: 'customer',
+        status: 'not-started',
+        criteria: '',
+        experiment: '',
+        evidence: '',
+        result: '',
+        phase: phaseType,
+        project_id: projectId,
+      });
+    }
+  }, [hypothesis, form, phaseType, projectId]);
+
+  const handleSubmit = async (data: any) => {
     try {
-      // Validation checks
-      if (!data.statement.trim()) {
-        form.setError('statement', { 
-          type: 'required', 
-          message: 'Hypothesis statement is required' 
-        });
-        return;
-      }
-
-      if (!data.criteria.trim()) {
-        form.setError('criteria', { 
-          type: 'required', 
-          message: 'Success criteria is required' 
-        });
-        return;
-      }
-
-      // Ensure phase is set
-      data.phase = phaseType;
+      console.log("Form submitted with data:", data);
       
-      // Ensure we're not sending empty strings for UUID fields
-      // This prevents database validation errors when inserting data
-      Object.keys(data).forEach(key => {
-        const k = key as keyof Hypothesis;
-        if (typeof data[k] === 'string' && (data[k] as string) === '') {
-          if (key.endsWith('_id')) {
-            // @ts-ignore: We know this is safe because we're checking for '_id' suffix
-            data[k] = null;
-          }
-        }
-      });
-
-      await onSave(data);
-      toast({
-        title: isEditing ? 'Hypothesis updated' : 'Hypothesis created',
-        description: isEditing 
-          ? 'Your hypothesis has been successfully updated' 
-          : 'Your new hypothesis has been created',
-      });
+      if (isEditing) {
+        const { error } = await supabase
+          .from('hypotheses')
+          .update({
+            statement: data.statement,
+            category: data.category,
+            status: data.status,
+            criteria: data.criteria,
+            experiment: data.experiment,
+            evidence: data.evidence || null,
+            result: data.result || null,
+            phase: data.phase,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', hypothesis!.id);
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Success',
+          description: 'Hypothesis updated successfully',
+        });
+      } else {
+        const { error } = await supabase
+          .from('hypotheses')
+          .insert({
+            statement: data.statement,
+            category: data.category,
+            status: data.status,
+            criteria: data.criteria,
+            experiment: data.experiment,
+            project_id: projectId,
+            phase: data.phase,
+          });
+          
+        if (error) throw error;
+        
+        toast({
+          title: 'Success',
+          description: 'New hypothesis created successfully',
+        });
+      }
+      
+      onSave(data);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving hypothesis:', error);
       toast({
         title: 'Error',
-        description: 'There was an error saving your hypothesis. Please try again.',
+        description: error.message || 'Failed to save hypothesis',
         variant: 'destructive',
       });
     }
-  };
-
-  const applyHypothesisTemplate = (template: string) => {
-    // Check if this is likely a criteria template
-    if (template.includes('%') || template.includes('>')) {
-      form.setValue('criteria', template);
-      form.trigger('criteria');
-    } else {
-      form.setValue('statement', template);
-      form.trigger('statement');
-    }
-  };
-
-  const getHypothesisTemplates = () => {
-    return phaseType === 'problem'
-      ? TEMPLATE_PROBLEM_HYPOTHESES
-      : TEMPLATE_SOLUTION_HYPOTHESES;
-  };
-
-  const getCriteriaTemplates = () => {
-    return phaseType === 'problem'
-      ? TEMPLATE_PROBLEM_CRITERIA 
-      : TEMPLATE_SOLUTION_CRITERIA;
   };
 
   return {
     form,
     isEditing,
     handleSubmit,
-    applyHypothesisTemplate,
-    getHypothesisTemplates,
-    getCriteriaTemplates
   };
-};
+}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { GrowthExperiment, ScalingReadinessMetric } from '@/types/database';
@@ -92,11 +91,35 @@ const GrowthExperimentForm: React.FC<GrowthExperimentFormProps> = ({
     }
   });
 
+  // Enhanced useEffect to ensure form data is properly loaded
   useEffect(() => {
     if (isOpen) {
       fetchScalingMetrics();
+      
+      if (experiment) {
+        console.log("Loading growth experiment data:", experiment);
+        
+        // Force a reset with a small delay to ensure the form is ready
+        setTimeout(() => {
+          form.reset({
+            id: experiment.id,
+            title: experiment.title || '',
+            hypothesis: experiment.hypothesis || '',
+            status: experiment.status || 'planned',
+            notes: experiment.notes || '',
+            project_id: projectId,
+            growth_model_id: growthModelId,
+            scaling_metric_id: experiment.scaling_metric_id || null,
+            start_date: experiment.start_date ? new Date(experiment.start_date).toISOString() : new Date().toISOString(),
+            end_date: experiment.end_date ? new Date(experiment.end_date).toISOString() : futureDate.toISOString(),
+            expected_lift: experiment.expected_lift ?? 0,
+            actual_lift: experiment.actual_lift || null,
+            metric_id: experiment.metric_id || null,
+          });
+        }, 0);
+      }
     }
-  }, [isOpen, projectId]);
+  }, [isOpen, experiment, projectId, growthModelId]);
 
   const fetchScalingMetrics = async () => {
     setIsLoading(true);

@@ -49,7 +49,7 @@ const ExperimentForm = ({
     isGrowthExperiment
   });
 
-  // Reset form with experiment data when it changes or when isOpen changes
+  // Enhanced useEffect to ensure proper form reset
   useEffect(() => {
     console.log("ExperimentForm useEffect triggered:", { 
       isOpen, 
@@ -61,23 +61,25 @@ const ExperimentForm = ({
     if (isOpen) {
       if (experiment) {
         console.log("Resetting form with existing experiment data:", experiment);
-        // Explicitly set all form fields to ensure proper data binding
-        form.reset({
-          ...experiment,
-          // For growth experiments, we need to ensure these fields are properly set
-          id: experiment.id,
-          title: experiment.title || '',
-          hypothesis: experiment.hypothesis || '',
-          method: experiment.method || '',
-          metrics: experiment.metrics || '',
-          status: experiment.status || 'planned',
-          category: experiment.category || experimentType || 'problem',
-          results: experiment.results || '',
-          insights: experiment.insights || '',
-          decisions: experiment.decisions || '',
-          project_id: experiment.project_id || projectId,
-          hypothesis_id: experiment.hypothesis_id || hypothesisId,
-        });
+        
+        // Force form reset with all fields explicitly assigned to ensure proper data binding
+        setTimeout(() => {
+          form.reset({
+            ...experiment,
+            id: experiment.id,
+            title: experiment.title || '',
+            hypothesis: experiment.hypothesis || '',
+            method: experiment.method || '',
+            metrics: experiment.metrics || '',
+            status: experiment.status || 'planned',
+            category: experiment.category || experimentType || 'problem',
+            results: experiment.results || '',
+            insights: experiment.insights || '',
+            decisions: experiment.decisions || '',
+            project_id: experiment.project_id || projectId,
+            hypothesis_id: experiment.hypothesis_id || hypothesisId,
+          });
+        }, 0);
       } else {
         console.log("Resetting form with default values for a new experiment");
         // Clear form for new experiment

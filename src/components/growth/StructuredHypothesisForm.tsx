@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -67,6 +66,22 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
     },
   });
 
+  useEffect(() => {
+    if (isOpen && hypothesis) {
+      console.log("Loading hypothesis data into form:", hypothesis);
+      
+      setTimeout(() => {
+        form.reset({
+          action: hypothesis.action || '',
+          outcome: hypothesis.outcome || '',
+          success_criteria: hypothesis.success_criteria || '',
+          stage: hypothesis.stage || 'channel',
+          metric_id: hypothesis.metric_id || '',
+        });
+      }, 0);
+    }
+  }, [isOpen, hypothesis, form]);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
@@ -81,7 +96,6 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
       };
 
       if (hypothesis) {
-        // Update existing hypothesis
         const { error } = await supabase
           .from('growth_hypotheses')
           .update(formData)
@@ -94,7 +108,6 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
           description: 'Your growth hypothesis has been updated',
         });
       } else {
-        // Create new hypothesis
         const { error } = await supabase
           .from('growth_hypotheses')
           .insert(formData);
