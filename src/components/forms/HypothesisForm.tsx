@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Hypothesis } from '@/types/database';
 import { Button } from '@/components/ui/button';
@@ -36,20 +35,14 @@ const HypothesisForm = ({
   projectId,
   phaseType = 'problem'
 }: HypothesisFormProps) => {
-  const { form, isEditing, handleSubmit, applyHypothesisTemplate } = useHypothesisForm(
+  const { form, isEditing, handleSubmit, applyHypothesisTemplate } = useHypothesisForm({
     hypothesis, 
+    projectId, 
     onSave, 
     onClose,
     phaseType
-  );
+  });
   const [showTemplates, setShowTemplates] = React.useState(false);
-
-  // Set project_id field whenever the projectId changes
-  useEffect(() => {
-    if (projectId) {
-      form.setValue('project_id', projectId);
-    }
-  }, [projectId, form]);
   
   const formTitle = phaseType === 'problem' ? 
     (isEditing ? 'Edit Problem Hypothesis' : 'Create Problem Hypothesis') :

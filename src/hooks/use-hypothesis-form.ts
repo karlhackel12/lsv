@@ -44,7 +44,7 @@ export function useHypothesisForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: hypothesis?.id,
+      id: hypothesis?.id || '',
       statement: hypothesis?.statement || '',
       category: hypothesis?.category || 'customer',
       status: hypothesis?.status || 'not-started',
@@ -54,8 +54,8 @@ export function useHypothesisForm({
       result: hypothesis?.result || '',
       phase: hypothesis?.phase || phaseType,
       project_id: projectId,
-      created_at: hypothesis?.created_at,
-      updated_at: hypothesis?.updated_at,
+      created_at: hypothesis?.created_at || '',
+      updated_at: hypothesis?.updated_at || '',
     },
   });
 
@@ -82,6 +82,7 @@ export function useHypothesisForm({
       }, 0);
     } else {
       form.reset({
+        id: '',
         statement: '',
         category: 'customer',
         status: 'not-started',
@@ -91,6 +92,8 @@ export function useHypothesisForm({
         result: '',
         phase: phaseType,
         project_id: projectId,
+        created_at: '',
+        updated_at: '',
       });
     }
   }, [hypothesis, form, phaseType, projectId]);
@@ -154,9 +157,21 @@ export function useHypothesisForm({
     }
   };
 
+  // Function to apply a template to the form
+  const applyHypothesisTemplate = (template: {
+    statement: string;
+    criteria: string;
+    experiment: string;
+  }) => {
+    form.setValue('statement', template.statement);
+    form.setValue('criteria', template.criteria);
+    form.setValue('experiment', template.experiment);
+  };
+
   return {
     form,
     isEditing,
     handleSubmit,
+    applyHypothesisTemplate
   };
 }
