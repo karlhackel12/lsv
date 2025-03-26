@@ -132,7 +132,7 @@ const HypothesisForm = ({
       
       {showTemplates && (
         <HypothesisTemplates
-          isOpen={showTemplates}
+          showTemplates={showTemplates}
           onClose={() => setShowTemplates(false)}
           onApply={handleApplyTemplate}
           phaseType={phaseType}

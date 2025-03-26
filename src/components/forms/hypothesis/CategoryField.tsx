@@ -8,8 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UseFormReturn } from 'react-hook-form';
-import { Hypothesis } from '@/types/database';
+import { Control } from 'react-hook-form';
 import { Info } from 'lucide-react';
 import {
   Tooltip,
@@ -19,13 +18,13 @@ import {
 } from '@/components/ui/tooltip';
 
 interface CategoryFieldProps {
-  form: UseFormReturn<Hypothesis>;
+  control: Control<any>;
 }
 
-const CategoryField = ({ form }: CategoryFieldProps) => {
+const CategoryField = ({ control }: CategoryFieldProps) => {
   return (
     <FormField
-      control={form.control}
+      control={control}
       name="category"
       render={({ field }) => (
         <FormItem>

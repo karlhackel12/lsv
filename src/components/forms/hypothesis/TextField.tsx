@@ -2,8 +2,7 @@
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { UseFormReturn } from 'react-hook-form';
-import { Hypothesis } from '@/types/database';
+import { Control } from 'react-hook-form';
 import { Info } from 'lucide-react';
 import {
   Tooltip,
@@ -13,26 +12,28 @@ import {
 } from '@/components/ui/tooltip';
 
 interface TextFieldProps {
-  form: UseFormReturn<Hypothesis>;
-  name: keyof Hypothesis;
+  name: string;
   label: string;
   placeholder: string;
+  description?: string; // Make description optional
+  control: Control<any>;
   height?: string;
   infoTooltip?: string;
 }
 
 const TextField = ({ 
-  form, 
+  control, 
   name, 
   label, 
-  placeholder, 
+  placeholder,
+  description,
   height = "min-h-[5rem]",
   infoTooltip 
 }: TextFieldProps) => {
   return (
     <FormField
-      control={form.control}
-      name={name as any}
+      control={control}
+      name={name}
       render={({ field }) => (
         <FormItem>
           <div className="flex items-center gap-2">
@@ -50,6 +51,9 @@ const TextField = ({
               </TooltipProvider>
             )}
           </div>
+          {description && (
+            <p className="text-xs text-gray-500 mb-2">{description}</p>
+          )}
           <FormControl>
             <Textarea
               placeholder={placeholder}

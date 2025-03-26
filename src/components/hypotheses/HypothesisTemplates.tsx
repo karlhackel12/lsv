@@ -11,19 +11,26 @@ import {
 } from '@/types/pivot';
 
 interface HypothesisTemplatesProps {
+  isOpen?: boolean; // Making isOpen optional with default in component
   showTemplates: boolean;
   setShowTemplates: (show: boolean) => void;
   onSelectTemplate?: (template: string) => void;
+  onApply?: (templateData: { statement: string; criteria: string; experiment: string; }) => void;
   phaseType?: 'problem' | 'solution';
 }
 
 const HypothesisTemplates = ({ 
-  showTemplates, 
+  showTemplates,
+  isOpen = showTemplates, // Default to showTemplates if isOpen not provided
   setShowTemplates,
   onSelectTemplate,
+  onApply,
   phaseType = 'problem'
 }: HypothesisTemplatesProps) => {
-  if (!showTemplates) return null;
+  // Use either isOpen or showTemplates to determine visibility
+  const shouldShow = isOpen || showTemplates;
+  
+  if (!shouldShow) return null;
   
   // Select appropriate templates based on phase
   const hypothesisTemplates = phaseType === 'problem' 
@@ -33,6 +40,22 @@ const HypothesisTemplates = ({
   const criteriaTemplates = phaseType === 'problem'
     ? TEMPLATE_PROBLEM_CRITERIA
     : TEMPLATE_SOLUTION_CRITERIA;
+    
+  // Handle template selection/application based on which callback is provided
+  const handleTemplateClick = (template: string) => {
+    if (onSelectTemplate) {
+      onSelectTemplate(template);
+    }
+    
+    // For backward compatibility with the new form
+    if (onApply && template) {
+      onApply({
+        statement: template,
+        criteria: criteriaTemplates[0] || '',  // Use first criteria as default
+        experiment: 'We will test this by conducting user interviews and surveys.'
+      });
+    }
+  };
   
   return (
     <Card className="p-6 mb-6 animate-fadeIn">
@@ -65,7 +88,7 @@ const HypothesisTemplates = ({
             <div 
               key={i} 
               className="p-3 bg-validation-gray-50 rounded-md border border-validation-gray-200 text-sm hover:bg-validation-gray-100 transition-colors cursor-pointer flex justify-between items-start"
-              onClick={() => onSelectTemplate && onSelectTemplate(template)}
+              onClick={() => handleTemplateClick(template)}
             >
               <p className="text-validation-gray-600">{template}</p>
               <Copy className="h-4 w-4 text-validation-gray-400 mt-1 flex-shrink-0" />
@@ -81,7 +104,7 @@ const HypothesisTemplates = ({
             <div 
               key={i} 
               className="p-3 bg-validation-gray-50 rounded-md border border-validation-gray-200 text-sm hover:bg-validation-gray-100 transition-colors cursor-pointer flex justify-between items-start"
-              onClick={() => onSelectTemplate && onSelectTemplate(template)}
+              onClick={() => handleTemplateClick(template)}
             >
               <p className="text-validation-gray-600">{template}</p>
               <Copy className="h-4 w-4 text-validation-gray-400 mt-1 flex-shrink-0" />
