@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment } from '@/types/database';
-import ExperimentsSection from '@/components/ExperimentsSection';
+import ExperimentList from '@/components/experiments/ExperimentList';
 import PageIntroduction from '@/components/PageIntroduction';
 import { Beaker } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
-import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
@@ -15,19 +14,11 @@ const ExperimentsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const experimentId = searchParams.get('id');
-  const createNew = searchParams.get('create') === 'true';
-  const viewParam = searchParams.get('view');
-  
   // Validate status parameter against allowed values
   const rawStatus = searchParams.get('status');
   const statusFilter = rawStatus && ['planned', 'in-progress', 'completed'].includes(rawStatus) 
     ? rawStatus as 'planned' | 'in-progress' | 'completed'
     : null;
-  
-  // Show summary when no specific experiment is being viewed, not creating a new one,
-  // and not explicitly requesting list view
-  const showSummary = !experimentId && !createNew && viewParam !== 'list' && !statusFilter;
   
   const fetchExperiments = async () => {
     try {
@@ -79,6 +70,18 @@ const ExperimentsPage = () => {
     return <div>Select a project to view experiments</div>;
   }
   
+  const handleCreateNew = () => {
+    setSearchParams({ create: 'true' });
+  };
+  
+  const handleEdit = (experiment: Experiment) => {
+    setSearchParams({ id: experiment.id });
+  };
+  
+  const handleViewDetail = (experiment: Experiment) => {
+    setSearchParams({ id: experiment.id });
+  };
+  
   return (
     <div className="space-y-6">
       <PageIntroduction 
@@ -87,22 +90,15 @@ const ExperimentsPage = () => {
         description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
       />
       
-      {showSummary && (
-        <ExperimentsSummarySection
-          experiments={experiments}
-          projectId={currentProject.id}
-        />
-      )}
-      
-      {!showSummary && (
-        <ExperimentsSection 
-          experiments={experiments}
-          refreshData={fetchExperiments}
-          projectId={currentProject.id}
-          isLoading={isLoading}
-          experimentType="solution"
-        />
-      )}
+      <ExperimentList 
+        experiments={experiments}
+        refreshData={fetchExperiments}
+        onEdit={handleEdit}
+        onDelete={undefined}
+        onCreateNew={handleCreateNew}
+        onViewDetail={handleViewDetail}
+        isGrowthExperiment={false}
+      />
     </div>
   );
 };
