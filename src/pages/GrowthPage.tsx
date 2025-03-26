@@ -1,33 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, Layers, ArrowRight, CheckCircle2, Lightbulb, GitFork, FlaskConical } from 'lucide-react';
+import { Loader2, TrendingUp, ArrowRight, CheckCircle2, GitFork } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
-import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
-import ScalingReadinessChecklist from '@/components/growth/ScalingReadinessChecklist';
-import { useGrowthModels } from '@/hooks/growth/use-growth-models';
-import { Card, CardContent } from '@/components/ui/card';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import PivotDecisionSection from '@/components/PivotDecisionSection';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
+import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
+import ScalingReadinessMetrics from '@/components/growth/ScalingReadinessMetrics';
+import { useNavigate } from 'react-router-dom';
+import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 
 const GrowthPage = () => {
-  const {
-    currentProject,
-    isLoading,
-    error
-  } = useProject();
-  const [searchParams] = useSearchParams();
-  const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'scaling_readiness');
-  const [defaultGrowthModelId, setDefaultGrowthModelId] = useState<string | null>(null);
+  const { currentProject, isLoading, error } = useProject();
   const [showAddScalingMetricForm, setShowAddScalingMetricForm] = useState(false);
   const { toast } = useToast();
-  const location = useLocation();
   const navigate = useNavigate();
   const {
     growthMetrics, 
@@ -40,73 +27,10 @@ const GrowthPage = () => {
   } = useGrowthModels(currentProject?.id || '');
   
   useEffect(() => {
-    if (location.state?.openForm) {
-      setShowAddScalingMetricForm(true);
-      navigate(location.pathname + location.search, { replace: true });
+    if (currentProject?.id) {
+      fetchGrowthData();
     }
-  }, [location]);
-  
-  useEffect(() => {
-    const fetchDefaultGrowthModel = async () => {
-      if (!currentProject?.id) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('growth_models')
-          .select('id')
-          .eq('project_id', currentProject.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setDefaultGrowthModelId(data[0].id);
-        } else {
-          const { data: newModel, error: createError } = await supabase
-            .from('growth_models')
-            .insert({
-              name: 'Default Growth Model',
-              description: 'Automatically created growth model',
-              framework: 'aarrr',
-              project_id: currentProject.id,
-              status: 'active'
-            })
-            .select();
-            
-          if (createError) throw createError;
-          
-          if (newModel && newModel.length > 0) {
-            setDefaultGrowthModelId(newModel[0].id);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching or creating default growth model:', err);
-        toast({
-          title: 'Error',
-          description: 'Could not set up a growth model. Some features may not work.',
-          variant: 'destructive'
-        });
-      }
-    };
-    
-    fetchDefaultGrowthModel();
   }, [currentProject?.id]);
-
-  useEffect(() => {
-    if (tabFromUrl) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [tabFromUrl]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    navigate(`/growth?tab=${value}`, { replace: true });
-  };
-
-  const navigateToGrowthExperiments = () => {
-    navigate('/experiments?type=growth');
-  };
 
   const handleAddScalingMetric = () => {
     setShowAddScalingMetricForm(true);
@@ -138,7 +62,7 @@ const GrowthPage = () => {
         icon={<TrendingUp className="h-5 w-5 text-blue-500" />} 
         description={
           <p>
-            Track acquisition channels, and evaluate your startup's readiness to scale using Lean Startup principles.
+            Track acquisition channels and metrics to evaluate your startup's readiness to scale.
           </p>
         }
         storageKey="growth-page"
@@ -146,113 +70,87 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="mt-6 space-y-6">
-          <ValidationPhaseIntro 
-            phase="growth"
-            onCreateNew={handleAddScalingMetric}
-            createButtonText="Add Scaling Metric"
-          />
-          
-          <PivotDecisionSection />
-          
-          <Card>
-            <CardContent className="p-0">
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <TabsList className="w-full flex justify-start p-1">
-                  <TabsTrigger value="scaling_readiness" className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Scaling Readiness</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="channels" className="flex items-center gap-2">
-                    <ArrowRight className="h-4 w-4" />
-                    <span>Channels</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="experiments" className="flex items-center gap-2">
-                    <FlaskConical className="h-4 w-4" />
-                    <span>Experiments</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="pivot" className="flex items-center gap-2">
-                    <GitFork className="h-4 w-4" />
-                    <span>Pivot</span>
-                  </TabsTrigger>
-                </TabsList>
-                
-                <div className="mt-6 px-4 pb-4">
-                  <Breadcrumb className="mb-6">
-                    <BreadcrumbList>
-                      <BreadcrumbItem>
-                        <BreadcrumbLink href="#">Growth</BreadcrumbLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        <BreadcrumbLink>
-                          {activeTab === 'scaling_readiness' ? 'Scaling Readiness' :
-                           activeTab === 'channels' ? 'Acquisition Channels' : 
-                           activeTab === 'experiments' ? 'Growth Experiments' :
-                           'Pivot Decision'}
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                  
-                  <TabsContent value="scaling_readiness" className="mt-0">
-                    <ScalingReadinessChecklist 
-                      projectId={currentProject.id}
-                      refreshData={() => fetchModelData(currentProject.id)}
-                      growthMetrics={growthMetrics}
-                      growthExperiments={growthExperiments}
-                      growthChannels={growthChannels}
-                      isMetricFormOpen={showAddScalingMetricForm}
-                      onMetricFormClose={() => setShowAddScalingMetricForm(false)}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="channels" className="mt-0">
-                    <GrowthChannelsSection 
-                      channels={growthChannels}
-                      projectId={currentProject.id} 
-                      refreshData={() => fetchModelData(currentProject.id)} 
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="experiments" className="mt-0">
-                    <div className="space-y-6">
-                      <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 flex flex-col items-center text-center">
-                        <FlaskConical className="h-12 w-12 text-blue-500 mb-4" />
-                        <h3 className="text-xl font-bold mb-2">Growth Experiments</h3>
-                        <p className="text-gray-600 mb-6 max-w-lg">
-                          Growth experiments help you optimize your key metrics and acquisition channels. 
-                          They are now managed in the centralized experiments section.
-                        </p>
-                        <Button 
-                          onClick={navigateToGrowthExperiments}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          Go to Growth Experiments
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="pivot" className="mt-0">
-                    <div className="space-y-6">
-                      <div className="text-center p-8">
-                        <GitFork className="mx-auto h-12 w-12 text-orange-500 mb-4" />
-                        <h3 className="text-xl font-bold mb-2">Pivot Decision Framework</h3>
-                        <p className="text-gray-600 mb-6">
-                          When your metrics indicate that your current approach isn't working, 
-                          it may be time to consider a strategic pivot.
-                        </p>
-                        <Button 
-                          onClick={() => navigate('/pivot')}
-                          className="bg-orange-600 hover:bg-orange-700"
-                        >
-                          View Full Pivot Framework
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Acquisition Channels Card */}
+            <Card>
+              <CardHeader className="bg-blue-50">
+                <CardTitle className="text-lg flex items-center">
+                  <ArrowRight className="h-5 w-5 mr-2 text-blue-500" />
+                  Acquisition Channels
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <GrowthChannelsSection 
+                  channels={growthChannels}
+                  projectId={currentProject.id} 
+                  refreshData={() => fetchModelData(currentProject.id)} 
+                />
+              </CardContent>
+            </Card>
+            
+            {/* Growth Metrics Card */}
+            <Card>
+              <CardHeader className="bg-green-50">
+                <CardTitle className="text-lg flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
+                  Growth Metrics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Track key metrics related to your product's growth and market performance.
+                  </p>
+                  <Button 
+                    onClick={() => navigate('/metrics')} 
+                    className="w-full"
+                  >
+                    View All Metrics
+                  </Button>
                 </div>
-              </Tabs>
+              </CardContent>
+            </Card>
+            
+            {/* Scaling Readiness Card */}
+            <Card>
+              <CardHeader className="bg-purple-50">
+                <CardTitle className="text-lg flex items-center">
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-purple-500" />
+                  Scaling Readiness
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <ScalingReadinessMetrics 
+                  projectId={currentProject.id} 
+                  refreshData={() => fetchModelData(currentProject.id)} 
+                  growthMetrics={growthMetrics}
+                  isFormOpen={showAddScalingMetricForm}
+                  onFormClose={() => setShowAddScalingMetricForm(false)}
+                />
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Pivot Decision Section */}
+          <Card>
+            <CardHeader className="bg-orange-50">
+              <CardTitle className="text-lg flex items-center">
+                <GitFork className="h-5 w-5 mr-2 text-orange-500" />
+                Pivot Decision
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-600">
+                  When metrics indicate your current approach isn't working, consider a strategic pivot.
+                </p>
+                <Button 
+                  onClick={() => navigate('/pivot')}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  View Pivot Framework
+                </Button>
+              </div>
             </CardContent>
           </Card>
           
