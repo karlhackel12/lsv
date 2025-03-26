@@ -21,16 +21,7 @@ const ExperimentsHeader = ({
       return 'Growth Experiments';
     }
     
-    switch(experimentType) {
-      case 'problem':
-        return 'Problem Validation Experiments';
-      case 'solution':
-        return 'Solution Validation Experiments';
-      case 'business-model':
-        return 'Business Model Validation Experiments';
-      default:
-        return 'Experiments';
-    }
+    return 'Validation Experiments';
   };
   
   const getDescription = () => {

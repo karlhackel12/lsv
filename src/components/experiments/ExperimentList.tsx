@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, TrendingUp, Beaker } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import StatusBadge from '@/components/StatusBadge';
+import { Badge } from '@/components/ui/badge';
 
 interface ExperimentListProps {
   experiments: Experiment[];
@@ -43,6 +44,7 @@ const ExperimentList = ({
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Hypothesis</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Method</TableHead>
@@ -58,6 +60,11 @@ const ExperimentList = ({
                   <TypeIcon className="h-4 w-4 text-blue-500 mr-2" />
                   {experiment.title}
                 </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant={experiment.category === 'problem' ? 'secondary' : 'outline'} className="capitalize">
+                  {experiment.category || 'problem'}
+                </Badge>
               </TableCell>
               <TableCell className="max-w-xs">
                 <p className="truncate">{experiment.hypothesis}</p>
