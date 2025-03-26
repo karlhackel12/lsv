@@ -11,7 +11,8 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
-import HypothesesPage from "./pages/HypothesesPage";
+import ProblemValidationPage from "./pages/ProblemValidationPage";
+import SolutionValidationPage from "./pages/SolutionValidationPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
 import MVPPage from "./pages/MVPPage";
 import MetricsPage from "./pages/MetricsPage";
@@ -38,7 +39,8 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Index />} />
-                  <Route path="/hypotheses" element={<HypothesesPage />} />
+                  <Route path="/problem-validation" element={<ProblemValidationPage />} />
+                  <Route path="/solution-validation" element={<SolutionValidationPage />} />
                   <Route path="/experiments" element={<ExperimentsPage />} />
                   <Route path="/mvp" element={<MVPPage />} />
                   <Route path="/metrics" element={<MetricsPage />} />

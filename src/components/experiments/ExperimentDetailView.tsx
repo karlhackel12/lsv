@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,7 +45,11 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
   
   const navigateToHypothesis = () => {
     if (relatedHypothesis) {
-      navigate('/hypotheses');
+      if (relatedHypothesis.phase === 'problem') {
+        navigate('/problem-validation');
+      } else {
+        navigate('/solution-validation');
+      }
     }
   };
   
@@ -75,7 +80,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
                   <ExperimentStatusActions 
                     experiment={experiment} 
                     refreshData={handleRefresh} 
-                    onEdit={() => onEdit()} 
+                    onEdit={onEdit} 
                     isGrowthExperiment={isGrowthExperiment}
                   />
                 </div>

@@ -41,25 +41,21 @@ const mainNavItems = [
   },
   {
     title: 'Problem Validation',
-    href: '/hypotheses?phase=problem',
+    href: '/problem-validation',
     icon: <Lightbulb className="h-5 w-5 mr-3" />,
     description: 'Create and test problem hypotheses',
   },
   {
     title: 'Solution Validation',
-    href: '/hypotheses?phase=solution',
+    href: '/solution-validation',
     icon: <FlaskConical className="h-5 w-5 mr-3" />,
     description: 'Test solutions with experiments',
-    subItems: [
-      {
-        title: 'Solution Hypotheses',
-        href: '/hypotheses?phase=solution',
-      },
-      {
-        title: 'Experiments',
-        href: '/experiments',
-      }
-    ]
+  },
+  {
+    title: 'Experiments',
+    href: '/experiments',
+    icon: <Beaker className="h-5 w-5 mr-3" />,
+    description: 'Run validation experiments',
   },
   {
     title: 'MVP',
@@ -72,16 +68,12 @@ const mainNavItems = [
     href: '/growth',
     icon: <TrendingUp className="h-5 w-5 mr-3" />,
     description: 'Scale your validated business',
-    subItems: [
-      {
-        title: 'Growth Model',
-        href: '/growth'
-      },
-      {
-        title: 'Metrics',
-        href: '/metrics'
-      }
-    ]
+  },
+  {
+    title: 'Metrics',
+    href: '/metrics',
+    icon: <LineChart className="h-5 w-5 mr-3" />,
+    description: 'Track key metrics for your product',
   },
   {
     title: 'Pivot',
@@ -108,20 +100,13 @@ const SideNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Check if a nav item or its subitems matches the current path
+  // Check if a nav item matches the current path
   const isItemActive = (item: any) => {
     // Exact match for dashboard
     if (item.href === '/' && location.pathname === '/') return true;
     
     // For other items, check if pathname starts with href (avoiding '/' which would match everything)
-    if (item.href !== '/' && location.pathname.startsWith(item.href.split('?')[0])) return true;
-    
-    // Check subitems if they exist
-    if (item.subItems) {
-      return item.subItems.some((subItem: any) => {
-        return location.pathname.startsWith(subItem.href.split('?')[0]);
-      });
-    }
+    if (item.href !== '/' && location.pathname.startsWith(item.href)) return true;
     
     return false;
   };
@@ -140,7 +125,7 @@ const SideNavigation = () => {
       <SidebarContent className="px-3">
         <div className="mb-4 px-2">
           <Button 
-            onClick={() => navigate('/experiments/new')}
+            onClick={() => navigate('/experiments?create=true')}
             className="w-full justify-start bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -166,23 +151,6 @@ const SideNavigation = () => {
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
-                  
-                  {item.subItems && (
-                    <SidebarMenuSub>
-                      {item.subItems.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.href}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname.startsWith(subItem.href.split('?')[0])}
-                          >
-                            <NavLink to={subItem.href}>
-                              {subItem.title}
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  )}
                 </SidebarMenuItem>
               );
             })}

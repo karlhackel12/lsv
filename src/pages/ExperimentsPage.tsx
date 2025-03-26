@@ -6,12 +6,8 @@ import { Experiment } from '@/types/database';
 import ExperimentsSection from '@/components/ExperimentsSection';
 import PageIntroduction from '@/components/PageIntroduction';
 import { Beaker } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useProject } from '@/hooks/use-project';
 import ExperimentsSummarySection from '@/components/experiments/ExperimentsSummarySection';
-
-// Define valid experiment status values for type checking
-type ExperimentStatus = 'planned' | 'in-progress' | 'completed';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
@@ -19,7 +15,6 @@ const ExperimentsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const currentPhase = searchParams.get('phase') || 'problem';
   const experimentId = searchParams.get('id');
   const createNew = searchParams.get('create') === 'true';
   const viewParam = searchParams.get('view');
@@ -27,7 +22,7 @@ const ExperimentsPage = () => {
   // Validate status parameter against allowed values
   const rawStatus = searchParams.get('status');
   const statusFilter = rawStatus && ['planned', 'in-progress', 'completed'].includes(rawStatus) 
-    ? rawStatus as ExperimentStatus
+    ? rawStatus as 'planned' | 'in-progress' | 'completed'
     : null;
   
   // Show summary when no specific experiment is being viewed, not creating a new one,
@@ -52,10 +47,6 @@ const ExperimentsPage = () => {
         query = query.eq('status', statusFilter);
       }
       
-      if (currentPhase && !statusFilter) {
-        query = query.eq('category', currentPhase);
-      }
-      
       const { data, error } = await query;
         
       if (error) {
@@ -78,26 +69,11 @@ const ExperimentsPage = () => {
     }
   };
   
-  // Refetch when project, phase, or status filter changes
   useEffect(() => {
     if (currentProject) {
       fetchExperiments();
     }
-  }, [currentProject, currentPhase, statusFilter]);
-  
-  // Change tab handler
-  const handleTabChange = (value: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('phase', value);
-    
-    // If we're viewing a specific experiment but changing the phase,
-    // clear the experiment ID to show the list for that phase
-    if (experimentId && !statusFilter) {
-      params.delete('id');
-    }
-    
-    setSearchParams(params);
-  };
+  }, [currentProject, statusFilter]);
   
   if (!currentProject) {
     return <div>Select a project to view experiments</div>;
@@ -111,43 +87,22 @@ const ExperimentsPage = () => {
         description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
       />
       
-      <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="problem">Problem Experiments</TabsTrigger>
-          <TabsTrigger value="solution">Solution Experiments</TabsTrigger>
-        </TabsList>
-        
-        {showSummary && (
-          <ExperimentsSummarySection
-            experiments={experiments}
-            projectId={currentProject.id}
-          />
-        )}
-        
-        {(!showSummary) && (
-          <>
-            <TabsContent value="problem">
-              <ExperimentsSection 
-                experiments={experiments}
-                refreshData={fetchExperiments}
-                projectId={currentProject.id}
-                isLoading={isLoading}
-                experimentType="problem"
-              />
-            </TabsContent>
-            
-            <TabsContent value="solution">
-              <ExperimentsSection 
-                experiments={experiments}
-                refreshData={fetchExperiments}
-                projectId={currentProject.id}
-                isLoading={isLoading}
-                experimentType="solution"
-              />
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+      {showSummary && (
+        <ExperimentsSummarySection
+          experiments={experiments}
+          projectId={currentProject.id}
+        />
+      )}
+      
+      {!showSummary && (
+        <ExperimentsSection 
+          experiments={experiments}
+          refreshData={fetchExperiments}
+          projectId={currentProject.id}
+          isLoading={isLoading}
+          experimentType="solution"
+        />
+      )}
     </div>
   );
 };
