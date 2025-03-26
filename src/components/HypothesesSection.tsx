@@ -61,13 +61,6 @@ const HypothesesSection = ({
     </div>;
   }
   
-  // Define a dummy template apply handler for the list view
-  const handleApplyTemplate = (templateData: { statement: string; criteria: string; experiment: string }) => {
-    console.log("Template applied in list view:", templateData);
-    // This function is just a placeholder since we're not actually using templates in the list view
-    // The actual template application happens in the HypothesisForm component
-  };
-  
   return (
     <div className="animate-fadeIn">
       {viewMode === 'list' ? (
@@ -76,7 +69,6 @@ const HypothesesSection = ({
             showTemplates={showTemplates} 
             setShowTemplates={setShowTemplates} 
             phaseType={phaseType} 
-            onApply={handleApplyTemplate}
           />
 
           {hypotheses.length === 0 ? (

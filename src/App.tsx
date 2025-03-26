@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from '@/contexts/AuthContext';
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -34,94 +34,26 @@ function App() {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Index />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
-              <Route path="/problem-validation" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <ProblemValidationPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/solution-validation" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <SolutionValidationPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/experiments" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <ExperimentsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/mvp" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <MVPPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/metrics" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <MetricsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/pivot" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <PivotPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/growth" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <GrowthPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/lean-startup-methodology" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <LeanStartupPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/business-plan" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <BusinessPlanPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <div>Profile Page</div>
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <div>Settings Page</div>
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<MainLayout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/problem-validation" element={<ProblemValidationPage />} />
+                  <Route path="/solution-validation" element={<SolutionValidationPage />} />
+                  <Route path="/experiments" element={<ExperimentsPage />} />
+                  <Route path="/mvp" element={<MVPPage />} />
+                  <Route path="/metrics" element={<MetricsPage />} />
+                  <Route path="/pivot" element={<PivotPage />} />
+                  <Route path="/growth" element={<GrowthPage />} />
+                  <Route path="/lean-startup-methodology" element={<LeanStartupPage />} />
+                  <Route path="/business-plan" element={<BusinessPlanPage />} />
+                  <Route path="/profile" element={<div>Profile Page</div>} />
+                  <Route path="/settings" element={<div>Settings Page</div>} />
+                </Route>
+              </Route>
               
               <Route path="*" element={<NotFound />} />
             </Routes>
