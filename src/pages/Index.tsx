@@ -3,11 +3,11 @@ import React from 'react';
 import Dashboard from '@/components/Dashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/use-project';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import PageIntroduction from '@/components/PageIntroduction';
+import { Button } from '@/components/ui/button';
 import { LayoutGrid, Lightbulb, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PageIntroduction from '@/components/PageIntroduction';
 
 const Index = () => {
   const { user } = useAuth();
@@ -19,7 +19,7 @@ const Index = () => {
       <PageIntroduction
         title="Product Validation Dashboard"
         icon={<LayoutGrid className="h-5 w-5 text-blue-500" />}
-        description="Track your progress through the Lean Startup validation journey. Each phase helps you systematically test and validate your business assumptions."
+        description="Track your progress validating your business assumptions using evidence-based experiments."
       />
       
       <div className="grid grid-cols-1 gap-6">

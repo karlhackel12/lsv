@@ -1,8 +1,11 @@
 
 import React from 'react';
-import ExperimentCard from './ExperimentCard';
 import EmptyExperimentState from './EmptyExperimentState';
 import { Experiment } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import { Eye, TrendingUp, Beaker } from 'lucide-react';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import StatusBadge from '@/components/StatusBadge';
 
 interface ExperimentListProps {
   experiments: Experiment[];
@@ -32,20 +35,61 @@ const ExperimentList = ({
     );
   }
 
+  const TypeIcon = isGrowthExperiment ? TrendingUp : Beaker;
+
   return (
-    <div className="space-y-6">
-      {experiments.map((experiment, index) => (
-        <ExperimentCard
-          key={experiment.id}
-          experiment={experiment}
-          index={index}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onViewDetail={onViewDetail}
-          refreshData={refreshData}
-          isGrowthExperiment={isGrowthExperiment}
-        />
-      ))}
+    <div className="space-y-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Hypothesis</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Method</TableHead>
+            <TableHead>Results</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {experiments.map((experiment) => (
+            <TableRow key={experiment.id}>
+              <TableCell className="font-medium">
+                <div className="flex items-center">
+                  <TypeIcon className="h-4 w-4 text-blue-500 mr-2" />
+                  {experiment.title}
+                </div>
+              </TableCell>
+              <TableCell className="max-w-xs">
+                <p className="truncate">{experiment.hypothesis}</p>
+              </TableCell>
+              <TableCell>
+                <StatusBadge status={experiment.status as any} />
+              </TableCell>
+              <TableCell className="max-w-xs">
+                <p className="truncate">{experiment.method}</p>
+              </TableCell>
+              <TableCell>
+                {experiment.results ? (
+                  <p className="truncate max-w-xs">{experiment.results}</p>
+                ) : (
+                  <span className="text-gray-400">No results yet</span>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => onViewDetail(experiment)}
+                >
+                  <Eye className="h-4 w-4" />
+                  <span className="sr-only">View details</span>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };

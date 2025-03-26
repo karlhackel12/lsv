@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Experiment, Hypothesis, GrowthExperiment } from '@/types/database';
 import ExperimentForm from './forms/ExperimentForm';
@@ -60,7 +59,6 @@ const ExperimentsSection = ({
     if (createParam === 'true') {
       handleCreateNew();
       
-      // Clear the create parameter to prevent reopening on refresh
       const params = new URLSearchParams(searchParams);
       params.delete('create');
       setSearchParams(params);
@@ -69,11 +67,9 @@ const ExperimentsSection = ({
 
   const handleCreateNew = () => {
     console.log("Creating new experiment - resetting form state");
-    // Explicitly set selectedExperiment to null to ensure a clean form
     setSelectedExperiment(null);
     setIsFormOpen(true);
 
-    // Set the experiment type in the URL if it's a growth experiment
     if (isGrowthExperiment) {
       const params = new URLSearchParams(searchParams);
       params.set('type', 'growth');
@@ -96,7 +92,6 @@ const ExperimentsSection = ({
     setSelectedExperiment(experiment);
     setViewMode('detail');
     
-    // Update URL with experiment ID and type
     const params = new URLSearchParams(searchParams);
     params.set('id', experiment.id);
     if (isGrowthExperiment) {
@@ -119,21 +114,17 @@ const ExperimentsSection = ({
 
   const handleFormClose = () => {
     setIsFormOpen(false);
-    // Ensure we clear the selected experiment when the form is closed
     setSelectedExperiment(null);
   };
 
   const handleFormSave = async (savedExperiment: Experiment) => {
-    // For growth experiments, we need to handle the save differently
     if (isGrowthExperiment && savedExperiment.originalGrowthExperiment) {
       try {
-        // Get the original growth experiment data and update it
         const updatedGrowthExperiment = updateGrowthExperimentFromExperiment(
           savedExperiment, 
           savedExperiment.originalGrowthExperiment as GrowthExperiment
         );
         
-        // Update the growth experiment in the database
         const { error } = await supabase
           .from('growth_experiments')
           .update({
@@ -152,7 +143,6 @@ const ExperimentsSection = ({
           description: 'The growth experiment has been successfully updated.',
         });
         
-        // Refresh data to show the updated experiment
         refreshData();
       } catch (error: any) {
         console.error('Error updating growth experiment:', error);
@@ -163,7 +153,6 @@ const ExperimentsSection = ({
         });
       }
     } else {
-      // For regular experiments, just refresh the data
       refreshData();
     }
   };
