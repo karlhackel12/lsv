@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -27,9 +26,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 
 interface GrowthExperimentsProps {
-  growthModel: GrowthModel;
   projectId: string;
   growthModelId: string;
+  growthModel: GrowthModel;
 }
 
 const statusLabels: Record<string, { label: string, color: string }> = {
@@ -69,9 +68,7 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
         
       if (error) throw error;
       
-      // Ensure the data conforms to the GrowthExperiment type
       const typedData = data?.map(item => {
-        // Validate that status is one of the allowed values
         let validStatus: GrowthExperiment['status'] = 'planned';
         if (['planned', 'running', 'completed', 'failed'].includes(item.status)) {
           validStatus = item.status as GrowthExperiment['status'];
@@ -110,7 +107,6 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
     await fetchExperiments();
   };
 
-  // Filter experiments based on the active tab
   const filteredExperiments = activeTab === 'all' 
     ? experiments 
     : experiments.filter(e => e.status === activeTab);

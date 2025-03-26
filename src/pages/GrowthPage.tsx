@@ -178,6 +178,17 @@ const GrowthPage = () => {
                 <GrowthExperimentsSection
                   projectId={currentProject.id}
                   growthModelId={activeModelId}
+                  growthModel={{
+                    id: activeModelId,
+                    name: 'Default Growth Model',
+                    description: '',
+                    framework: 'aarrr',
+                    status: 'active',
+                    project_id: currentProject.id,
+                    created_at: '',
+                    updated_at: '',
+                    originalId: activeModelId
+                  }}
                 />
               )}
             </CardContent>

@@ -89,7 +89,7 @@ const PivotPage = () => {
           });
           fetchPivotOptions();
         })
-        .catch(error => {
+        .catch((error) => {
           toast({
             title: 'Error',
             description: 'Failed to delete pivot option',
