@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Experiment, Hypothesis, GrowthExperiment } from '@/types/database';
 import ExperimentForm from './forms/ExperimentForm';
@@ -6,7 +7,7 @@ import ExperimentList from './experiments/ExperimentList';
 import DeleteExperimentDialog from './experiments/DeleteExperimentDialog';
 import ExperimentDetailView from './experiments/ExperimentDetailView';
 import ExperimentHypothesisLink from './experiments/ExperimentHypothesisLink';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -42,8 +43,11 @@ const ExperimentsSection = ({
   const [relatedHypothesis, setRelatedHypothesis] = useState<Hypothesis | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    // Handle experiment ID from URL params
     const experimentId = searchParams.get('id');
     if (experimentId && experiments.length > 0) {
       const experiment = experiments.find(e => e.id === experimentId);
@@ -52,7 +56,26 @@ const ExperimentsSection = ({
         setViewMode('detail');
       }
     }
-  }, [searchParams, experiments]);
+    
+    // Handle experiment ID from location state (for direct navigation)
+    const state = location.state as any;
+    if (state?.experimentId && experiments.length > 0) {
+      const experiment = experiments.find(e => e.id === state.experimentId);
+      if (experiment) {
+        setSelectedExperiment(experiment);
+        setViewMode('detail');
+        // Reset location state
+        navigate(location.pathname, { replace: true });
+      }
+    }
+    
+    // Handle create new from location state
+    if (state?.createNew) {
+      handleCreateNew();
+      // Reset location state
+      navigate(location.pathname, { replace: true });
+    }
+  }, [searchParams, experiments, location]);
 
   useEffect(() => {
     const createParam = searchParams.get('create');
@@ -188,7 +211,7 @@ const ExperimentsSection = ({
         </>
       ) : (
         <>
-          <div className="mb-4">
+          <div className="mb-6">
             <Button 
               variant="outline" 
               onClick={handleBackToList}

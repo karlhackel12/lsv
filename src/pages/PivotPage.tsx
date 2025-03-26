@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +16,8 @@ const PivotPage = () => {
   const [isLoadingPivotOptions, setIsLoadingPivotOptions] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPivotOption, setSelectedPivotOption] = useState<PivotOption | null>(null);
+  const [pivotToDelete, setPivotToDelete] = useState<PivotOption | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchPivotOptions = async () => {
@@ -32,7 +33,6 @@ const PivotPage = () => {
         
       if (error) throw error;
       
-      // Ensure all properties have correct types
       const transformedData: PivotOption[] = data.map((item) => ({
         ...item,
         id: item.id,
@@ -59,6 +59,42 @@ const PivotPage = () => {
     }
   };
 
+  const deletePivotOption = async (id: string) => {
+    return supabase
+      .from('pivot_options')
+      .delete()
+      .eq('id', id);
+  };
+
+  const refreshPivotOptions = () => {
+    fetchPivotOptions();
+  };
+
+  const confirmDelete = () => {
+    if (!pivotToDelete) return;
+    
+    deletePivotOption(pivotToDelete.id)
+      .then(() => {
+        toast({
+          title: 'Pivot option deleted',
+          description: 'The pivot option has been successfully deleted.'
+        });
+        refreshPivotOptions();
+      })
+      .catch((error) => {
+        console.error('Error deleting pivot option:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete pivot option.',
+          variant: 'destructive'
+        });
+      })
+      .finally(() => {
+        setIsDeleteDialogOpen(false);
+        setPivotToDelete(null);
+      });
+  };
+
   useEffect(() => {
     if (currentProject) {
       fetchPivotOptions();
@@ -76,27 +112,8 @@ const PivotPage = () => {
   };
 
   const handleDelete = (option: PivotOption) => {
-    // Simple deletion function
-    if (confirm('Are you sure you want to delete this pivot option?')) {
-      supabase
-        .from('pivot_options')
-        .delete()
-        .eq('id', option.id)
-        .then(() => {
-          toast({
-            title: 'Pivot option deleted',
-            description: 'The pivot option has been successfully deleted.'
-          });
-          fetchPivotOptions();
-        })
-        .catch((error) => {
-          toast({
-            title: 'Error',
-            description: 'Failed to delete pivot option',
-            variant: 'destructive'
-          });
-        });
-    }
+    setPivotToDelete(option);
+    setIsDeleteDialogOpen(true);
   };
 
   if (isLoading) {
@@ -165,6 +182,28 @@ const PivotPage = () => {
           onSave={fetchPivotOptions}
           onClose={() => setIsFormOpen(false)}
         />
+      )}
+      
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <p>Are you sure you want to delete this pivot option?</p>
+            <div className="flex justify-end mt-4">
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={confirmDelete}
+              >
+                Delete
+              </Button>
+              <Button 
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700 ml-2"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

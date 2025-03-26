@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -13,6 +12,7 @@ import {
   BookOpen,
   FileText,
   HelpCircle,
+  Beaker
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -100,12 +100,9 @@ const SideNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Check if a nav item matches the current path
   const isItemActive = (item: any) => {
-    // Exact match for dashboard
     if (item.href === '/' && location.pathname === '/') return true;
     
-    // For other items, check if pathname starts with href (avoiding '/' which would match everything)
     if (item.href !== '/' && location.pathname.startsWith(item.href)) return true;
     
     return false;
