@@ -176,7 +176,6 @@ const GrowthPage = () => {
             <CardContent className="p-6">
               {activeModelId && (
                 <GrowthExperimentsSection
-                  growthModel={{ id: activeModelId }}
                   projectId={currentProject.id}
                   growthModelId={activeModelId}
                 />

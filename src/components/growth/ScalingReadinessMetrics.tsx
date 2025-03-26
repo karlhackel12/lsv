@@ -160,7 +160,6 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
 
       {showForm && (
         <ScalingMetricForm
-          isOpen={showForm}
           metric={selectedMetric}
           projectId={projectId}
           onSave={handleFormSave}

@@ -75,6 +75,30 @@ const PivotPage = () => {
     setIsFormOpen(true);
   };
 
+  const handleDelete = (option: PivotOption) => {
+    // Simple deletion function
+    if (confirm('Are you sure you want to delete this pivot option?')) {
+      supabase
+        .from('pivot_options')
+        .delete()
+        .eq('id', option.id)
+        .then(() => {
+          toast({
+            title: 'Pivot option deleted',
+            description: 'The pivot option has been successfully deleted.'
+          });
+          fetchPivotOptions();
+        })
+        .catch(error => {
+          toast({
+            title: 'Error',
+            description: 'Failed to delete pivot option',
+            variant: 'destructive'
+          });
+        });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -123,29 +147,7 @@ const PivotPage = () => {
         <PivotOptionsTable
           pivotOptions={pivotOptions}
           onEdit={handleEdit}
-          onDelete={(option) => {
-            // Simple deletion function
-            if (confirm('Are you sure you want to delete this pivot option?')) {
-              supabase
-                .from('pivot_options')
-                .delete()
-                .eq('id', option.id)
-                .then(() => {
-                  toast({
-                    title: 'Pivot option deleted',
-                    description: 'The pivot option has been successfully deleted.'
-                  });
-                  fetchPivotOptions();
-                })
-                .catch(err => {
-                  toast({
-                    title: 'Error',
-                    description: 'Failed to delete pivot option',
-                    variant: 'destructive'
-                  });
-                });
-            }
-          }}
+          onDelete={handleDelete}
         />
       ) : (
         <div className="flex items-center justify-center h-64">
