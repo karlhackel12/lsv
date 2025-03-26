@@ -5,8 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Experiment } from '@/types/database';
 import ExperimentList from '@/components/experiments/ExperimentList';
 import PageIntroduction from '@/components/PageIntroduction';
-import { Beaker } from 'lucide-react';
+import { Beaker, PlusCircle } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
+import { Button } from '@/components/ui/button';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
@@ -84,11 +85,18 @@ const ExperimentsPage = () => {
   
   return (
     <div className="space-y-6">
-      <PageIntroduction 
-        title="Experiments" 
-        icon={<Beaker className="h-5 w-5 text-blue-500" />}
-        description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
-      />
+      <div className="flex justify-between items-center">
+        <PageIntroduction 
+          title="Experiments" 
+          icon={<Beaker className="h-5 w-5 text-blue-500" />}
+          description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
+        />
+        
+        <Button onClick={handleCreateNew} className="flex items-center gap-2">
+          <PlusCircle className="h-4 w-4" />
+          New Experiment
+        </Button>
+      </div>
       
       <ExperimentList 
         experiments={experiments}
