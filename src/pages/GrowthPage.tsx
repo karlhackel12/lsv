@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, ArrowRight, CheckCircle2, GitFork } from 'lucide-react';
+import { Loader2, TrendingUp, ArrowRight, CheckCircle2 } from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,36 @@ const GrowthPage = () => {
     setShowAddScalingMetricForm(true);
   };
 
+  const renderPivotCTA = () => {
+    // Check if any metrics are at risk or failing
+    const hasMetricsAtRisk = growthMetrics.some(m => m.status === 'off-track' || m.status === 'at-risk');
+    
+    if (hasMetricsAtRisk) {
+      return (
+        <Card className="mt-6 bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-red-700">Warning: Growth Metrics at Risk</h3>
+                <p className="text-sm text-red-600 mt-1">
+                  Some of your metrics are not on track. You might need to consider a pivot in your strategy.
+                </p>
+              </div>
+              <Button 
+                onClick={() => navigate('/pivot')}
+                className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+              >
+                Evaluate Pivot Options
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -67,6 +97,8 @@ const GrowthPage = () => {
         }
         storageKey="growth-page"
       />
+      
+      {renderPivotCTA()}
       
       {currentProject && (
         <div className="mt-6 space-y-6">
@@ -130,29 +162,6 @@ const GrowthPage = () => {
               </CardContent>
             </Card>
           </div>
-          
-          {/* Pivot Decision Section */}
-          <Card>
-            <CardHeader className="bg-orange-50">
-              <CardTitle className="text-lg flex items-center">
-                <GitFork className="h-5 w-5 mr-2 text-orange-500" />
-                Pivot Decision
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">
-                  When metrics indicate your current approach isn't working, consider a strategic pivot.
-                </p>
-                <Button 
-                  onClick={() => navigate('/pivot')}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  View Pivot Framework
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
           
           {isLoadingData && (
             <div className="flex items-center justify-center h-64">

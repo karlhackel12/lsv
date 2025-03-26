@@ -4,15 +4,19 @@ import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, GitBranch } from 'lucide-react';
-import PivotSection from '@/components/PivotSection';
 import { PivotOption } from '@/types/pivot';
 import PageIntroduction from '@/components/PageIntroduction';
-import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
+import PivotOptionsTable from '@/components/pivot/PivotOptionsTable';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import PivotOptionForm from '@/components/forms/PivotOptionForm';
 
 const PivotPage = () => {
   const { currentProject, isLoading, error } = useProject();
   const [pivotOptions, setPivotOptions] = useState<PivotOption[]>([]);
   const [isLoadingPivotOptions, setIsLoadingPivotOptions] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedPivotOption, setSelectedPivotOption] = useState<PivotOption | null>(null);
   const { toast } = useToast();
 
   const fetchPivotOptions = async () => {
@@ -61,17 +65,14 @@ const PivotPage = () => {
     }
   }, [currentProject]);
   
-  const handleCreatePivotOption = () => {
-    // This will be passed to the ValidationPhaseIntro component to trigger
-    // the creation of a new pivot option
-    const pivotSection = document.querySelector('#pivot-section');
-    if (pivotSection) {
-      // If the section exists, find the Add Pivot Option button and click it
-      const addButton = pivotSection.querySelector('button');
-      if (addButton) {
-        addButton.click();
-      }
-    }
+  const handleCreateNew = () => {
+    setSelectedPivotOption(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (option: PivotOption) => {
+    setSelectedPivotOption(option);
+    setIsFormOpen(true);
   };
 
   if (isLoading) {
@@ -96,64 +97,72 @@ const PivotPage = () => {
   return (
     <div className="p-6">
       <PageIntroduction
-        title="Pivot Planning and Decision Framework"
+        title="Pivot Planning and Framework"
         icon={<GitBranch className="h-5 w-5 text-blue-500" />}
         description={
-          <>
-            <p>
-              A pivot is a structured course correction designed to test a new fundamental hypothesis about your product,
-              business model, or growth strategy. It's not a failure, but rather a critical part of the startup process.
-            </p>
-            <ul className="list-disc pl-5 mt-2">
-              <li><strong>Pivot triggers:</strong> Specific metric thresholds that indicate when to consider a pivot</li>
-              <li><strong>Evidence-based:</strong> Decisions based on data from experiments and customer feedback</li>
-              <li><strong>Preserves value:</strong> Maintains what you've learned while changing direction</li>
-              <li><strong>Strategic change:</strong> Addresses fundamental assumptions, not just tactics</li>
-            </ul>
-            <p className="mt-2">
-              <strong>Common pivot types:</strong>
-            </p>
-            <ul className="list-disc pl-5">
-              <li><strong>Zoom-in pivot:</strong> A single feature becomes the whole product</li>
-              <li><strong>Zoom-out pivot:</strong> The product becomes a feature of a larger solution</li>
-              <li><strong>Customer segment pivot:</strong> Changing which customers you're serving</li>
-              <li><strong>Customer need pivot:</strong> Solving a different problem for the same customers</li>
-              <li><strong>Platform pivot:</strong> Changing from an application to a platform or vice versa</li>
-              <li><strong>Business architecture pivot:</strong> Switching between high margin/low volume and low margin/high volume</li>
-              <li><strong>Value capture pivot:</strong> Changing your revenue model or monetization strategy</li>
-              <li><strong>Engine of growth pivot:</strong> Changing your customer acquisition strategy</li>
-              <li><strong>Channel pivot:</strong> Changing how you deliver your product to customers</li>
-              <li><strong>Technology pivot:</strong> Using a different technology to solve the same problem</li>
-            </ul>
-            <p className="mt-2">
-              When considering a pivot, clearly document your current state, the new hypothesis you're testing,
-              and the specific metrics that will validate or invalidate this new direction.
-            </p>
-          </>
+          <p>
+            A pivot is a structured course correction designed to test a new fundamental hypothesis about your product,
+            business model, or growth strategy when metrics indicate your current approach isn't working.
+          </p>
         }
+        storageKey="pivot-page"
       />
-
-      <ValidationPhaseIntro
-        phase="pivot"
-        onCreateNew={handleCreatePivotOption}
-        createButtonText="Add Pivot Option"
-      />
-
-      {currentProject && !isLoadingPivotOptions && (
-        <div id="pivot-section">
-          <PivotSection
-            pivotOptions={pivotOptions}
-            refreshData={fetchPivotOptions}
-            projectId={currentProject.id}
-          />
-        </div>
-      )}
       
-      {isLoadingPivotOptions && (
+      <div className="flex justify-between items-center mb-6 mt-8">
+        <h2 className="text-2xl font-bold">Pivot Options</h2>
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={handleCreateNew}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Pivot Option
+        </Button>
+      </div>
+
+      {currentProject && !isLoadingPivotOptions ? (
+        <PivotOptionsTable
+          pivotOptions={pivotOptions}
+          onEdit={handleEdit}
+          onDelete={(option) => {
+            // Simple deletion function
+            if (confirm('Are you sure you want to delete this pivot option?')) {
+              supabase
+                .from('pivot_options')
+                .delete()
+                .eq('id', option.id)
+                .then(() => {
+                  toast({
+                    title: 'Pivot option deleted',
+                    description: 'The pivot option has been successfully deleted.'
+                  });
+                  fetchPivotOptions();
+                })
+                .catch(err => {
+                  toast({
+                    title: 'Error',
+                    description: 'Failed to delete pivot option',
+                    variant: 'destructive'
+                  });
+                });
+            }
+          }}
+        />
+      ) : (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">Loading pivot options...</span>
         </div>
+      )}
+      
+      {isFormOpen && currentProject && (
+        <PivotOptionForm
+          isOpen={isFormOpen}
+          pivotOption={selectedPivotOption}
+          projectId={currentProject.id}
+          metrics={[]}
+          onSave={fetchPivotOptions}
+          onClose={() => setIsFormOpen(false)}
+        />
       )}
     </div>
   );
