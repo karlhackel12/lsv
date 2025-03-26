@@ -54,7 +54,7 @@ const ExperimentList = ({
         </TableHeader>
         <TableBody>
           {experiments.map((experiment) => (
-            <TableRow key={experiment.id}>
+            <TableRow key={experiment.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onViewDetail(experiment)}>
               <TableCell className="font-medium">
                 <div className="flex items-center">
                   <TypeIcon className="h-4 w-4 text-blue-500 mr-2" />
@@ -87,7 +87,10 @@ const ExperimentList = ({
                   variant="ghost" 
                   size="sm"
                   className="h-8 w-8 p-0"
-                  onClick={() => onViewDetail(experiment)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent the row click from triggering
+                    onViewDetail(experiment);
+                  }}
                 >
                   <Eye className="h-4 w-4" />
                   <span className="sr-only">View details</span>
