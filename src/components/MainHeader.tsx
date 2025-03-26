@@ -51,12 +51,14 @@ const MainHeader = () => {
   return (
     <header className="h-16 border-b border-validation-gray-200 bg-white z-10">
       <div className="h-full px-4 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <SidebarTrigger className="md:hidden" />
           <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-validation-blue-600 to-validation-blue-800 mr-4">
             LSV
           </h1>
-          
+        </div>
+        
+        <div className="flex items-center gap-4">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] md:w-[220px] justify-between truncate">
@@ -107,9 +109,7 @@ const MainHeader = () => {
               </Command>
             </PopoverContent>
           </Popover>
-        </div>
-        
-        <div className="flex items-center">
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">

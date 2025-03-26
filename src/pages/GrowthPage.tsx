@@ -104,66 +104,66 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Acquisition Channels Card */}
-            <Card>
-              <CardHeader className="bg-blue-50">
-                <CardTitle className="text-lg flex items-center">
-                  <ArrowRight className="h-5 w-5 mr-2 text-blue-500" />
-                  Acquisition Channels
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <GrowthChannelsSection 
-                  channels={growthChannels}
-                  projectId={currentProject.id} 
-                  refreshData={() => fetchModelData(currentProject.id)} 
-                />
-              </CardContent>
-            </Card>
-            
-            {/* Growth Metrics Card */}
-            <Card>
-              <CardHeader className="bg-green-50">
-                <CardTitle className="text-lg flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
-                  Growth Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Track key metrics related to your product's growth and market performance.
-                  </p>
-                  <Button 
-                    onClick={() => navigate('/metrics')} 
-                    className="w-full"
-                  >
-                    View All Metrics
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Scaling Readiness Card */}
-            <Card>
-              <CardHeader className="bg-purple-50">
-                <CardTitle className="text-lg flex items-center">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-purple-500" />
-                  Scaling Readiness
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ScalingReadinessMetrics 
-                  projectId={currentProject.id} 
-                  refreshData={() => fetchModelData(currentProject.id)} 
-                  growthMetrics={growthMetrics}
-                  isFormOpen={showAddScalingMetricForm}
-                  onFormClose={() => setShowAddScalingMetricForm(false)}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          {/* Vertical layout with full-width cards */}
+          
+          {/* Acquisition Channels Card */}
+          <Card>
+            <CardHeader className="bg-blue-50">
+              <CardTitle className="text-lg flex items-center">
+                <ArrowRight className="h-5 w-5 mr-2 text-blue-500" />
+                Acquisition Channels
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <GrowthChannelsSection 
+                channels={growthChannels}
+                projectId={currentProject.id} 
+                refreshData={() => fetchModelData(currentProject.id)} 
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Growth Metrics Card */}
+          <Card>
+            <CardHeader className="bg-green-50">
+              <CardTitle className="text-lg flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
+                Growth Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Track key metrics related to your product's growth and market performance.
+                </p>
+                <Button 
+                  onClick={() => navigate('/metrics')} 
+                  className="w-full"
+                >
+                  View All Metrics
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Scaling Readiness Card */}
+          <Card>
+            <CardHeader className="bg-purple-50">
+              <CardTitle className="text-lg flex items-center">
+                <CheckCircle2 className="h-5 w-5 mr-2 text-purple-500" />
+                Scaling Readiness
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ScalingReadinessMetrics 
+                projectId={currentProject.id} 
+                refreshData={() => fetchModelData(currentProject.id)} 
+                growthMetrics={growthMetrics}
+                isFormOpen={showAddScalingMetricForm}
+                onFormClose={() => setShowAddScalingMetricForm(false)}
+              />
+            </CardContent>
+          </Card>
           
           {/* Growth Experiments Section */}
           <Card>
