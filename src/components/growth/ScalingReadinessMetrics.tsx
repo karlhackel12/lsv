@@ -100,9 +100,10 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
     onFormClose();
   };
 
-  const handleFormSave = () => {
-    fetchMetrics();
-    refreshData();
+  // Fixed to return a Promise<void>
+  const handleFormSave = async () => {
+    await fetchMetrics();
+    await refreshData();
     handleFormClose();
   };
 

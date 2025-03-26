@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import ScalingReadinessMetrics from '@/components/growth/ScalingReadinessMetrics';
+import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
 import { useNavigate } from 'react-router-dom';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
 
@@ -20,7 +21,8 @@ const GrowthPage = () => {
     growthMetrics, 
     growthChannels, 
     growthExperiments, 
-    scalingMetrics, 
+    scalingMetrics,
+    activeModelId, 
     isLoading: isLoadingData,
     fetchGrowthData,
     fetchModelData
@@ -162,6 +164,25 @@ const GrowthPage = () => {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Growth Experiments Section */}
+          <Card>
+            <CardHeader className="bg-yellow-50">
+              <CardTitle className="text-lg flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-yellow-500" />
+                Growth Experiments
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {activeModelId && (
+                <GrowthExperimentsSection
+                  growthModel={{ id: activeModelId }}
+                  projectId={currentProject.id}
+                  growthModelId={activeModelId}
+                />
+              )}
+            </CardContent>
+          </Card>
           
           {isLoadingData && (
             <div className="flex items-center justify-center h-64">
