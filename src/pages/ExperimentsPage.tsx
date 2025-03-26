@@ -4,16 +4,18 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment } from '@/types/database';
 import ExperimentList from '@/components/experiments/ExperimentList';
-import PageIntroduction from '@/components/PageIntroduction';
-import { Beaker, PlusCircle } from 'lucide-react';
+import { FlaskConical, Info } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
 import { Button } from '@/components/ui/button';
+import ExperimentForm from '@/components/forms/ExperimentForm';
+import { Card, CardContent } from '@/components/ui/card';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isFormOpen, setIsFormOpen] = useState(false);
   
   // Validate status parameter against allowed values
   const rawStatus = searchParams.get('status');
@@ -72,7 +74,20 @@ const ExperimentsPage = () => {
   }
   
   const handleCreateNew = () => {
-    setSearchParams({ create: 'true' });
+    setIsFormOpen(true);
+  };
+  
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    // Clear any URL parameters related to experiment creation
+    const params = new URLSearchParams(searchParams);
+    params.delete('create');
+    setSearchParams(params);
+  };
+  
+  const handleFormSave = (experiment: Experiment) => {
+    fetchExperiments();
+    setIsFormOpen(false);
   };
   
   const handleEdit = (experiment: Experiment) => {
@@ -85,18 +100,32 @@ const ExperimentsPage = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <PageIntroduction 
-          title="Experiments" 
-          icon={<Beaker className="h-5 w-5 text-blue-500" />}
-          description="Design and run experiments to validate your hypotheses and make evidence-based decisions."
-        />
-        
-        <Button onClick={handleCreateNew} className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
-          New Experiment
-        </Button>
-      </div>
+      {/* Header section styled similarly to the image */}
+      <Card className="border-blue-100 bg-gradient-to-r from-blue-50 to-blue-50/50">
+        <CardContent className="p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <FlaskConical className="h-6 w-6 text-blue-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Experiments</h1>
+                <p className="text-gray-600 mt-1 max-w-2xl">
+                  Design and run experiments to validate your hypotheses and collect 
+                  evidence to make informed decisions about your product.
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleCreateNew} 
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 h-auto"
+              size="lg"
+            >
+              Create New Experiment
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       <ExperimentList 
         experiments={experiments}
@@ -106,6 +135,14 @@ const ExperimentsPage = () => {
         onCreateNew={handleCreateNew}
         onViewDetail={handleViewDetail}
         isGrowthExperiment={false}
+      />
+      
+      <ExperimentForm
+        isOpen={isFormOpen}
+        onClose={handleFormClose}
+        onSave={handleFormSave}
+        experiment={null}
+        projectId={currentProject.id}
       />
     </div>
   );
