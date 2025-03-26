@@ -1,15 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Edit, Lightbulb, FileText, CheckSquare, AlertTriangle, CalendarClock } from 'lucide-react';
-import { Hypothesis, Experiment } from '@/types/database';
+import { Edit, ArrowRight, FileText, CalendarClock } from 'lucide-react';
+import { Hypothesis } from '@/types/database';
 import StatusBadge from '@/components/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
-import HypothesisConnectionsPanel from './HypothesisConnectionsPanel';
-import { supabase } from '@/integrations/supabase/client';
 
 interface HypothesisDetailViewProps {
   hypothesis: Hypothesis;
@@ -27,41 +24,14 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
   projectId
 }) => {
   const navigate = useNavigate();
-  const [linkedExperiments, setLinkedExperiments] = useState<Experiment[]>([]);
-  const [isLoadingExperiments, setIsLoadingExperiments] = useState(false);
-
-  useEffect(() => {
-    if (hypothesis && projectId) {
-      fetchLinkedExperiments();
-    }
-  }, [hypothesis, projectId]);
-
-  const fetchLinkedExperiments = async () => {
-    if (!hypothesis || !projectId) return;
-    
-    try {
-      setIsLoadingExperiments(true);
-      const { data, error } = await supabase
-        .from('experiments')
-        .select('*')
-        .eq('hypothesis_id', hypothesis.id)
-        .eq('project_id', projectId);
-        
-      if (error) throw error;
-      
-      setLinkedExperiments(data || []);
-    } catch (err) {
-      console.error('Error fetching linked experiments:', err);
-    } finally {
-      setIsLoadingExperiments(false);
-    }
-  };
   
-  const handleRefresh = () => {
-    if (onRefresh) {
-      onRefresh();
-    }
-    fetchLinkedExperiments();
+  const handleCreateExperiment = () => {
+    navigate('/experiments', { 
+      state: { 
+        createNew: true, 
+        hypothesisId: hypothesis.id 
+      } 
+    });
   };
   
   return (
@@ -81,21 +51,17 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
             </span>
           </div>
         </div>
-        <Button variant="outline" onClick={onEdit} className="flex items-center">
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Hypothesis
-        </Button>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={onEdit} className="flex items-center">
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button onClick={handleCreateExperiment} className="flex items-center">
+            <ArrowRight className="h-4 w-4 mr-2" />
+            Run Experiment
+          </Button>
+        </div>
       </div>
-      
-      {/* Add the connections panel if we have projectId */}
-      {projectId && (
-        <HypothesisConnectionsPanel
-          hypothesis={hypothesis}
-          projectId={projectId}
-          linkedExperiments={linkedExperiments}
-          onRefresh={handleRefresh}
-        />
-      )}
       
       <Tabs defaultValue="details" className="w-full">
         <TabsList>
@@ -128,9 +94,11 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
             {hypothesis.evidence ? (
               <p className="text-validation-gray-700 whitespace-pre-line">{hypothesis.evidence}</p>
             ) : (
-              <div className="flex items-center text-validation-gray-500">
-                <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
-                No evidence recorded yet
+              <div className="flex flex-col space-y-4">
+                <p className="text-validation-gray-500">No evidence recorded yet</p>
+                <Button onClick={handleCreateExperiment} className="w-fit">
+                  Run an experiment to collect evidence
+                </Button>
               </div>
             )}
           </Card>
@@ -140,9 +108,11 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
             {hypothesis.result ? (
               <p className="text-validation-gray-700 whitespace-pre-line">{hypothesis.result}</p>
             ) : (
-              <div className="flex items-center text-validation-gray-500">
-                <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
-                No results recorded yet
+              <div className="flex flex-col space-y-4">
+                <p className="text-validation-gray-500">No results recorded yet</p>
+                <Button onClick={handleCreateExperiment} className="w-fit">
+                  Run an experiment to get results
+                </Button>
               </div>
             )}
           </Card>
