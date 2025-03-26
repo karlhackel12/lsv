@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,19 +33,15 @@ const MetricsPage = () => {
         
       if (error) throw error;
       
-      // Transform the data to include numeric ID for easier handling in UI
-      // And ensure category is correctly typed
       const transformedData = data.map((item) => ({
         ...item,
         id: item.id,
         originalId: item.id,
-        // Make sure category is one of the allowed values
         category: (item.category as 'acquisition' | 'activation' | 'retention' | 'revenue' | 'referral' | 'custom') || 'custom',
       }));
       
       setMetrics(transformedData as MetricData[]);
       
-      // For demo purposes, simulate pivot triggers that are close to being triggered
       const atRiskMetrics = transformedData.filter(m => 
         m.status === 'warning' || m.status === 'error'
       ).slice(0, 2);
@@ -102,36 +97,9 @@ const MetricsPage = () => {
   return (
     <div className="p-6">
       <PageIntroduction
-        title="Product Metrics & Key Performance Indicators"
+        title="Product Metrics"
         icon={<LineChart className="h-5 w-5 text-blue-500" />}
-        description={
-          <>
-            <p>
-              Metrics provide quantitative evidence to guide your product decisions and track your progress toward product-market fit.
-              Effective product metrics:
-            </p>
-            <ul className="list-disc pl-5 mt-2">
-              <li><strong>Are tied to specific hypotheses:</strong> Directly measure what you're trying to validate</li>
-              <li><strong>Show user behavior:</strong> Reflect what users do, not just what they say</li>
-              <li><strong>Have clear targets:</strong> Define success criteria with specific thresholds</li>
-              <li><strong>Drive decisions:</strong> Lead to clear actions based on results</li>
-            </ul>
-            <p className="mt-2">
-              <strong>AARRR Framework (Pirate Metrics):</strong>
-            </p>
-            <ul className="list-disc pl-5">
-              <li><strong>Acquisition:</strong> How users discover your product (traffic sources, cost per acquisition)</li>
-              <li><strong>Activation:</strong> How users have their first positive experience (conversion rate, onboarding completion)</li>
-              <li><strong>Retention:</strong> How users return to your product (churn rate, daily/weekly active users)</li>
-              <li><strong>Revenue:</strong> How your product generates money (ARPU, LTV, conversion to paid)</li>
-              <li><strong>Referral:</strong> How users tell others about your product (viral coefficient, NPS)</li>
-            </ul>
-            <p className="mt-2">
-              Focus on the North Star Metric that best indicates product-market fit for your specific business model,
-              and establish pivot triggers for when metrics indicate a change in strategy is needed.
-            </p>
-          </>
-        }
+        description="Track key metrics to validate your product and guide decisions toward product-market fit."
       />
 
       {pivotTriggers.length > 0 && (
