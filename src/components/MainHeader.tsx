@@ -1,30 +1,25 @@
+
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut, Settings, ChevronsUpDown, Check, PlusCircle, LayoutDashboard, Beaker, FlaskConical, Lightbulb, Layers, TrendingUp, GitBranch } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, LogOut, Settings, ChevronsUpDown, Check, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Project } from '@/types/database';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useProject } from '@/hooks/use-project';
 import ProjectForm from '@/components/forms/ProjectForm';
+import { Project } from '@/types/database';
 
 const MainHeader = () => {
-  const {
-    user,
-    signOut
-  } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
-  const isMobile = useIsMobile();
+  
   const {
     projects,
     currentProject,
@@ -51,87 +46,27 @@ const MainHeader = () => {
     setIsProjectFormOpen(false);
   };
 
-  const validationPhases = [{
-    name: "Problem Validation",
-    icon: <Lightbulb className="h-4 w-4 mr-2" />,
-    path: "/hypotheses?phase=problem"
-  }, {
-    name: "Solution Validation",
-    icon: <Beaker className="h-4 w-4 mr-2" />,
-    path: "/hypotheses?phase=solution"
-  }, {
-    name: "MVP Testing",
-    icon: <Layers className="h-4 w-4 mr-2" />,
-    path: "/mvp"
-  }, {
-    name: "Growth Model",
-    icon: <TrendingUp className="h-4 w-4 mr-2" />,
-    path: "/growth"
-  }, {
-    name: "Pivot Decision",
-    icon: <GitBranch className="h-4 w-4 mr-2" />,
-    path: "/pivot"
-  }];
-
   const initials = user?.email ? user.email.split('@')[0].substring(0, 2).toUpperCase() : 'U';
 
-  return <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-validation-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/">
-            <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-validation-blue-600 to-validation-blue-800">LSV</h1>
-          </Link>
+  return (
+    <header className="h-16 border-b border-validation-gray-200 bg-white z-10">
+      <div className="h-full px-4 flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="md:hidden" />
+          <h1 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-validation-blue-600 to-validation-blue-800 mr-4">
+            LSV
+          </h1>
           
-          <div className="flex ml-8 space-x-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/" className="flex items-center">
-                <LayoutDashboard className="h-4 w-4 mr-1" />
-                Dashboard
-              </Link>
-            </Button>
-            
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="h-9 px-3 flex items-center text-sm">
-                    Validation Journey
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-2 p-4 bg-white">
-                      {validationPhases.map((phase, index) => <li key={index}>
-                          <NavigationMenuLink asChild>
-                            <Link to={phase.path} className={cn("flex items-center p-2 rounded-md hover:bg-validation-gray-100", "focus:bg-validation-gray-100 focus:outline-none")}>
-                              <div className={cn("flex items-center justify-center rounded-full p-1", index === 0 ? "bg-blue-100" : index === 1 ? "bg-green-100" : index === 2 ? "bg-yellow-100" : "bg-purple-100")}>
-                                {phase.icon}
-                              </div>
-                              <div className="ml-2">
-                                <p className="font-medium text-sm">{phase.name}</p>
-                              </div>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>)}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-            
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/experiments" className="flex items-center">
-                <Beaker className="h-4 w-4 mr-1" />
-                Experiments
-              </Link>
-            </Button>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={open} className="w-[180px] md:w-[220px] justify-between truncate">
-                {currentProject ? <span className="truncate max-w-[120px] md:max-w-[160px]">
+                {currentProject ? (
+                  <span className="truncate max-w-[120px] md:max-w-[160px]">
                     {currentProject.name}
-                  </span> : "Select project..."}
+                  </span>
+                ) : (
+                  "Select project..."
+                )}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -141,17 +76,30 @@ const MainHeader = () => {
                 <CommandList>
                   <CommandEmpty>No projects found.</CommandEmpty>
                   <CommandGroup>
-                    {projects.map(project => <CommandItem key={project.id} value={project.name} onSelect={() => handleProjectSelect(project)}>
-                        <Check className={cn("mr-2 h-4 w-4", currentProject?.id === project.id ? "opacity-100" : "opacity-0")} />
+                    {projects.map(project => (
+                      <CommandItem 
+                        key={project.id} 
+                        value={project.name} 
+                        onSelect={() => handleProjectSelect(project)}
+                      >
+                        <Check className={cn(
+                          "mr-2 h-4 w-4", 
+                          currentProject?.id === project.id ? "opacity-100" : "opacity-0"
+                        )} />
                         <span className="truncate">{project.name}</span>
-                      </CommandItem>)}
+                      </CommandItem>
+                    ))}
                   </CommandGroup>
                 </CommandList>
                 <div className="p-2 border-t">
-                  <Button variant="outline" className="w-full justify-start" onClick={() => {
-                  setOpen(false);
-                  setIsProjectFormOpen(true);
-                }}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    onClick={() => {
+                      setOpen(false);
+                      setIsProjectFormOpen(true);
+                    }}
+                  >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Project
                   </Button>
@@ -159,7 +107,9 @@ const MainHeader = () => {
               </Command>
             </PopoverContent>
           </Popover>
-          
+        </div>
+        
+        <div className="flex items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -172,7 +122,9 @@ const MainHeader = () => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "User"}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user_metadata?.full_name || "User"}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground truncate">
                     {user?.email}
                   </p>
@@ -197,8 +149,13 @@ const MainHeader = () => {
         </div>
       </div>
       
-      <ProjectForm isOpen={isProjectFormOpen} onClose={() => setIsProjectFormOpen(false)} onSave={handleCreateProject} />
-    </header>;
+      <ProjectForm 
+        isOpen={isProjectFormOpen} 
+        onClose={() => setIsProjectFormOpen(false)} 
+        onSave={handleCreateProject} 
+      />
+    </header>
+  );
 };
 
 export default MainHeader;

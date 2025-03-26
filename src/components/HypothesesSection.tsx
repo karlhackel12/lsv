@@ -1,7 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Hypothesis } from '@/types/database';
 import HypothesisForm from './forms/HypothesisForm';
 import HypothesisTemplates from './hypotheses/HypothesisTemplates';
@@ -58,33 +56,65 @@ const HypothesesSection = ({
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 animate-pulse">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
-        <span className="text-lg font-medium text-validation-gray-600">Loading hypotheses...</span>
-      </div>;
+      <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+      <span className="text-lg font-medium text-validation-gray-600">Loading hypotheses...</span>
+    </div>;
   }
   
-  return <div className="animate-fadeIn">
-      {viewMode === 'list' ? <>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-validation-gray-900">
-              {phaseType === 'problem' ? 'Problem Hypotheses' : 'Solution Hypotheses'}
-            </h2>
-            <Button onClick={handleCreateNew} id="create-hypothesis-button" className="hidden">
-              Create Hypothesis
-            </Button>
-          </div>
+  return (
+    <div className="animate-fadeIn">
+      {viewMode === 'list' ? (
+        <>
+          <HypothesisTemplates 
+            showTemplates={showTemplates} 
+            setShowTemplates={setShowTemplates} 
+            phaseType={phaseType} 
+          />
 
-          <HypothesisTemplates showTemplates={showTemplates} setShowTemplates={setShowTemplates} phaseType={phaseType} />
-
-          {hypotheses.length === 0 ? <EmptyHypothesisState onCreateNew={handleCreateNew} phaseType={phaseType} /> : <HypothesisList hypotheses={hypotheses} onEdit={handleEdit} onDelete={handleDelete} onCreateNew={handleCreateNew} onViewDetail={handleViewDetail} onStatusChange={updateHypothesisStatus} />}
-        </> : selectedHypothesis && <HypothesisDetailView hypothesis={selectedHypothesis} onEdit={() => handleEdit(selectedHypothesis)} onClose={() => setViewMode('list')} onRefresh={refreshData} projectId={projectId} />}
+          {hypotheses.length === 0 ? (
+            <EmptyHypothesisState onCreateNew={handleCreateNew} phaseType={phaseType} />
+          ) : (
+            <HypothesisList 
+              hypotheses={hypotheses} 
+              onEdit={handleEdit} 
+              onDelete={handleDelete} 
+              onCreateNew={handleCreateNew} 
+              onViewDetail={handleViewDetail} 
+              onStatusChange={updateHypothesisStatus} 
+            />
+          )}
+        </>
+      ) : (
+        selectedHypothesis && (
+          <HypothesisDetailView 
+            hypothesis={selectedHypothesis} 
+            onEdit={() => handleEdit(selectedHypothesis)} 
+            onClose={() => setViewMode('list')} 
+            onRefresh={refreshData} 
+            projectId={projectId} 
+          />
+        )
+      )}
 
       {/* Hypothesis Form Dialog */}
-      <HypothesisForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onSave={handleSaveHypothesis} hypothesis={selectedHypothesis} projectId={projectId} phaseType={phaseType} />
+      <HypothesisForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onSave={handleSaveHypothesis} 
+        hypothesis={selectedHypothesis} 
+        projectId={projectId} 
+        phaseType={phaseType} 
+      />
 
       {/* Delete Confirmation Dialog */}
-      <DeleteHypothesisDialog isOpen={isDeleteDialogOpen} setIsOpen={setIsDeleteDialogOpen} hypothesisToDelete={hypothesisToDelete} onConfirmDelete={confirmDelete} />
-    </div>;
+      <DeleteHypothesisDialog 
+        isOpen={isDeleteDialogOpen} 
+        setIsOpen={setIsDeleteDialogOpen} 
+        hypothesisToDelete={hypothesisToDelete} 
+        onConfirmDelete={confirmDelete} 
+      />
+    </div>
+  );
 };
 
 export default HypothesesSection;

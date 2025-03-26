@@ -76,15 +76,24 @@ const HypothesesPage = () => {
   };
   
   if (!currentProject) {
-    return <div>Select a project to view hypotheses</div>;
+    return <div className="flex justify-center items-center h-full p-8">
+      <div className="text-center">
+        <Lightbulb className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
+        <p className="text-gray-500">Select a project from the dropdown in the header to view hypotheses.</p>
+      </div>
+    </div>;
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       <PageIntroduction 
-        title="Hypothesis Testing" 
+        title={currentPhase === 'problem' ? "Problem Validation" : "Solution Validation"} 
         icon={<Lightbulb className="h-5 w-5 text-blue-500" />}
-        description="Create and test hypotheses to validate your business model. The scientific method helps you make evidence-based decisions."
+        description={currentPhase === 'problem' 
+          ? "Create and test hypotheses to validate if your target customers have the problem you think they have."
+          : "Test whether your proposed solution effectively addresses the validated problem."
+        }
       />
       
       <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">
@@ -93,7 +102,7 @@ const HypothesesPage = () => {
           <TabsTrigger value="solution">Solution Validation</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="problem">
+        <TabsContent value="problem" className="space-y-6">
           <ValidationPhaseIntro 
             phase="problem" 
             onCreateNew={handleCreateHypothesis}
@@ -109,7 +118,7 @@ const HypothesesPage = () => {
           />
         </TabsContent>
         
-        <TabsContent value="solution">
+        <TabsContent value="solution" className="space-y-6">
           <ValidationPhaseIntro 
             phase="solution" 
             onCreateNew={handleCreateHypothesis}

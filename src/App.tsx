@@ -23,7 +23,6 @@ import BusinessPlanPage from "./pages/BusinessPlanPage";
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-// Define App as a proper React functional component
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -47,13 +46,11 @@ function App() {
                   <Route path="/growth" element={<GrowthPage />} />
                   <Route path="/lean-startup-methodology" element={<LeanStartupPage />} />
                   <Route path="/business-plan" element={<BusinessPlanPage />} />
-                  {/* These routes will be implemented later */}
                   <Route path="/profile" element={<div>Profile Page</div>} />
                   <Route path="/settings" element={<div>Settings Page</div>} />
                 </Route>
               </Route>
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
