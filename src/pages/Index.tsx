@@ -8,8 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import PageIntroduction from '@/components/PageIntroduction';
 import { LayoutGrid, Lightbulb, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import PhaseNavigation from '@/components/PhaseNavigation';
-import QuickActions from '@/components/QuickActions';
 
 const Index = () => {
   const { user } = useAuth();
@@ -23,13 +21,6 @@ const Index = () => {
         icon={<LayoutGrid className="h-5 w-5 text-blue-500" />}
         description="Track your progress through the Lean Startup validation journey. Each phase helps you systematically test and validate your business assumptions."
       />
-      
-      {currentProject && (
-        <>
-          <PhaseNavigation />
-          <QuickActions variant="expanded" className="mb-4" />
-        </>
-      )}
       
       <div className="grid grid-cols-1 gap-6">
         {isLoading ? (
