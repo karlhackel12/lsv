@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProject } from '@/hooks/use-project';
-import MVPSection from '@/components/MVPSection';
+import MVPKanban from '@/components/MVPKanban';
 import PageIntroduction from '@/components/PageIntroduction';
 import { Layers } from 'lucide-react';
-import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 
 const MVPPage = () => {
   const { currentProject } = useProject();
@@ -72,18 +71,14 @@ const MVPPage = () => {
         description="Define and prioritize the essential features for your MVP. Focus on features that deliver the most value with the least effort."
       />
       
-      <ValidationPhaseIntro 
-        phase="mvp" 
-        onCreateNew={handleOpenMvpForm}
-        createButtonText="Add MVP Feature"
-      />
-      
-      <MVPSection 
+      <MVPKanban 
         mvpFeatures={mvpFeatures}
         refreshData={fetchMVPFeatures}
         projectId={currentProject.id}
         isFormOpen={showMvpForm}
         onFormClose={handleCloseMvpForm}
+        onFormOpen={handleOpenMvpForm}
+        isLoading={isLoading}
       />
     </div>
   );
