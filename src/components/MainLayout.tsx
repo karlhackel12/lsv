@@ -4,8 +4,11 @@ import { Outlet } from 'react-router-dom';
 import MainHeader from '@/components/MainHeader';
 import SideNavigation from '@/components/SideNavigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { useProject } from '@/hooks/use-project';
 
 const MainLayout = () => {
+  const { currentProject } = useProject();
+  
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen bg-validation-gray-50 w-full">

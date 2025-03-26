@@ -8,6 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import PageIntroduction from '@/components/PageIntroduction';
 import { LayoutGrid, Lightbulb, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PhaseNavigation from '@/components/PhaseNavigation';
+import QuickActions from '@/components/QuickActions';
 
 const Index = () => {
   const { user } = useAuth();
@@ -16,42 +18,18 @@ const Index = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-      </div>
-      
       <PageIntroduction
         title="Product Validation Dashboard"
         icon={<LayoutGrid className="h-5 w-5 text-blue-500" />}
-        description={
-          <>
-            <p>
-              Welcome to your Product Validation Dashboard. This dashboard helps you track your progress through the 
-              validation journey using Lean Startup methodology:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
-              {[
-                { title: "Problem Validation", description: "Verify problem significance" },
-                { title: "Solution Validation", description: "Test solution effectiveness" },
-                { title: "MVP", description: "Build minimal viable product" },
-                { title: "Product-Market Fit", description: "Achieve measurable traction" },
-                { title: "Scale", description: "Grow customer base" }
-              ].map((step, index) => (
-                <Card key={index} className={`border-l-4 ${index === 0 ? 'border-l-blue-500' : index === 1 ? 'border-l-green-500' : index === 2 ? 'border-l-yellow-500' : index === 3 ? 'border-l-purple-500' : 'border-l-red-500'}`}>
-                  <CardContent className="p-4">
-                    <h3 className="font-medium text-sm">{index + 1}. {step.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{step.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            <p className="mt-4">
-              Use the sections below to track your hypotheses, experiments, MVP features, and key metrics. 
-              This evidence-based approach will guide your product decisions and increase your chances of success.
-            </p>
-          </>
-        }
+        description="Track your progress through the Lean Startup validation journey. Each phase helps you systematically test and validate your business assumptions."
       />
+      
+      {currentProject && (
+        <>
+          <PhaseNavigation />
+          <QuickActions variant="expanded" className="mb-4" />
+        </>
+      )}
       
       <div className="grid grid-cols-1 gap-6">
         {isLoading ? (
