@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,19 +62,18 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Validation tool colors
 				validation: {
 					blue: {
-						50: '#EEF2FF',
-						100: '#D7E1FF',
-						200: '#B0C3FF',
-						300: '#89A4FF',
-						400: '#6286FF',
-						500: '#3B68FF',
-						600: '#0A41FF',
-						700: '#0035EB',
-						800: '#002BC3',
-						900: '#00229A'
+						50: '#EEF5FF',
+						100: '#D5E6FF',
+						200: '#A8CCFF',
+						300: '#7AB3FF',
+						400: '#4C9AFF',
+						500: '#2581FF',
+						600: '#0A69FF',
+						700: '#0055EB',
+						800: '#0042C3',
+						900: '#00339A'
 					},
 					gray: {
 						50: '#F9FAFB',
@@ -124,6 +122,18 @@ export default {
 						700: '#B91C1C',
 						800: '#991B1B',
 						900: '#7F1D1D'
+					},
+					purple: {
+						50: '#F3EAFF',
+						100: '#E4D3FF',
+						200: '#C9A7FF',
+						300: '#B07CFF',
+						400: '#9651FE',
+						500: '#7C26FD',
+						600: '#6309EA',
+						700: '#5005C1',
+						800: '#3C0398',
+						900: '#29026A'
 					}
 				}
 			},

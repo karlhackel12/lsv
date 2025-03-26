@@ -20,6 +20,7 @@ import PivotPage from "./pages/PivotPage";
 import GrowthPage from "./pages/GrowthPage";
 import LeanStartupPage from "./pages/LeanStartupPage";
 import BusinessPlanPage from "./pages/BusinessPlanPage";
+import LandingPage from "./pages/LandingPage";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function App() {
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
