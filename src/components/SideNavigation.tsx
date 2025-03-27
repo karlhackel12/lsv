@@ -31,7 +31,8 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useProject } from '@/hooks/use-project';
+import { useToast } from '@/hooks/use-toast';
 
 const mainNavItems = [
   {
@@ -100,6 +101,11 @@ const resourceNavItems = [
 const SideNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentProject, isLoading } = useProject();
+  const { toast } = useToast();
+  
+  console.log("SideNavigation: Current project:", currentProject);
+  console.log("SideNavigation: Current location:", location.pathname);
   
   const isItemActive = (item: any) => {
     if (item.href === '/dashboard' && location.pathname === '/dashboard') return true;
@@ -107,6 +113,20 @@ const SideNavigation = () => {
     if (item.href !== '/dashboard' && location.pathname.startsWith(item.href)) return true;
     
     return false;
+  };
+
+  const handleNewExperiment = () => {
+    if (!currentProject) {
+      toast({
+        title: "No project selected",
+        description: "Please select a project before creating an experiment",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    console.log("Creating new experiment for project:", currentProject.id);
+    navigate('/dashboard/experiments?create=true');
   };
 
   return (
@@ -123,7 +143,7 @@ const SideNavigation = () => {
       <SidebarContent className="px-3">
         <div className="mb-4 px-2">
           <Button 
-            onClick={() => navigate('/dashboard/experiments?create=true')}
+            onClick={handleNewExperiment}
             className="w-full justify-start bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />

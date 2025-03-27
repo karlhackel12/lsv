@@ -1,242 +1,56 @@
 
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Experiment } from '@/types/database';
-import ExperimentList from '@/components/experiments/ExperimentList';
-import { FlaskConical } from 'lucide-react';
+import React, { useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
-import { Button } from '@/components/ui/button';
-import ExperimentForm from '@/components/forms/ExperimentForm';
-import { Card, CardContent } from '@/components/ui/card';
-import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
-import ExperimentHypothesisLink from '@/components/experiments/ExperimentHypothesisLink';
+import ExperimentsSection from '@/components/ExperimentsSection';
+import { FlaskConical } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const ExperimentsPage = () => {
-  const { currentProject } = useProject();
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
-  const [relatedHypothesis, setRelatedHypothesis] = useState(null);
-  const navigate = useNavigate();
-  
-  // Validate status parameter against allowed values
-  const rawStatus = searchParams.get('status');
-  const statusFilter = rawStatus && ['planned', 'in-progress', 'completed'].includes(rawStatus) 
-    ? rawStatus as 'planned' | 'in-progress' | 'completed'
-    : null;
-  
-  const fetchExperiments = async () => {
-    try {
-      setIsLoading(true);
-      
-      if (!currentProject) {
-        console.log('No current project selected, cannot fetch experiments');
-        return;
-      }
-      
-      console.log('Fetching experiments for project:', currentProject.id);
-      
-      // Create base query
-      let query = supabase
-        .from('experiments')
-        .select('*')
-        .eq('project_id', currentProject.id)
-        .order('updated_at', { ascending: false });
-      
-      // Apply filters if needed
-      if (statusFilter) {
-        query = query.eq('status', statusFilter);
-      }
-      
-      const { data, error } = await query;
-        
-      if (error) {
-        console.error('Error fetching experiments:', error);
-        return;
-      }
-      
-      console.log('Fetched experiments data:', data);
-      
-      // Add originalId field to each experiment for tracking original database ID
-      const processedData = data?.map(item => ({
-        ...item,
-        originalId: item.id
-      })) as Experiment[];
-      
-      console.log("Processed experiments:", processedData);
-      setExperiments(processedData || []);
-    } catch (err) {
-      console.error('Error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { currentProject, isLoading: projectLoading } = useProject();
+  const { toast } = useToast();
   
   useEffect(() => {
-    if (currentProject) {
-      fetchExperiments();
-    } else {
-      console.log('No current project available');
-    }
-  }, [currentProject, statusFilter]);
-  
-  useEffect(() => {
-    // Check for 'create=true' in URL params to open the experiment form
-    const shouldCreate = searchParams.get('create') === 'true';
-    if (shouldCreate) {
-      setIsFormOpen(true);
-    }
+    console.log("ExperimentsPage mounted, currentProject:", currentProject);
     
-    // Handle experiment ID from URL params
-    const experimentId = searchParams.get('id');
-    if (experimentId && experiments.length > 0) {
-      const experiment = experiments.find(e => e.id === experimentId);
-      if (experiment) {
-        setSelectedExperiment(experiment);
-        setViewMode('detail');
-      }
+    if (!currentProject && !projectLoading) {
+      console.log("No project available after loading");
+      toast({
+        title: "No project selected",
+        description: "Please select a project to view experiments",
+        variant: "destructive"
+      });
     }
-  }, [searchParams, experiments]);
-  
-  if (!currentProject) {
-    return <div className="flex justify-center items-center h-full p-8">
-      <div className="text-center">
-        <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
-        <p className="text-gray-500">Select a project from the dropdown in the header to view experiments.</p>
+  }, [currentProject, projectLoading, toast]);
+
+  if (projectLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+        <span className="ml-2">Loading project data...</span>
       </div>
-    </div>;
+    );
+  }
+
+  if (!currentProject) {
+    return (
+      <div className="flex justify-center items-center h-full p-8">
+        <div className="text-center">
+          <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
+          <p className="text-gray-500">Select a project from the dropdown in the header to view experiments.</p>
+        </div>
+      </div>
+    );
   }
   
-  const handleCreateNew = () => {
-    console.log('Creating new experiment');
-    setIsFormOpen(true);
-  };
-  
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    // Clear any URL parameters related to experiment creation
-    const params = new URLSearchParams(searchParams);
-    params.delete('create');
-    setSearchParams(params);
-  };
-  
-  const handleFormSave = (experiment: Experiment) => {
-    console.log('Experiment saved:', experiment);
-    fetchExperiments();
-    setIsFormOpen(false);
-  };
-  
-  const handleEdit = (experiment: Experiment) => {
-    console.log('Editing experiment:', experiment);
-    setSearchParams({ id: experiment.id });
-    setSelectedExperiment(experiment);
-    setIsFormOpen(true);
-  };
-  
-  const handleViewDetail = (experiment: Experiment) => {
-    console.log('Viewing experiment details:', experiment);
-    setSelectedExperiment(experiment);
-    setViewMode('detail');
-    setSearchParams({ id: experiment.id });
-  };
-  
-  const handleBackToList = () => {
-    setViewMode('list');
-    setSelectedExperiment(null);
-    const params = new URLSearchParams(searchParams);
-    params.delete('id');
-    setSearchParams(params);
-  };
-
-  const handleHypothesisFound = (hypothesis) => {
-    setRelatedHypothesis(hypothesis);
-  };
-  
   return (
-    <div className="space-y-6">
-      {viewMode === 'list' ? (
-        <>
-          {/* Header section styled similarly to the image */}
-          <Card className="border-blue-100 bg-gradient-to-r from-blue-50 to-blue-50/50">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    <FlaskConical className="h-6 w-6 text-blue-500" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Experiments</h1>
-                    <p className="text-gray-600 mt-1 max-w-2xl">
-                      Design and run experiments to validate your hypotheses and collect 
-                      evidence to make informed decisions about your product.
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleCreateNew} 
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 h-auto"
-                  size="lg"
-                >
-                  Create New Experiment
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <ExperimentList 
-            experiments={experiments}
-            refreshData={fetchExperiments}
-            onEdit={handleEdit}
-            onDelete={undefined}
-            onCreateNew={handleCreateNew}
-            onViewDetail={handleViewDetail}
-            isGrowthExperiment={false}
-          />
-        </>
-      ) : (
-        <div className="space-y-6">
-          <Button 
-            variant="outline" 
-            onClick={handleBackToList}
-            className="mb-4"
-          >
-            Back to Experiments
-          </Button>
-          
-          {selectedExperiment && (
-            <>
-              <ExperimentHypothesisLink 
-                experiment={selectedExperiment}
-                projectId={currentProject.id}
-                onHypothesisFound={handleHypothesisFound}
-              />
-              
-              <ExperimentDetailView 
-                experiment={selectedExperiment}
-                onEdit={() => handleEdit(selectedExperiment)}
-                onClose={handleBackToList}
-                relatedHypothesis={relatedHypothesis}
-                onRefresh={fetchExperiments}
-                projectId={currentProject.id}
-              />
-            </>
-          )}
-        </div>
-      )}
-      
-      <ExperimentForm
-        isOpen={isFormOpen}
-        onClose={handleFormClose}
-        onSave={handleFormSave}
-        experiment={selectedExperiment}
-        projectId={currentProject.id}
-      />
-    </div>
+    <ExperimentsSection 
+      experiments={[]} 
+      refreshData={() => console.log("Refresh data called")} 
+      projectId={currentProject.id}
+      isLoading={false}
+      isGrowthExperiment={false}
+    />
   );
 };
 
