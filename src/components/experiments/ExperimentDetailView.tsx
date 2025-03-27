@@ -16,7 +16,6 @@ import ExperimentHeader from './detail/ExperimentHeader';
 import ExperimentProgressBar from './detail/ExperimentProgressBar';
 import ExperimentStatusIndicator from './detail/ExperimentStatusIndicator';
 import ExperimentStatusActions from './ExperimentStatusActions';
-import ExperimentJournal from './ExperimentJournal';
 
 interface ExperimentDetailViewProps {
   experiment: Experiment;
@@ -55,9 +54,9 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
     
     // Navigate to the correct validation page based on hypothesis phase
     if (relatedHypothesis.phase === 'problem') {
-      navigate('/problem-validation');
+      navigate('/dashboard/problem-validation');
     } else {
-      navigate('/solution-validation');
+      navigate('/dashboard/solution-validation');
     }
   };
 
@@ -242,23 +241,6 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
           </div>
         </CardContent>
       </Card>
-      
-      {/* Journal Section - Only for regular experiments */}
-      {!isGrowthExperiment && (
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center mb-4">
-              <Book className="h-5 w-5 text-purple-500 mr-2" />
-              <h2 className="text-lg font-semibold">Experiment Journal</h2>
-            </div>
-            
-            <ExperimentJournal 
-              experiment={experiment} 
-              refreshExperiment={onRefresh}
-            />
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

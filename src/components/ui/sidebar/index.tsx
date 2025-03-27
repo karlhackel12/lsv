@@ -11,8 +11,8 @@ import { SidebarMenu, SidebarMenuAction, SidebarMenuBadge, SidebarMenuButton, Si
 import { SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "./sidebar-menu-sub"
 import { SidebarInput } from "./sidebar-input"
 
-// Wrap SidebarProvider to include TooltipProvider
-const WrappedSidebarProvider: typeof SidebarProvider = (props) => (
+// Create wrapper that includes TooltipProvider
+const SidebarProviderWithTooltips = (props) => (
   <TooltipProvider delayDuration={0}>
     <SidebarProvider
       className="group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
@@ -20,10 +20,9 @@ const WrappedSidebarProvider: typeof SidebarProvider = (props) => (
     />
   </TooltipProvider>
 )
-WrappedSidebarProvider.displayName = "SidebarProvider"
 
 export {
-  WrappedSidebarProvider as SidebarProvider,
+  SidebarProviderWithTooltips as SidebarProvider,
   Sidebar,
   SidebarContent,
   SidebarFooter,
