@@ -61,11 +61,11 @@ const HypothesesSection = ({
     </div>;
   }
   
-  // Define a stub onApply function since we're just displaying templates but not using them directly
-  const handleApplyTemplate = () => {
-    // This is intentionally empty as the actual template application is handled elsewhere
-    // Just needed to satisfy the prop requirement
-    setShowTemplates(false);
+  // Define a dummy template apply handler for the list view
+  const handleApplyTemplate = (templateData: { statement: string; criteria: string; experiment: string }) => {
+    console.log("Template applied in list view:", templateData);
+    // This function is just a placeholder since we're not actually using templates in the list view
+    // The actual template application happens in the HypothesisForm component
   };
   
   return (
@@ -74,9 +74,9 @@ const HypothesesSection = ({
         <>
           <HypothesisTemplates 
             showTemplates={showTemplates} 
-            onClose={() => setShowTemplates(false)}
-            onApply={handleApplyTemplate} 
+            setShowTemplates={setShowTemplates} 
             phaseType={phaseType} 
+            onApply={handleApplyTemplate}
           />
 
           {hypotheses.length === 0 ? (

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -200,6 +201,28 @@
   .staggered-children > *:nth-child(4) { animation-delay: 0.4s; }
   .staggered-children > *:nth-child(5) { animation-delay: 0.5s; }
   .staggered-children > *:nth-child(6) { animation-delay: 0.6s; }
+  
+  /* Blue-purple gradient backgrounds */
+  .bg-blue-purple-gradient {
+    @apply bg-gradient-to-br from-validation-blue-100 to-validation-purple-100;
+  }
+  
+  .bg-blue-purple-gradient-dark {
+    @apply bg-gradient-to-br from-validation-blue-700 to-validation-purple-700;
+  }
+  
+  .bg-blue-purple-gradient-light {
+    @apply bg-gradient-to-br from-validation-blue-50 to-validation-purple-50;
+  }
+  
+  /* Accent buttons and elements */
+  .btn-blue-accent {
+    @apply bg-validation-blue-600 hover:bg-validation-blue-700 text-white transition-colors;
+  }
+  
+  .btn-purple-accent {
+    @apply bg-validation-purple-600 hover:bg-validation-purple-700 text-white transition-colors;
+  }
 }
 
 /* Font Face Declaration */
@@ -274,4 +297,3 @@
     gap: 0.5rem !important;
   }
 }
-

@@ -21,22 +21,11 @@ import GrowthPage from "./pages/GrowthPage";
 import LeanStartupPage from "./pages/LeanStartupPage";
 import BusinessPlanPage from "./pages/BusinessPlanPage";
 import LandingPage from "./pages/LandingPage";
-import HypothesisRedirectPage from "./pages/HypothesisRedirectPage";
 
 // Create a new QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
-  console.log("App rendering - initializing routes");
-  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -45,52 +34,94 @@ function App() {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Redirect root to landing page */}
-              <Route path="/" element={<Navigate to="/landing" replace />} />
-              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Index />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
-              {/* Legacy route redirects - with logging */}
-              <Route path="/experiment" element={
-                <Navigate to="/dashboard/experiments" replace />
+              <Route path="/problem-validation" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ProblemValidationPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/solution-validation" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SolutionValidationPage />
+                  </MainLayout>
+                </ProtectedRoute>
               } />
               <Route path="/experiments" element={
-                <Navigate to="/dashboard/experiments" replace />
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ExperimentsPage />
+                  </MainLayout>
+                </ProtectedRoute>
               } />
-              <Route path="/hypothesis" element={
-                <Navigate to="/dashboard/problem-validation" replace />
-              } />
-              <Route path="/hypotheses" element={<HypothesisRedirectPage />} />
               <Route path="/mvp" element={
-                <Navigate to="/dashboard/mvp" replace />
+                <ProtectedRoute>
+                  <MainLayout>
+                    <MVPPage />
+                  </MainLayout>
+                </ProtectedRoute>
               } />
               <Route path="/metrics" element={
-                <Navigate to="/dashboard/metrics" replace />
+                <ProtectedRoute>
+                  <MainLayout>
+                    <MetricsPage />
+                  </MainLayout>
+                </ProtectedRoute>
               } />
               <Route path="/pivot" element={
-                <Navigate to="/dashboard/pivot" replace />
+                <ProtectedRoute>
+                  <MainLayout>
+                    <PivotPage />
+                  </MainLayout>
+                </ProtectedRoute>
               } />
               <Route path="/growth" element={
-                <Navigate to="/dashboard/growth" replace />
+                <ProtectedRoute>
+                  <MainLayout>
+                    <GrowthPage />
+                  </MainLayout>
+                </ProtectedRoute>
               } />
-              
-              <Route path="/dashboard" element={<ProtectedRoute />}>
-                <Route element={<MainLayout />}>
-                  <Route index element={<Index />} />
-                  <Route path="problem-validation" element={<ProblemValidationPage />} />
-                  <Route path="solution-validation" element={<SolutionValidationPage />} />
-                  <Route path="experiments" element={<ExperimentsPage />} />
-                  <Route path="mvp" element={<MVPPage />} />
-                  <Route path="metrics" element={<MetricsPage />} />
-                  <Route path="pivot" element={<PivotPage />} />
-                  <Route path="growth" element={<GrowthPage />} />
-                  <Route path="lean-startup-methodology" element={<LeanStartupPage />} />
-                  <Route path="business-plan" element={<BusinessPlanPage />} />
-                  <Route path="profile" element={<div>Profile Page</div>} />
-                  <Route path="settings" element={<div>Settings Page</div>} />
-                </Route>
-              </Route>
+              <Route path="/lean-startup-methodology" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <LeanStartupPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/business-plan" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <BusinessPlanPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <div>Profile Page</div>
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <div>Settings Page</div>
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

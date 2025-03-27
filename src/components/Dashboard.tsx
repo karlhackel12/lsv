@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -29,10 +30,7 @@ const Dashboard = () => {
   
   useEffect(() => {
     if (currentProject) {
-      console.log("Dashboard: Fetching data for project:", currentProject.id);
       fetchDashboardData();
-    } else {
-      console.log("Dashboard: No current project available");
     }
   }, [currentProject]);
   
@@ -105,6 +103,7 @@ const Dashboard = () => {
     }
   };
   
+  // Calculate scaling readiness score based on metrics
   const calculateReadinessScore = () => {
     if (scalingMetrics.length === 0) return 0;
     
@@ -128,15 +127,7 @@ const Dashboard = () => {
     return Math.round((achievedWeight / totalWeight) * 100);
   };
   
-  const navigateWithPrefix = (path) => {
-    if (!path.startsWith('/dashboard')) {
-      path = '/dashboard' + path;
-    }
-    navigate(path);
-  };
-
   if (!currentProject) {
-    console.log("Dashboard: Rendering no project state");
     return <div>Please select a project to view the dashboard.</div>;
   }
   
@@ -168,7 +159,7 @@ const Dashboard = () => {
               </div>}
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full text-blue-600" onClick={() => navigateWithPrefix('/problem-validation')}>
+            <Button variant="outline" className="w-full text-blue-600" onClick={() => navigate('/hypotheses')}>
               View All Hypotheses
             </Button>
           </CardFooter>
@@ -197,7 +188,7 @@ const Dashboard = () => {
               </div>}
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full text-green-600" onClick={() => navigateWithPrefix('/experiments')}>
+            <Button variant="outline" className="w-full text-green-600" onClick={() => navigate('/experiments')}>
               View All Experiments
             </Button>
           </CardFooter>
@@ -226,7 +217,7 @@ const Dashboard = () => {
               </div>}
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full text-yellow-600" onClick={() => navigateWithPrefix('/mvp')}>
+            <Button variant="outline" className="w-full text-yellow-600" onClick={() => navigate('/mvp')}>
               View MVP Features
             </Button>
           </CardFooter>
@@ -278,7 +269,7 @@ const Dashboard = () => {
           )}
         </CardContent>
         <CardFooter>
-          <Button variant="outline" className="w-full text-purple-600" onClick={() => navigateWithPrefix('/experiments?type=growth')}>
+          <Button variant="outline" className="w-full text-purple-600" onClick={() => navigate('/experiments?type=growth')}>
             View Growth Experiments
           </Button>
         </CardFooter>
@@ -331,12 +322,11 @@ const Dashboard = () => {
           )}
         </CardContent>
         <CardFooter>
-          <Button variant="outline" className="w-full text-teal-600" onClick={() => navigateWithPrefix('/growth?tab=scaling_readiness')}>
+          <Button variant="outline" className="w-full text-teal-600" onClick={() => navigate('/growth?tab=scaling_readiness')}>
             View Scaling Readiness
           </Button>
         </CardFooter>
       </Card>
     </div>;
 };
-
 export default Dashboard;

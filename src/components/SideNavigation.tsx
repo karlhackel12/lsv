@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -31,55 +30,54 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { useProject } from '@/hooks/use-project';
-import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const mainNavItems = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/',
     icon: <LayoutDashboard className="h-5 w-5 mr-3" />,
     description: 'Overview of your product validation journey',
   },
   {
     title: 'Problem Validation',
-    href: '/dashboard/problem-validation',
+    href: '/problem-validation',
     icon: <Lightbulb className="h-5 w-5 mr-3" />,
     description: 'Create and test problem hypotheses',
   },
   {
     title: 'Solution Validation',
-    href: '/dashboard/solution-validation',
+    href: '/solution-validation',
     icon: <FlaskConical className="h-5 w-5 mr-3" />,
     description: 'Test solutions with experiments',
   },
   {
     title: 'Experiments',
-    href: '/dashboard/experiments',
+    href: '/experiments',
     icon: <Beaker className="h-5 w-5 mr-3" />,
     description: 'Run validation experiments',
   },
   {
     title: 'MVP',
-    href: '/dashboard/mvp',
+    href: '/mvp',
     icon: <Layers className="h-5 w-5 mr-3" />,
     description: 'Build your minimum viable product',
   },
   {
     title: 'Growth',
-    href: '/dashboard/growth',
+    href: '/growth',
     icon: <TrendingUp className="h-5 w-5 mr-3" />,
     description: 'Scale your validated business',
   },
   {
     title: 'Metrics',
-    href: '/dashboard/metrics',
+    href: '/metrics',
     icon: <LineChart className="h-5 w-5 mr-3" />,
     description: 'Track key metrics for your product',
   },
   {
     title: 'Pivot',
-    href: '/dashboard/pivot',
+    href: '/pivot',
     icon: <GitFork className="h-5 w-5 mr-3" />,
     description: 'Determine if a strategic change is needed',
   },
@@ -88,12 +86,12 @@ const mainNavItems = [
 const resourceNavItems = [
   {
     title: 'Lean Startup Guide',
-    href: '/dashboard/lean-startup-methodology',
+    href: '/lean-startup-methodology',
     icon: <BookOpen className="h-5 w-5 mr-3" />,
   },
   {
     title: 'Business Plan',
-    href: '/dashboard/business-plan',
+    href: '/business-plan',
     icon: <FileText className="h-5 w-5 mr-3" />,
   },
 ];
@@ -101,32 +99,13 @@ const resourceNavItems = [
 const SideNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentProject, isLoading } = useProject();
-  const { toast } = useToast();
-  
-  console.log("SideNavigation: Current project:", currentProject);
-  console.log("SideNavigation: Current location:", location.pathname);
   
   const isItemActive = (item: any) => {
-    if (item.href === '/dashboard' && location.pathname === '/dashboard') return true;
+    if (item.href === '/' && location.pathname === '/') return true;
     
-    if (item.href !== '/dashboard' && location.pathname.startsWith(item.href)) return true;
+    if (item.href !== '/' && location.pathname.startsWith(item.href)) return true;
     
     return false;
-  };
-
-  const handleNewExperiment = () => {
-    if (!currentProject) {
-      toast({
-        title: "No project selected",
-        description: "Please select a project before creating an experiment",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    console.log("Creating new experiment for project:", currentProject.id);
-    navigate('/dashboard/experiments?create=true');
   };
 
   return (
@@ -143,7 +122,7 @@ const SideNavigation = () => {
       <SidebarContent className="px-3">
         <div className="mb-4 px-2">
           <Button 
-            onClick={handleNewExperiment}
+            onClick={() => navigate('/experiments?create=true')}
             className="w-full justify-start bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -164,7 +143,7 @@ const SideNavigation = () => {
                     tooltip={item.description}
                     isActive={active}
                   >
-                    <NavLink to={item.href} end={item.href === '/dashboard'}>
+                    <NavLink to={item.href} end={item.href === '/'}>
                       {item.icon}
                       <span>{item.title}</span>
                     </NavLink>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, LogOut, Settings, ChevronsUpDown, Check, PlusCircle } from 'lucide-react';
@@ -12,59 +13,37 @@ import { cn } from '@/lib/utils';
 import { useProject } from '@/hooks/use-project';
 import ProjectForm from '@/components/forms/ProjectForm';
 import { Project } from '@/types/database';
-import { useToast } from '@/components/ui/toast';
 
 const MainHeader = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
-  const { toast } = useToast();
   
   const {
     projects,
     currentProject,
     selectProject,
-    createProject,
-    isLoading: projectsLoading
+    createProject
   } = useProject();
-
-  console.log("MainHeader: Current project:", currentProject);
-  console.log("MainHeader: Available projects:", projects);
-  console.log("MainHeader: Projects loading:", projectsLoading);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
 
-  const handleProjectSelect = (project) => {
-    console.log("Selecting project:", project);
+  const handleProjectSelect = (project: Project) => {
     selectProject(project);
     setOpen(false);
-    
-    // Reload the current page to ensure components re-render with the new project
-    window.location.reload();
   };
 
-  const handleCreateProject = async (projectData) => {
-    try {
-      console.log("Creating new project:", projectData);
-      const newProject = await createProject(projectData);
-      console.log("Project created successfully:", newProject);
-      toast({
-        title: "Project created",
-        description: `Project "${projectData.name}" has been created successfully.`,
-      });
-      setIsProjectFormOpen(false);
-    } catch (error) {
-      console.error("Error creating project:", error);
-      toast({
-        title: "Error creating project",
-        description: error.message || "An error occurred while creating the project.",
-        variant: "destructive"
-      });
-    }
+  const handleCreateProject = async (projectData: {
+    name: string;
+    description: string;
+    stage: string;
+  }) => {
+    await createProject(projectData);
+    setIsProjectFormOpen(false);
   };
 
   const initials = user?.email ? user.email.split('@')[0].substring(0, 2).toUpperCase() : 'U';

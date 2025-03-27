@@ -10,6 +10,7 @@ interface HypothesisTemplatesProps {
   isOpen?: boolean; // Supporting both old and new versions
   onClose?: () => void; // Supporting both old and new versions
   onDismiss?: () => void; // Supporting both old and new versions
+  setShowTemplates?: React.Dispatch<React.SetStateAction<boolean>>; // Added for backward compatibility
   onApply: (templateData: { statement: string; criteria: string; experiment: string }) => void;
   phaseType: "problem" | "solution";
 }
@@ -19,12 +20,21 @@ const HypothesisTemplates = ({
   isOpen, 
   onClose, 
   onDismiss, 
+  setShowTemplates,
   onApply, 
   phaseType 
 }: HypothesisTemplatesProps) => {
   // For backward compatibility, support both isOpen/onClose and showTemplates/onDismiss patterns
   const isDialogOpen = showTemplates || isOpen || false;
-  const handleClose = onClose || onDismiss || (() => {});
+  
+  // Handle close function based on available props
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      if (onClose) onClose();
+      if (onDismiss) onDismiss();
+      if (setShowTemplates) setShowTemplates(false);
+    }
+  };
 
   const templates = {
     problem: [

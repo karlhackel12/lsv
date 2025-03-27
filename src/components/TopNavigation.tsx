@@ -7,52 +7,47 @@ import { cn } from '@/lib/utils';
 const mainNavItems = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/',
     icon: <LayoutDashboard className="h-5 w-5 mr-2" />
   }, 
   {
-    title: 'Problem Validation',
-    href: '/dashboard/problem-validation',
+    title: 'Hypotheses',
+    href: '/hypotheses',
     icon: <Lightbulb className="h-5 w-5 mr-2" />
-  },
-  {
-    title: 'Solution Validation',
-    href: '/dashboard/solution-validation',
-    icon: <Lightbulb className="h-5 w-5 mr-2" />
-  },
+  }, 
   {
     title: 'Experiments',
-    href: '/dashboard/experiments',
+    href: '/experiments',
     icon: <FlaskConical className="h-5 w-5 mr-2" />
   }, 
   {
     title: 'MVP',
-    href: '/dashboard/mvp',
+    href: '/mvp',
     icon: <Layers className="h-5 w-5 mr-2" />
   }, 
   {
     title: 'Metrics',
-    href: '/dashboard/metrics',
+    href: '/metrics',
     icon: <LineChart className="h-5 w-5 mr-2" />
   }, 
   {
     title: 'Growth',
-    href: '/dashboard/growth',
+    href: '/growth',
     icon: <TrendingUp className="h-5 w-5 mr-2" />
   }, 
   {
     title: 'Pivot',
-    href: '/dashboard/pivot',
+    href: '/pivot',
     icon: <GitFork className="h-5 w-5 mr-2" />
   },
   {
     title: 'Lean Startup Guide',
-    href: '/dashboard/lean-startup-methodology',
+    href: '/lean-startup-methodology',
     icon: <BookOpen className="h-5 w-5 mr-2" />
   },
   {
     title: 'Business Plan',
-    href: '/dashboard/business-plan',
+    href: '/business-plan',
     icon: <FileText className="h-5 w-5 mr-2" />
   }
 ];
