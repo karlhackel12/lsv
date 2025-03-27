@@ -79,11 +79,16 @@ export function useExperimentForm({
     try {
       console.log("Form submitted with data:", data);
       
+      // Ensure hypothesis_id is null if it's an empty string or "none"
+      const sanitizedHypothesisId = 
+        data.hypothesis_id === "" || data.hypothesis_id === "none" ? null : data.hypothesis_id;
+      
       // If this is a growth experiment, we just pass the data back
       // to be handled by the parent component
       if (isGrowthExperiment) {
         onSave({
           ...data,
+          hypothesis_id: sanitizedHypothesisId,
           isGrowthExperiment: true,
           originalGrowthExperiment: experiment?.originalGrowthExperiment
         });
@@ -105,7 +110,7 @@ export function useExperimentForm({
             results: data.results || null,
             insights: data.insights || null,
             decisions: data.decisions || null,
-            hypothesis_id: data.hypothesis_id,
+            hypothesis_id: sanitizedHypothesisId,
             updated_at: new Date().toISOString()
           })
           .eq('id', experiment.id);
@@ -130,7 +135,7 @@ export function useExperimentForm({
             insights: data.insights || null,
             decisions: data.decisions || null,
             project_id: projectId,
-            hypothesis_id: data.hypothesis_id,
+            hypothesis_id: sanitizedHypothesisId,
           });
           
         if (error) throw error;

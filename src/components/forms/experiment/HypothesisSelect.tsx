@@ -65,9 +65,14 @@ const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelecte
   
   // When a hypothesis is selected, update the form with its data
   const handleHypothesisChange = (hypothesisId: string) => {
-    const selectedHypothesis = hypotheses.find(h => h.id === hypothesisId) || null;
+    // Handle the "none" selection by setting to null instead of empty string
+    const actualHypothesisId = hypothesisId === "none" ? null : hypothesisId;
     
-    form.setValue('hypothesis_id', hypothesisId);
+    form.setValue('hypothesis_id', actualHypothesisId);
+    
+    const selectedHypothesis = hypothesisId === "none" 
+      ? null
+      : hypotheses.find(h => h.id === hypothesisId) || null;
     
     // If we have a hypothesis, pre-populate form fields with hypothesis data
     if (selectedHypothesis) {
@@ -106,8 +111,8 @@ const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelecte
           <FormLabel>Connected Hypothesis</FormLabel>
           <Select 
             onValueChange={handleHypothesisChange} 
-            value={field.value || ''}
-            defaultValue={field.value || ''}
+            value={field.value || 'none'}
+            defaultValue={field.value || 'none'}
           >
             <FormControl>
               <SelectTrigger>
