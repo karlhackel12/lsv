@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Experiment, Hypothesis, GrowthExperiment } from '@/types/database';
 import ExperimentForm from './forms/ExperimentForm';
@@ -47,7 +46,6 @@ const ExperimentsSection = ({
   const location = useLocation();
 
   useEffect(() => {
-    // Handle experiment ID from URL params
     const experimentId = searchParams.get('id');
     if (experimentId && experiments.length > 0) {
       const experiment = experiments.find(e => e.id === experimentId);
@@ -57,22 +55,18 @@ const ExperimentsSection = ({
       }
     }
     
-    // Handle experiment ID from location state (for direct navigation)
     const state = location.state as any;
     if (state?.experimentId && experiments.length > 0) {
       const experiment = experiments.find(e => e.id === state.experimentId);
       if (experiment) {
         setSelectedExperiment(experiment);
         setViewMode('detail');
-        // Reset location state
         navigate(location.pathname, { replace: true });
       }
     }
     
-    // Handle create new from location state
     if (state?.createNew) {
       handleCreateNew();
-      // Reset location state
       navigate(location.pathname, { replace: true });
     }
   }, [searchParams, experiments, location]);
@@ -177,6 +171,14 @@ const ExperimentsSection = ({
       }
     } else {
       refreshData();
+    }
+  };
+
+  const handleNavigateToHypothesis = (hypothesis: Hypothesis) => {
+    if (hypothesis.phase === 'problem') {
+      navigate('/dashboard/problem-validation');
+    } else {
+      navigate('/dashboard/solution-validation');
     }
   };
 

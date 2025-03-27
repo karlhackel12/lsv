@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment } from '@/types/database';
 import ExperimentList from '@/components/experiments/ExperimentList';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import ExperimentForm from '@/components/forms/ExperimentForm';
 import { Card, CardContent } from '@/components/ui/card';
 import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
+import ExperimentHypothesisLink from '@/components/experiments/ExperimentHypothesisLink';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
@@ -19,6 +20,8 @@ const ExperimentsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [relatedHypothesis, setRelatedHypothesis] = useState(null);
+  const navigate = useNavigate();
   
   // Validate status parameter against allowed values
   const rawStatus = searchParams.get('status');
@@ -30,7 +33,12 @@ const ExperimentsPage = () => {
     try {
       setIsLoading(true);
       
-      if (!currentProject) return;
+      if (!currentProject) {
+        console.log('No current project selected, cannot fetch experiments');
+        return;
+      }
+      
+      console.log('Fetching experiments for project:', currentProject.id);
       
       // Create base query
       let query = supabase
@@ -51,13 +59,15 @@ const ExperimentsPage = () => {
         return;
       }
       
+      console.log('Fetched experiments data:', data);
+      
       // Add originalId field to each experiment for tracking original database ID
       const processedData = data?.map(item => ({
         ...item,
         originalId: item.id
       })) as Experiment[];
       
-      console.log("Fetched experiments:", processedData);
+      console.log("Processed experiments:", processedData);
       setExperiments(processedData || []);
     } catch (err) {
       console.error('Error:', err);
@@ -69,6 +79,8 @@ const ExperimentsPage = () => {
   useEffect(() => {
     if (currentProject) {
       fetchExperiments();
+    } else {
+      console.log('No current project available');
     }
   }, [currentProject, statusFilter]);
   
@@ -91,10 +103,17 @@ const ExperimentsPage = () => {
   }, [searchParams, experiments]);
   
   if (!currentProject) {
-    return <div>Select a project to view experiments</div>;
+    return <div className="flex justify-center items-center h-full p-8">
+      <div className="text-center">
+        <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
+        <p className="text-gray-500">Select a project from the dropdown in the header to view experiments.</p>
+      </div>
+    </div>;
   }
   
   const handleCreateNew = () => {
+    console.log('Creating new experiment');
     setIsFormOpen(true);
   };
   
@@ -107,17 +126,20 @@ const ExperimentsPage = () => {
   };
   
   const handleFormSave = (experiment: Experiment) => {
+    console.log('Experiment saved:', experiment);
     fetchExperiments();
     setIsFormOpen(false);
   };
   
   const handleEdit = (experiment: Experiment) => {
+    console.log('Editing experiment:', experiment);
     setSearchParams({ id: experiment.id });
     setSelectedExperiment(experiment);
     setIsFormOpen(true);
   };
   
   const handleViewDetail = (experiment: Experiment) => {
+    console.log('Viewing experiment details:', experiment);
     setSelectedExperiment(experiment);
     setViewMode('detail');
     setSearchParams({ id: experiment.id });
@@ -129,6 +151,10 @@ const ExperimentsPage = () => {
     const params = new URLSearchParams(searchParams);
     params.delete('id');
     setSearchParams(params);
+  };
+
+  const handleHypothesisFound = (hypothesis) => {
+    setRelatedHypothesis(hypothesis);
   };
   
   return (
@@ -183,14 +209,22 @@ const ExperimentsPage = () => {
           </Button>
           
           {selectedExperiment && (
-            <ExperimentDetailView 
-              experiment={selectedExperiment}
-              onEdit={() => handleEdit(selectedExperiment)}
-              onClose={handleBackToList}
-              relatedHypothesis={null}
-              onRefresh={fetchExperiments}
-              projectId={currentProject.id}
-            />
+            <>
+              <ExperimentHypothesisLink 
+                experiment={selectedExperiment}
+                projectId={currentProject.id}
+                onHypothesisFound={handleHypothesisFound}
+              />
+              
+              <ExperimentDetailView 
+                experiment={selectedExperiment}
+                onEdit={() => handleEdit(selectedExperiment)}
+                onClose={handleBackToList}
+                relatedHypothesis={relatedHypothesis}
+                onRefresh={fetchExperiments}
+                projectId={currentProject.id}
+              />
+            </>
           )}
         </div>
       )}
