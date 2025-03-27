@@ -61,13 +61,21 @@ const HypothesesSection = ({
     </div>;
   }
   
+  // Define a stub onApply function since we're just displaying templates but not using them directly
+  const handleApplyTemplate = () => {
+    // This is intentionally empty as the actual template application is handled elsewhere
+    // Just needed to satisfy the prop requirement
+    setShowTemplates(false);
+  };
+  
   return (
     <div className="animate-fadeIn">
       {viewMode === 'list' ? (
         <>
           <HypothesisTemplates 
             showTemplates={showTemplates} 
-            setShowTemplates={setShowTemplates} 
+            onClose={() => setShowTemplates(false)}
+            onApply={handleApplyTemplate} 
             phaseType={phaseType} 
           />
 
