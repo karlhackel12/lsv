@@ -21,6 +21,7 @@ import GrowthPage from "./pages/GrowthPage";
 import LeanStartupPage from "./pages/LeanStartupPage";
 import BusinessPlanPage from "./pages/BusinessPlanPage";
 import LandingPage from "./pages/LandingPage";
+import HypothesisRedirectPage from "./pages/HypothesisRedirectPage";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -39,6 +40,16 @@ function App() {
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* Legacy route redirects */}
+              <Route path="/experiment" element={<Navigate to="/dashboard/experiments" replace />} />
+              <Route path="/experiments" element={<Navigate to="/dashboard/experiments" replace />} />
+              <Route path="/hypothesis" element={<Navigate to="/dashboard/problem-validation" replace />} />
+              <Route path="/hypotheses" element={<HypothesisRedirectPage />} />
+              <Route path="/mvp" element={<Navigate to="/dashboard/mvp" replace />} />
+              <Route path="/metrics" element={<Navigate to="/dashboard/metrics" replace />} />
+              <Route path="/pivot" element={<Navigate to="/dashboard/pivot" replace />} />
+              <Route path="/growth" element={<Navigate to="/dashboard/growth" replace />} />
               
               <Route path="/dashboard" element={<ProtectedRoute />}>
                 <Route element={<MainLayout />}>

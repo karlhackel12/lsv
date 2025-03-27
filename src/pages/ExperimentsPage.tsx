@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment } from '@/types/database';
 import ExperimentList from '@/components/experiments/ExperimentList';
-import { FlaskConical, Info } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
 import { Button } from '@/components/ui/button';
 import ExperimentForm from '@/components/forms/ExperimentForm';
@@ -73,6 +73,12 @@ const ExperimentsPage = () => {
   }, [currentProject, statusFilter]);
   
   useEffect(() => {
+    // Check for 'create=true' in URL params to open the experiment form
+    const shouldCreate = searchParams.get('create') === 'true';
+    if (shouldCreate) {
+      setIsFormOpen(true);
+    }
+    
     // Handle experiment ID from URL params
     const experimentId = searchParams.get('id');
     if (experimentId && experiments.length > 0) {
