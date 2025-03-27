@@ -1,10 +1,22 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle, BarChart, Layout, Users, Rocket, Lightbulb } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const LandingPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-validation-blue-50 to-validation-purple-50">
       {/* Navigation */}
@@ -14,10 +26,19 @@ const LandingPage = () => {
           <span className="font-bold text-2xl text-validation-blue-900">LSV</span>
         </div>
         <div className="flex gap-4 items-center">
-          <Link to="/auth" className="text-validation-blue-700 hover:text-validation-blue-900 transition-colors">
-            Login
-          </Link>
-          <Button className="bg-validation-purple-600 hover:bg-validation-purple-700 transition-colors">
+          {user ? (
+            <Link to="/dashboard" className="text-validation-blue-700 hover:text-validation-blue-900 transition-colors">
+              Dashboard
+            </Link>
+          ) : (
+            <Link to="/auth" className="text-validation-blue-700 hover:text-validation-blue-900 transition-colors">
+              Login
+            </Link>
+          )}
+          <Button 
+            className="bg-validation-purple-600 hover:bg-validation-purple-700 transition-colors"
+            onClick={handleGetStarted}
+          >
             Get Started
           </Button>
         </div>
@@ -32,7 +53,11 @@ const LandingPage = () => {
           The ultimate platform for founders to test hypotheses, run experiments, and find product-market fit using the Lean Startup methodology.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="bg-validation-blue-600 hover:bg-validation-blue-700 transition-colors">
+          <Button 
+            size="lg" 
+            className="bg-validation-blue-600 hover:bg-validation-blue-700 transition-colors"
+            onClick={handleGetStarted}
+          >
             Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
           <Button size="lg" variant="outline" className="border-validation-blue-300 text-validation-blue-700">
@@ -122,7 +147,11 @@ const LandingPage = () => {
           <p className="text-lg text-validation-blue-100 max-w-2xl mx-auto mb-10">
             Join thousands of founders who are finding product-market fit faster with our validation platform.
           </p>
-          <Button size="lg" className="bg-validation-purple-600 hover:bg-validation-purple-700">
+          <Button 
+            size="lg" 
+            className="bg-validation-purple-600 hover:bg-validation-purple-700"
+            onClick={handleGetStarted}
+          >
             Get Started for Free
           </Button>
         </div>
