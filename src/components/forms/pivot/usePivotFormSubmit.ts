@@ -34,6 +34,7 @@ export const usePivotFormSubmit = ({ pivotOption, onSave, onClose }: UsePivotFor
           description: formData.description,
           trigger: formData.trigger,
           likelihood: formData.likelihood,
+          evidence: formData.evidence,
           updated_at: new Date().toISOString(),
         };
 
@@ -55,6 +56,7 @@ export const usePivotFormSubmit = ({ pivotOption, onSave, onClose }: UsePivotFor
           description: formData.description,
           trigger: formData.trigger,
           likelihood: formData.likelihood,
+          evidence: formData.evidence,
           project_id: formData.project_id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

@@ -817,6 +817,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          evidence: string | null
           id: string
           likelihood: Database["public"]["Enums"]["pivot_likelihood"]
           project_id: string | null
@@ -827,6 +828,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description: string
+          evidence?: string | null
           id?: string
           likelihood?: Database["public"]["Enums"]["pivot_likelihood"]
           project_id?: string | null
@@ -837,6 +839,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string
+          evidence?: string | null
           id?: string
           likelihood?: Database["public"]["Enums"]["pivot_likelihood"]
           project_id?: string | null
