@@ -1,10 +1,13 @@
+
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Experiment } from '@/types/database';
+
 interface ExperimentProgressBarProps {
   experiment: Experiment;
   showLabels?: boolean;
 }
+
 const ExperimentProgressBar = ({
   experiment,
   showLabels = true
@@ -22,7 +25,21 @@ const ExperimentProgressBar = ({
         return 10;
     }
   };
+  
   const progress = calculateProgress();
-  return;
+  
+  return (
+    <div className="w-full space-y-1">
+      <Progress value={progress} className="w-full h-2" />
+      {showLabels && (
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>Planned</span>
+          <span>In Progress</span>
+          <span>Completed</span>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default ExperimentProgressBar;

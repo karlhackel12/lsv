@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -162,6 +163,9 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
       onClose={onClose}
       title={metric ? 'Edit Readiness Metric' : 'Add Readiness Metric'}
       description="Track metrics that indicate your startup's readiness to scale."
+      onSubmit={() => form.handleSubmit(onSubmit)()}
+      submitLabel={metric ? 'Update Metric' : 'Create Metric'}
+      isSubmitting={isSubmitting}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -369,15 +373,6 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
               </FormItem>
             )}
           />
-          
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : metric ? 'Update Metric' : 'Create Metric'}
-            </Button>
-          </div>
         </form>
       </Form>
     </FormSheet>

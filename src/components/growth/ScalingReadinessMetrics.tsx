@@ -5,8 +5,8 @@ import { ScalingReadinessMetric, GrowthMetric } from '@/types/database';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import ScalingMetricForm from './ScalingMetricForm';
 import ScalingReadinessTable from './ScalingReadinessTable';
+import ScalingReadinessMetricForm from '@/components/forms/ScalingReadinessMetricForm';
 
 interface ScalingReadinessMetricsProps {
   projectId: string;
@@ -159,11 +159,12 @@ const ScalingReadinessMetrics: React.FC<ScalingReadinessMetricsProps> = ({
       )}
 
       {showForm && (
-        <ScalingMetricForm
-          metric={selectedMetric}
+        <ScalingReadinessMetricForm
           projectId={projectId}
+          metric={selectedMetric}
           onSave={handleFormSave}
           onClose={handleFormClose}
+          isOpen={showForm}
         />
       )}
     </div>
