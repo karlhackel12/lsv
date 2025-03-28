@@ -27,7 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { FormSheet } from '@/components/ui/form-sheet';
 import { Slider } from '@/components/ui/slider';
-import { predefinedScalingMetrics } from '@/lib/scaling-metrics';
+import { predefinedScalingMetrics, getAllCategories } from '@/lib/scaling-metrics';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -88,7 +88,8 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
         unit: values.unit,
         status: values.status,
         importance: values.importance,
-        notes: values.notes || '',
+        // Only include notes if it's actually in the database schema
+        // notes: values.notes || '',
         project_id: projectId,
       };
 
@@ -152,15 +153,10 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
     }
   };
 
-  const categoryOptions = [
-    { id: 'product_market_fit', name: 'Product-Market Fit' },
-    { id: 'unit_economics', name: 'Unit Economics' },
-    { id: 'growth_engine', name: 'Growth Engine' },
-    { id: 'team_capacity', name: 'Team Capacity' },
-    { id: 'operational_scalability', name: 'Operational Scalability' },
-    { id: 'financial_readiness', name: 'Financial Readiness' },
-    { id: 'market_opportunity', name: 'Market Opportunity' },
-  ];
+  const categories = getAllCategories().map(categoryId => ({
+    id: categoryId,
+    name: getCategoryName(categoryId)
+  }));
 
   const unitOptions = [
     { id: 'number', name: 'Number' },
@@ -258,7 +254,7 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {categoryOptions.map((category) => (
+                    {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>
@@ -410,24 +406,6 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
                 <FormDescription>
                   How important is this metric for your scaling readiness?
                 </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notes</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    {...field} 
-                    placeholder="Additional notes about this metric" 
-                    className="min-h-[80px]"
-                  />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
