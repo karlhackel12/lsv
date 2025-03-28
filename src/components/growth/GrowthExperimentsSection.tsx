@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -15,7 +16,8 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  BrainCircuit
+  BrainCircuit,
+  Trash2
 } from 'lucide-react';
 import { GrowthModel, GrowthExperiment } from '@/types/database';
 import GrowthExperimentForm from '../forms/GrowthExperimentForm';
@@ -24,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
+import DeleteGrowthExperimentDialog from './DeleteGrowthExperimentDialog';
 
 interface GrowthExperimentsProps {
   projectId: string;
@@ -48,6 +51,8 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
   const [experiments, setExperiments] = useState<GrowthExperiment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [experimentToDelete, setExperimentToDelete] = useState<GrowthExperiment | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,6 +108,11 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
     setSelectedExperiment(null);
   };
 
+  const handleDeleteClick = (experiment: GrowthExperiment) => {
+    setExperimentToDelete(experiment);
+    setIsDeleteDialogOpen(true);
+  };
+
   const refreshData = async () => {
     await fetchExperiments();
   };
@@ -151,7 +161,18 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
             </div>
           )}
         </CardContent>
-        <CardFooter className="border-t pt-3 pb-3 flex justify-end">
+        <CardFooter className="border-t pt-3 pb-3 flex justify-between">
+          <Button 
+            size="sm" 
+            variant="destructive" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(experiment);
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
           <Button 
             size="sm" 
             variant="outline" 
@@ -173,6 +194,13 @@ const GrowthExperimentsSection: React.FC<GrowthExperimentsProps> = ({
         onSave={refreshData}
         onClose={handleCloseForm}
         experiment={selectedExperiment}
+      />
+
+      <DeleteGrowthExperimentDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        experimentToDelete={experimentToDelete}
+        refreshData={refreshData}
       />
 
       {!showForm && (
