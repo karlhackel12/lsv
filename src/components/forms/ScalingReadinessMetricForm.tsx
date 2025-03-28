@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -27,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { FormSheet } from '@/components/ui/form-sheet';
 import { Slider } from '@/components/ui/slider';
+import { predefinedScalingMetrics } from '@/lib/scaling-metrics';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -38,6 +39,7 @@ const formSchema = z.object({
   status: z.string().min(1, 'Status is required'),
   importance: z.number().min(1).max(5, 'Importance must be between 1 and 5'),
   notes: z.string().optional(),
+  predefined_metric: z.string().optional(),
 });
 
 interface ScalingReadinessMetricFormProps {
@@ -70,6 +72,7 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
       status: metric?.status || 'pending',
       importance: metric?.importance || 3,
       notes: metric?.notes || '',
+      predefined_metric: '',
     },
   });
 
@@ -131,6 +134,24 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
     }
   };
 
+  // Handle selecting a predefined metric
+  const handlePredefinedMetricChange = (value: string) => {
+    if (!value || value === 'none') return;
+    
+    const selectedMetric = predefinedScalingMetrics.find(metric => 
+      `${metric.category}:${metric.name}` === value
+    );
+    
+    if (selectedMetric) {
+      form.setValue('name', selectedMetric.name);
+      form.setValue('description', selectedMetric.description);
+      form.setValue('category', selectedMetric.category);
+      form.setValue('unit', selectedMetric.unit);
+      form.setValue('importance', selectedMetric.importance);
+      form.setValue('target_value', selectedMetric.target_value || 0);
+    }
+  };
+
   const categoryOptions = [
     { id: 'product_market_fit', name: 'Product-Market Fit' },
     { id: 'unit_economics', name: 'Unit Economics' },
@@ -169,6 +190,44 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="predefined_metric"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Choose a Predefined Metric (Optional)</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    handlePredefinedMetricChange(value);
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a predefined metric or create your own" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Custom Metric</SelectItem>
+                    {predefinedScalingMetrics.map((metric) => (
+                      <SelectItem 
+                        key={`${metric.category}:${metric.name}`} 
+                        value={`${metric.category}:${metric.name}`}
+                      >
+                        {`${metric.name} (${getCategoryName(metric.category)})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose a predefined metric or create your own custom metric
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
           <FormField
             control={form.control}
             name="name"
@@ -378,5 +437,20 @@ const ScalingReadinessMetricForm: React.FC<ScalingReadinessMetricFormProps> = ({
     </FormSheet>
   );
 };
+
+// Helper function to get category name from ID
+function getCategoryName(categoryId: string): string {
+  const categories: Record<string, string> = {
+    'product_market_fit': 'Product-Market Fit',
+    'unit_economics': 'Unit Economics',
+    'growth_engine': 'Growth Engine',
+    'team_capacity': 'Team Capacity',
+    'operational_scalability': 'Operational Scalability',
+    'financial_readiness': 'Financial Readiness',
+    'market_opportunity': 'Market Opportunity'
+  };
+  
+  return categories[categoryId] || categoryId;
+}
 
 export default ScalingReadinessMetricForm;
