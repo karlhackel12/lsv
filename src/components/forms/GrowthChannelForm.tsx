@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -28,6 +28,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ChevronDown } from 'lucide-react';
+import useGrowthModels from '@/hooks/growth/use-growth-models';
 
 interface GrowthChannelFormProps {
   growthModel?: GrowthModel; // Make growthModel optional
@@ -46,6 +47,8 @@ const GrowthChannelForm = ({
 }: GrowthChannelFormProps) => {
   const { toast } = useToast();
   const isEditing = !!channel;
+  // Get the active model ID from the hook if not provided directly
+  const { activeModelId } = useGrowthModels(projectId);
 
   const form = useForm<GrowthChannel>({
     defaultValues: channel || {
@@ -55,15 +58,25 @@ const GrowthChannelForm = ({
       conversion_rate: undefined,
       volume: undefined,
       status: 'testing',
-      growth_model_id: growthModel?.id, // Use optional chaining
+      growth_model_id: growthModel?.id || activeModelId || undefined,
       project_id: projectId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     } as GrowthChannel,
   });
 
+  // Update the growth_model_id when activeModelId changes
+  useEffect(() => {
+    if (!isEditing && activeModelId && !form.getValues('growth_model_id')) {
+      form.setValue('growth_model_id', activeModelId);
+    }
+  }, [activeModelId, isEditing, form]);
+
   const handleSubmit = async (data: GrowthChannel) => {
     try {
+      // Make sure we have a growth_model_id
+      const modelId = data.growth_model_id || activeModelId;
+      
       if (isEditing && channel) {
         const { error } = await supabase
           .from('growth_channels')
@@ -74,6 +87,7 @@ const GrowthChannelForm = ({
             conversion_rate: data.conversion_rate,
             volume: data.volume,
             status: data.status,
+            growth_model_id: modelId,
             updated_at: new Date().toISOString(),
           })
           .eq('id', channel.originalId || channel.id);
@@ -95,6 +109,7 @@ const GrowthChannelForm = ({
             volume: data.volume,
             status: data.status,
             project_id: projectId,
+            growth_model_id: modelId,
           });
           
         if (error) throw error;

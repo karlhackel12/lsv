@@ -71,7 +71,7 @@ export const useGrowthModels = (projectId: string) => {
   };
 
   const fetchModelData = async (modelId: string) => {
-    if (!modelId) return;
+    if (!modelId || !projectId) return;
     
     try {
       // Fetch metrics
@@ -89,20 +89,46 @@ export const useGrowthModels = (projectId: string) => {
         status: metric.status as 'on-track' | 'at-risk' | 'off-track'
       })) as GrowthMetric[]);
       
-      // Fetch channels
-      const { data: channelData, error: channelError } = await supabase
+      // Fetch channels - fetch both by growth_model_id AND by project_id with null growth_model_id
+      const { data: channelDataByModel, error: channelErrorByModel } = await supabase
         .from('growth_channels')
         .select('*')
         .eq('growth_model_id', modelId)
         .order('created_at', { ascending: false });
       
-      if (channelError) throw channelError;
+      if (channelErrorByModel) throw channelErrorByModel;
+
+      // Also fetch channels that may only have project_id
+      const { data: channelDataByProject, error: channelErrorByProject } = await supabase
+        .from('growth_channels')
+        .select('*')
+        .eq('project_id', projectId)
+        .is('growth_model_id', null)
+        .order('created_at', { ascending: false });
+        
+      if (channelErrorByProject) throw channelErrorByProject;
       
-      setGrowthChannels(channelData.map(channel => ({
+      // Combine and deduplicate channels
+      const allChannels = [...(channelDataByModel || []), ...(channelDataByProject || [])];
+      const uniqueChannels = Array.from(
+        new Map(allChannels.map(channel => [channel.id, channel])).values()
+      );
+      
+      setGrowthChannels(uniqueChannels.map(channel => ({
         ...channel,
         originalId: channel.id,
         status: channel.status as 'active' | 'testing' | 'inactive'
       })) as GrowthChannel[]);
+      
+      // Update any channels that don't have growth_model_id
+      for (const channel of channelDataByProject || []) {
+        if (!channel.growth_model_id) {
+          await supabase
+            .from('growth_channels')
+            .update({ growth_model_id: modelId })
+            .eq('id', channel.id);
+        }
+      }
       
       // Fetch experiments
       const { data: experimentData, error: experimentError } = await supabase

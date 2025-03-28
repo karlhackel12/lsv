@@ -25,11 +25,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { GrowthChannel } from '@/types/database';
+import { GrowthChannel, GrowthModel } from '@/types/database';
 import GrowthChannelForm from '@/components/forms/GrowthChannelForm';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import useGrowthModels from '@/hooks/growth/use-growth-models';
 
 interface GrowthChannelsSectionProps {
   channels: GrowthChannel[];
@@ -60,6 +61,7 @@ const GrowthChannelsSection = ({
   const [editingChannel, setEditingChannel] = useState<GrowthChannel | null>(null);
   const [channelToDelete, setChannelToDelete] = useState<GrowthChannel | null>(null);
   const { toast } = useToast();
+  const { activeModelId } = useGrowthModels(projectId);
 
   const handleOpenForm = (channel?: GrowthChannel) => {
     setEditingChannel(channel || null);
@@ -117,6 +119,16 @@ const GrowthChannelsSection = ({
           onSave={refreshData}
           onClose={handleCloseForm}
           channel={editingChannel}
+          growthModel={activeModelId ? {
+            id: activeModelId,
+            name: 'Current Growth Model',
+            description: '',
+            framework: 'aarrr',
+            status: 'active',
+            project_id: projectId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as GrowthModel : undefined}
         />
       ) : (
         <>
