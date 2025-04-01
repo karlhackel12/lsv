@@ -44,6 +44,28 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
     if (!hypothesisToDelete) return;
     
     try {
+      // First check if there are any linked experiments
+      const { data: linkedExperiments, error: fetchError } = await supabase
+        .from('experiments')
+        .select('id, title')
+        .eq('hypothesis_id', hypothesisToDelete.id);
+      
+      if (fetchError) throw fetchError;
+      
+      // If there are linked experiments, show an error message
+      if (linkedExperiments && linkedExperiments.length > 0) {
+        const experimentNames = linkedExperiments.map(exp => exp.title).join(', ');
+        toast({
+          title: 'Cannot delete hypothesis',
+          description: `This hypothesis has linked experiments: ${experimentNames}. You must delete these experiments first.`,
+          variant: 'destructive',
+        });
+        setIsDeleteDialogOpen(false);
+        setHypothesisToDelete(null);
+        return;
+      }
+      
+      // If no linked experiments, proceed with deletion
       const { error } = await supabase
         .from('hypotheses')
         .delete()
@@ -59,6 +81,7 @@ export function useHypotheses(refreshData: () => void, phaseType: 'problem' | 's
       refreshData();
       setViewMode('list');
     } catch (error: any) {
+      console.error('Error deleting hypothesis:', error);
       toast({
         title: 'Error',
         description: error.message || 'An error occurred while deleting.',
