@@ -3,7 +3,7 @@ import React from 'react';
 import EmptyExperimentState from './EmptyExperimentState';
 import { Experiment } from '@/types/database';
 import { Button } from '@/components/ui/button';
-import { Eye, TrendingUp, Beaker } from 'lucide-react';
+import { Eye, TrendingUp, Beaker, Trash2 } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import StatusBadge from '@/components/StatusBadge';
 import { Badge } from '@/components/ui/badge';
@@ -82,18 +82,35 @@ const ExperimentList = ({
                 )}
               </TableCell>
               <TableCell className="text-right">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-8 p-0" 
-                  onClick={e => {
-                    e.stopPropagation(); // Prevent the row click from triggering
-                    onViewDetail(experiment);
-                  }}
-                >
-                  <Eye className="h-4 w-4" />
-                  <span className="sr-only">View details</span>
-                </Button>
+                <div className="flex justify-end items-center space-x-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0" 
+                    onClick={e => {
+                      e.stopPropagation(); // Prevent the row click from triggering
+                      onViewDetail(experiment);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">View details</span>
+                  </Button>
+                  
+                  {onDelete && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" 
+                      onClick={e => {
+                        e.stopPropagation(); // Prevent the row click from triggering
+                        onDelete(experiment);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}
