@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import ExperimentForm from '@/components/forms/ExperimentForm';
 import { Card, CardContent } from '@/components/ui/card';
 import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
+import DeleteExperimentDialog from '@/components/experiments/DeleteExperimentDialog';
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
@@ -19,8 +19,9 @@ const ExperimentsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [experimentToDelete, setExperimentToDelete] = useState<Experiment | null>(null);
   
-  // Validate status parameter against allowed values
   const rawStatus = searchParams.get('status');
   const statusFilter = rawStatus && ['planned', 'in-progress', 'completed'].includes(rawStatus) 
     ? rawStatus as 'planned' | 'in-progress' | 'completed'
@@ -32,14 +33,12 @@ const ExperimentsPage = () => {
       
       if (!currentProject) return;
       
-      // Create base query
       let query = supabase
         .from('experiments')
         .select('*')
         .eq('project_id', currentProject.id)
         .order('updated_at', { ascending: false });
       
-      // Apply filters if needed
       if (statusFilter) {
         query = query.eq('status', statusFilter);
       }
@@ -51,7 +50,6 @@ const ExperimentsPage = () => {
         return;
       }
       
-      // Add originalId field to each experiment for tracking original database ID
       const processedData = data?.map(item => ({
         ...item,
         originalId: item.id
@@ -73,7 +71,6 @@ const ExperimentsPage = () => {
   }, [currentProject, statusFilter]);
   
   useEffect(() => {
-    // Handle experiment ID from URL params
     const experimentId = searchParams.get('id');
     if (experimentId && experiments.length > 0) {
       const experiment = experiments.find(e => e.id === experimentId);
@@ -94,7 +91,6 @@ const ExperimentsPage = () => {
   
   const handleFormClose = () => {
     setIsFormOpen(false);
-    // Clear any URL parameters related to experiment creation
     const params = new URLSearchParams(searchParams);
     params.delete('create');
     setSearchParams(params);
@@ -109,6 +105,11 @@ const ExperimentsPage = () => {
     setSearchParams({ id: experiment.id });
     setSelectedExperiment(experiment);
     setIsFormOpen(true);
+  };
+  
+  const handleDelete = (experiment: Experiment) => {
+    setExperimentToDelete(experiment);
+    setIsDeleteDialogOpen(true);
   };
   
   const handleViewDetail = (experiment: Experiment) => {
@@ -129,7 +130,6 @@ const ExperimentsPage = () => {
     <div className="space-y-6">
       {viewMode === 'list' ? (
         <>
-          {/* Header section styled similarly to the image */}
           <Card className="border-blue-100 bg-gradient-to-r from-blue-50 to-blue-50/50">
             <CardContent className="p-6">
               <div className="flex justify-between items-center">
@@ -160,7 +160,7 @@ const ExperimentsPage = () => {
             experiments={experiments}
             refreshData={fetchExperiments}
             onEdit={handleEdit}
-            onDelete={undefined}
+            onDelete={handleDelete}
             onCreateNew={handleCreateNew}
             onViewDetail={handleViewDetail}
             isGrowthExperiment={false}
@@ -195,6 +195,13 @@ const ExperimentsPage = () => {
         onSave={handleFormSave}
         experiment={selectedExperiment}
         projectId={currentProject.id}
+      />
+
+      <DeleteExperimentDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        experimentToDelete={experimentToDelete}
+        refreshData={fetchExperiments}
       />
     </div>
   );
