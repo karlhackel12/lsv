@@ -132,210 +132,305 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
     }
   };
   
+  const getValidationProgress = () => {
+    switch(hypothesis.status) {
+      case 'validated':
+        return 100;
+      case 'invalid':
+        return 100;
+      case 'validating':
+        return 75;
+      default:
+        return 25;
+    }
+  };
+  
   return (
     <div className="animate-fadeIn">
-      <Card className="shadow-md border-t-4 border-t-blue-500">
-        <CardHeader className="pb-2 pt-6">
-          <div className="flex justify-between items-start">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-full bg-blue-50">
-                {hypothesis.phase === 'problem' 
-                  ? <Lightbulb className="h-6 w-6 text-blue-500" />
-                  : <Beaker className="h-6 w-6 text-purple-500" />
-                }
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">{hypothesis.statement}</h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <StatusBadge status={hypothesis.status} />
-                  <span className="flex items-center text-gray-500">
-                    <CalendarClock className="h-4 w-4 mr-1" />
-                    {new Date(hypothesis.updated_at).toLocaleDateString()}
-                  </span>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    {hypothesis.category || 'Value Hypothesis'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onEdit} className="flex items-center">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button onClick={handleCreateExperiment} className="flex items-center">
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Run Experiment
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h2 className="text-md font-semibold mb-2 flex items-center text-gray-700">
-                <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                Hypothesis Statement
-              </h2>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100">
-                {hypothesis.statement}
-              </p>
-              
-              <h2 className="text-md font-semibold mt-4 mb-2 flex items-center text-gray-700">
-                <CheckCircle className="h-4 w-4 mr-2 text-blue-500" />
-                Success Criteria
-              </h2>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100 whitespace-pre-line">
-                {hypothesis.criteria}
-              </p>
-            </div>
-            
-            <div>
-              <h2 className="text-md font-semibold mb-2 flex items-center text-gray-700">
-                <Beaker className="h-4 w-4 mr-2 text-purple-500" />
-                Experiment Approach
-              </h2>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100 whitespace-pre-line">
-                {hypothesis.experiment}
-              </p>
-              
-              <div className="mt-4">
-                <h2 className="text-md font-semibold mb-2 flex items-center text-gray-700">
-                  <BarChart2 className="h-4 w-4 mr-2 text-blue-500" />
-                  Status
-                </h2>
-                <div className="flex items-center p-3 rounded-md border bg-gray-50">
-                  {getHypothesisStatusIcon(hypothesis.status as string)}
-                  <span className="ml-2 font-medium capitalize">{hypothesis.status}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <Separator className="my-6" />
-          
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
-            <BarChart2 className="h-5 w-5 text-green-500 mr-2" />
-            Results & Evidence
+      {/* Header section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-3xl font-bold leading-tight tracking-tight text-gray-800">
+            {hypothesis.phase === 'problem' ? 'Problem Hypothesis' : 'Solution Hypothesis'}
           </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="text-md font-semibold mb-2 text-gray-700">Evidence</h3>
-              <Textarea 
-                value={evidenceInput}
-                onChange={(e) => setEvidenceInput(e.target.value)}
-                placeholder="Add evidence that supports or refutes your hypothesis..."
-                className="min-h-[120px]"
-              />
-            </div>
-            <div>
-              <h3 className="text-md font-semibold mb-2 text-gray-700">Results</h3>
-              <Textarea 
-                value={resultInput}
-                onChange={(e) => setResultInput(e.target.value)}
-                placeholder="Summarize the results of your experiments..."
-                className="min-h-[120px]"
-              />
-            </div>
+          <StatusBadge 
+            status={hypothesis.status as any} 
+            className="px-3 py-1 text-sm" 
+          />
+        </div>
+        
+        {/* Progress bar */}
+        <div className="w-full">
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div 
+              className="h-4 bg-blue-600 rounded-full"
+              style={{ width: `${getValidationProgress()}%` }}
+            ></div>
           </div>
-          
-          <div className="flex justify-end mb-6">
-            <Button 
-              onClick={saveResults} 
-              disabled={isSaving}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isSaving ? 'Saving...' : 'Save Results'}
-            </Button>
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>Not Started</span>
+            <span>Validating</span>
+            <span>Validated</span>
           </div>
-          
-          <Separator className="my-6" />
-          
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold flex items-center">
-                <Beaker className="h-5 w-5 text-blue-500 mr-2" />
-                Linked Experiments
-              </h2>
-              <Button 
-                variant="outline" 
-                onClick={handleCreateExperiment} 
-                size="sm"
-                className="flex items-center"
-              >
-                <ArrowRight className="h-4 w-4 mr-2" />
-                New Experiment
-              </Button>
-            </div>
-            
-            {isLoadingExperiments ? (
-              <p className="text-gray-500 text-center py-4">Loading experiments...</p>
-            ) : linkedExperiments.length > 0 ? (
-              <div className="space-y-3">
-                {linkedExperiments.map(experiment => (
-                  <div 
-                    key={experiment.id} 
-                    className="border rounded-md p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => navigateToExperiment(experiment.id)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{experiment.title}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <StatusBadge status={experiment.status} />
-                          <span className="text-sm text-gray-500">
-                            Updated: {new Date(experiment.updated_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      <Badge 
-                        variant="outline" 
-                        className={`
-                          ${experiment.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 
-                           experiment.status === 'in-progress' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                           'bg-amber-50 text-amber-700 border-amber-200'}
-                        `}
-                      >
-                        {experiment.status === 'completed' ? 'Completed' : 
-                         experiment.status === 'in-progress' ? 'In Progress' : 
-                         'Planned'}
-                      </Badge>
-                    </div>
-                    <Separator className="my-3" />
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {experiment.hypothesis}
+        </div>
+      </div>
+      
+      {/* Main content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold mb-4 flex items-center">
+                    <Lightbulb className="h-5 w-5 text-blue-500 mr-2" />
+                    Hypothesis Statement
+                  </h3>
+                  <p className="text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-100">
+                    {hypothesis.statement}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <h4 className="text-md font-semibold mb-2 flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-blue-500" />
+                      Success Criteria
+                    </h4>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100 whitespace-pre-line">
+                      {hypothesis.criteria}
                     </p>
-                    
-                    {experiment.results && (
-                      <div className="mt-2 p-2 bg-blue-50 rounded-md">
-                        <span className="text-xs font-medium text-blue-700 flex items-center">
-                          <MessageSquare className="h-3 w-3 mr-1" /> 
-                          Results available
-                        </span>
-                      </div>
-                    )}
                   </div>
-                ))}
+                  
+                  <div>
+                    <h4 className="text-md font-semibold mb-2 flex items-center">
+                      <Beaker className="h-4 w-4 mr-2 text-purple-500" />
+                      Experiment Approach
+                    </h4>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-100 whitespace-pre-line">
+                      {hypothesis.experiment}
+                    </p>
+                  </div>
+                </div>
+                
+                <Separator className="my-6" />
+                
+                <div>
+                  <h3 className="text-xl font-bold mb-4 flex items-center">
+                    <BarChart2 className="h-5 w-5 text-green-500 mr-2" />
+                    Results & Evidence
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-md font-semibold mb-2 text-gray-700">Evidence</h4>
+                      <Textarea 
+                        value={evidenceInput}
+                        onChange={(e) => setEvidenceInput(e.target.value)}
+                        placeholder="Add evidence that supports or refutes your hypothesis..."
+                        className="min-h-[120px]"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-md font-semibold mb-2 text-gray-700">Results</h4>
+                      <Textarea 
+                        value={resultInput}
+                        onChange={(e) => setResultInput(e.target.value)}
+                        placeholder="Summarize the results of your experiments..."
+                        className="min-h-[120px]"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button 
+                      onClick={saveResults} 
+                      disabled={isSaving}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSaving ? 'Saving...' : 'Save Results'}
+                    </Button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-6 border border-dashed rounded-md">
-                <Beaker className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500 mb-4">No experiments linked to this hypothesis yet</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-sm hover:shadow-md transition-shadow mt-6">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold flex items-center">
+                  <Beaker className="h-5 w-5 text-blue-500 mr-2" />
+                  Linked Experiments
+                </h3>
                 <Button 
                   variant="outline" 
-                  onClick={handleCreateExperiment}
-                  className="flex items-center mx-auto"
+                  onClick={handleCreateExperiment} 
+                  size="sm"
+                  className="flex items-center"
                 >
                   <ArrowRight className="h-4 w-4 mr-2" />
-                  Create First Experiment
+                  New Experiment
                 </Button>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              
+              {isLoadingExperiments ? (
+                <p className="text-gray-500 text-center py-4">Loading experiments...</p>
+              ) : linkedExperiments.length > 0 ? (
+                <div className="space-y-3">
+                  {linkedExperiments.map(experiment => (
+                    <div 
+                      key={experiment.id} 
+                      className="border rounded-md p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => navigateToExperiment(experiment.id)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{experiment.title}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge status={experiment.status as any} />
+                            <span className="text-sm text-gray-500">
+                              Updated: {new Date(experiment.updated_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={
+                            experiment.status === 'completed' ? 'default' :
+                            experiment.status === 'in-progress' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {experiment.status === 'completed' ? 'Completed' : 
+                          experiment.status === 'in-progress' ? 'In Progress' : 
+                          'Planned'}
+                        </Badge>
+                      </div>
+                      <Separator className="my-3" />
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {experiment.hypothesis}
+                      </p>
+                      
+                      {experiment.results && (
+                        <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                          <span className="text-xs font-medium text-blue-700 flex items-center">
+                            <MessageSquare className="h-3 w-3 mr-1" /> 
+                            Results available
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 border border-dashed rounded-md">
+                  <Beaker className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 mb-4">No experiments linked to this hypothesis yet</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCreateExperiment}
+                    className="flex items-center mx-auto"
+                  >
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    Create First Experiment
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="space-y-6">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Status</h3>
+              <div className="flex items-center p-3 rounded-md border bg-gray-50">
+                {getHypothesisStatusIcon(hypothesis.status as string)}
+                <span className="ml-2 font-medium capitalize">{hypothesis.status}</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Details</h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm text-gray-500">Category</span>
+                  <p className="font-medium">{hypothesis.category || 'Value Hypothesis'}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-500">Phase</span>
+                  <p className="font-medium capitalize">{hypothesis.phase} Validation</p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-500">Last Updated</span>
+                  <p className="font-medium">
+                    {new Date(hypothesis.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Actions</h3>
+              <div className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={onEdit}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Hypothesis
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={handleCreateExperiment}
+                >
+                  <Beaker className="h-4 w-4 mr-2" />
+                  Run Experiment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Validation Metrics</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <p className="text-gray-600">Evidence Collected</p>
+                    <span>{evidenceInput ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="h-2 bg-blue-600 rounded-full"
+                      style={{ width: evidenceInput ? '100%' : '0%' }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <p className="text-gray-600">Experiments Linked</p>
+                    <span>{linkedExperiments.length}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="h-2 bg-blue-600 rounded-full"
+                      style={{ width: linkedExperiments.length > 0 ? '100%' : '0%' }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

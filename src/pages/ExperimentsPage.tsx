@@ -1,15 +1,23 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment } from '@/types/database';
 import ExperimentList from '@/components/experiments/ExperimentList';
-import { FlaskConical, Info } from 'lucide-react';
+import { FlaskConical, Info, ArrowLeft } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
 import { Button } from '@/components/ui/button';
 import ExperimentForm from '@/components/forms/ExperimentForm';
 import { Card, CardContent } from '@/components/ui/card';
 import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
 import DeleteExperimentDialog from '@/components/experiments/DeleteExperimentDialog';
+import { 
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
 
 const ExperimentsPage = () => {
   const { currentProject } = useProject();
@@ -130,6 +138,25 @@ const ExperimentsPage = () => {
     <div className="space-y-6">
       {viewMode === 'list' ? (
         <>
+          {/* Breadcrumb */}
+          <div className="mb-4">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="#">Projects</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="#">{currentProject.name}</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="#">Experiments</BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+          
           <Card className="border-blue-100 bg-gradient-to-r from-blue-50 to-blue-50/50">
             <CardContent className="p-6">
               <div className="flex justify-between items-center">
@@ -171,8 +198,9 @@ const ExperimentsPage = () => {
           <Button 
             variant="outline" 
             onClick={handleBackToList}
-            className="mb-4"
+            className="flex items-center"
           >
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Experiments
           </Button>
           
