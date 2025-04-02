@@ -50,6 +50,54 @@ export const isMetricAtRisk = (status: string): boolean => {
   return status === 'warning' || status === 'error' || status === 'at-risk' || status === 'off-track';
 };
 
+// Get default metric configuration for quick-add metrics
+export const getDefaultMetricConfig = (metricType: 'customer-interviews' | 'survey-responses' | 'problem-solution-fit' | 'mvp-usage'): {
+  name: string;
+  description: string;
+  category: string;
+  target: string;
+  unit?: string;
+} => {
+  switch (metricType) {
+    case 'customer-interviews':
+      return {
+        name: 'Customer Interviews',
+        description: 'Number of customer interviews conducted',
+        category: 'acquisition',
+        target: '50',
+      };
+    case 'survey-responses':
+      return {
+        name: 'Survey Responses',
+        description: 'Number of survey responses collected',
+        category: 'activation',
+        target: '100',
+      };
+    case 'problem-solution-fit':
+      return {
+        name: 'Problem/Solution Fit',
+        description: 'Percentage of customers who confirm the solution solves their problem',
+        category: 'retention',
+        target: '80',
+        unit: 'percentage'
+      };
+    case 'mvp-usage':
+      return {
+        name: 'MVP Usage',
+        description: 'Number of active users using the MVP',
+        category: 'activation',
+        target: '50',
+      };
+    default:
+      return {
+        name: '',
+        description: '',
+        category: 'custom',
+        target: '0',
+      };
+  }
+};
+
 // Convert between regular and growth metric types
 export const convertValidationToGrowthMetric = (
   validationMetric: any,

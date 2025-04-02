@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import MetricForm from '@/components/forms/MetricForm';
 import GrowthMetricForm from '@/components/forms/GrowthMetricForm';
-import { calculateMetricStatus } from '@/utils/metricCalculations';
+import { calculateMetricStatus, getDefaultMetricConfig } from '@/utils/metricCalculations';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +46,7 @@ const MetricsPage = () => {
   const [selectedMetric, setSelectedMetric] = useState<MetricData | null>(null);
   const [selectedGrowthMetric, setSelectedGrowthMetric] = useState<GrowthMetric | null>(null);
   const [formType, setFormType] = useState<'regular' | 'growth'>('regular');
+  const [quickAddMetricType, setQuickAddMetricType] = useState<'customer-interviews' | 'survey-responses' | 'problem-solution-fit' | 'mvp-usage' | null>(null);
   const [kpiData, setKpiData] = useState({
     customerInterviews: 0,
     surveyResponses: 0,
@@ -180,10 +181,12 @@ const MetricsPage = () => {
     }
   }, [currentProject]);
 
+  // Handle opening the add metric form
   const handleAddMetric = (type: 'regular' | 'growth') => {
     setFormType(type);
     if (type === 'regular') {
       setSelectedMetric(null);
+      setQuickAddMetricType(null);
       setIsFormOpen(true);
     } else {
       setSelectedGrowthMetric(null);
@@ -191,10 +194,19 @@ const MetricsPage = () => {
     }
   };
 
+  // Handle quick-add for KPI metrics
+  const handleQuickAddMetric = (type: 'customer-interviews' | 'survey-responses' | 'problem-solution-fit' | 'mvp-usage') => {
+    setFormType('regular');
+    setQuickAddMetricType(type);
+    setSelectedMetric(null);
+    setIsFormOpen(true);
+  };
+
   const handleEditMetric = (metric: MetricData | GrowthMetric, type: 'regular' | 'growth') => {
     setFormType(type);
     if (type === 'regular') {
       setSelectedMetric(metric as MetricData);
+      setQuickAddMetricType(null);
       setIsFormOpen(true);
     } else {
       setSelectedGrowthMetric(metric as GrowthMetric);
@@ -258,6 +270,34 @@ const MetricsPage = () => {
     );
   }
 
+  // Function to check if a KPI metric exists
+  const hasKpiMetric = (type: 'customer-interviews' | 'survey-responses' | 'problem-solution-fit' | 'mvp-usage') => {
+    switch (type) {
+      case 'customer-interviews':
+        return metrics.some(m => 
+          m.name.toLowerCase().includes('interview') || 
+          m.description?.toLowerCase().includes('interview')
+        );
+      case 'survey-responses':
+        return metrics.some(m => 
+          m.name.toLowerCase().includes('survey') || 
+          m.description?.toLowerCase().includes('survey')
+        );
+      case 'problem-solution-fit':
+        return metrics.some(m => 
+          m.name.toLowerCase().includes('solution fit') || 
+          m.description?.toLowerCase().includes('solution fit')
+        );
+      case 'mvp-usage':
+        return metrics.some(m => 
+          m.name.toLowerCase().includes('usage') || 
+          m.description?.toLowerCase().includes('usage')
+        );
+      default:
+        return false;
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-8">
@@ -284,6 +324,34 @@ const MetricsPage = () => {
               value={80}
               className="h-2 bg-gray-200"
             />
+            <div className="flex justify-end">
+              {hasKpiMetric('customer-interviews') ? (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const interviewMetric = metrics.find(m => 
+                      m.name.toLowerCase().includes('interview') || 
+                      m.description?.toLowerCase().includes('interview')
+                    );
+                    if (interviewMetric) {
+                      handleEditMetric(interviewMetric, 'regular');
+                    }
+                  }}
+                >
+                  Update
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickAddMetric('customer-interviews')}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Metric
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -300,6 +368,34 @@ const MetricsPage = () => {
               value={65}
               className="h-2 bg-gray-200"
             />
+            <div className="flex justify-end">
+              {hasKpiMetric('survey-responses') ? (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const surveyMetric = metrics.find(m => 
+                      m.name.toLowerCase().includes('survey') || 
+                      m.description?.toLowerCase().includes('survey')
+                    );
+                    if (surveyMetric) {
+                      handleEditMetric(surveyMetric, 'regular');
+                    }
+                  }}
+                >
+                  Update
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickAddMetric('survey-responses')}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Metric
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -316,6 +412,34 @@ const MetricsPage = () => {
               value={kpiData.problemSolutionFit}
               className="h-2 bg-gray-200"
             />
+            <div className="flex justify-end">
+              {hasKpiMetric('problem-solution-fit') ? (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const fitMetric = metrics.find(m => 
+                      m.name.toLowerCase().includes('solution fit') || 
+                      m.description?.toLowerCase().includes('solution fit')
+                    );
+                    if (fitMetric) {
+                      handleEditMetric(fitMetric, 'regular');
+                    }
+                  }}
+                >
+                  Update
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickAddMetric('problem-solution-fit')}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Metric
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -332,6 +456,34 @@ const MetricsPage = () => {
               value={45}
               className="h-2 bg-gray-200"
             />
+            <div className="flex justify-end">
+              {hasKpiMetric('mvp-usage') ? (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const usageMetric = metrics.find(m => 
+                      m.name.toLowerCase().includes('usage') || 
+                      m.description?.toLowerCase().includes('usage')
+                    );
+                    if (usageMetric) {
+                      handleEditMetric(usageMetric, 'regular');
+                    }
+                  }}
+                >
+                  Update
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickAddMetric('mvp-usage')}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Metric
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -625,6 +777,7 @@ const MetricsPage = () => {
           onSave={fetchMetrics}
           metric={selectedMetric}
           projectId={currentProject.id}
+          quickAddMetricType={quickAddMetricType}
         />
       )}
 

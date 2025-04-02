@@ -1,484 +1,270 @@
+
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { FormSheet } from '@/components/ui/form-sheet';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { MetricData } from '@/types/metrics';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart } from 'lucide-react';
+import { getDefaultMetricConfig } from '@/utils/metricCalculations';
 
 interface MetricFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
-  metric?: MetricData;
+  metric?: MetricData | null;
   projectId: string;
+  quickAddMetricType?: 'customer-interviews' | 'survey-responses' | 'problem-solution-fit' | 'mvp-usage' | null;
 }
 
-const MetricForm = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  metric, 
-  projectId 
-}: MetricFormProps) => {
-  // Form state
-  const [name, setName] = useState(metric?.name || '');
-  const [description, setDescription] = useState(metric?.description || '');
-  const [category, setCategory] = useState(metric?.category || '');
-  const [current, setCurrent] = useState(metric?.current || '');
-  const [target, setTarget] = useState(metric?.target || '');
-  const [status, setStatus] = useState<"success" | "warning" | "error" | "not-started">(
-    metric?.status || 'not-started'
-  );
-  const [warningThreshold, setWarningThreshold] = useState('0');
-  const [errorThreshold, setErrorThreshold] = useState('0');
-  const [notes, setNotes] = useState('');
-  
-  // UI state
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const MetricForm = ({ isOpen, onClose, onSave, metric, projectId, quickAddMetricType }: MetricFormProps) => {
+  const [form, setForm] = useState<{
+    name: string;
+    description: string;
+    category: 'acquisition' | 'activation' | 'retention' | 'revenue' | 'referral' | 'custom';
+    current: string;
+    target: string;
+    status?: 'success' | 'warning' | 'error' | 'not-started';
+  }>({
+    name: '',
+    description: '',
+    category: 'custom',
+    current: '',
+    target: '',
+    status: 'not-started',
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Load thresholds when editing an existing metric
+  // Populate form with metric data when editing
   useEffect(() => {
-    const fetchThresholds = async () => {
-      if (metric?.id) {
-        try {
-          const { data, error } = await supabase
-            .from('metric_thresholds')
-            .select('*')
-            .eq('metric_id', metric.id)
-            .maybeSingle();
-            
-          if (error) throw error;
-          
-          if (data) {
-            setWarningThreshold(data.warning_threshold || '0');
-            setErrorThreshold(data.error_threshold || '0');
-          }
-        } catch (err) {
-          console.error('Error fetching metric thresholds:', err);
-        }
-      }
-    };
-    
-    if (isOpen) {
-      fetchThresholds();
+    if (metric) {
+      setForm({
+        name: metric.name,
+        description: metric.description || '',
+        category: metric.category || 'custom',
+        current: metric.current || '',
+        target: metric.target,
+        status: metric.status || 'not-started',
+      });
+    } else if (quickAddMetricType) {
+      // Pre-fill form with default values based on quick add type
+      const defaultConfig = getDefaultMetricConfig(quickAddMetricType);
+      setForm({
+        name: defaultConfig.name,
+        description: defaultConfig.description,
+        category: defaultConfig.category as any,
+        current: '',
+        target: defaultConfig.target,
+        status: 'not-started',
+      });
+    } else {
+      // Reset form to defaults when adding a new metric
+      setForm({
+        name: '',
+        description: '',
+        category: 'custom',
+        current: '',
+        target: '',
+        status: 'not-started',
+      });
     }
-  }, [metric, isOpen]);
+  }, [metric, quickAddMetricType]);
 
-  // Reset form when opened or metric changes
-  useEffect(() => {
-    if (isOpen) {
-      if (metric) {
-        setName(metric.name || '');
-        setDescription(metric.description || '');
-        setCategory(metric.category || '');
-        setCurrent(metric.current || '');
-        setTarget(metric.target || '');
-        setStatus(metric.status || 'not-started');
-        setNotes('');
-      } else {
-        // Reset form when creating a new metric
-        setName('');
-        setDescription('');
-        setCategory('');
-        setCurrent('');
-        setTarget('');
-        setStatus('not-started');
-        setWarningThreshold('0');
-        setErrorThreshold('0');
-        setNotes('');
-      }
-    }
-  }, [metric, isOpen]);
-
-  // Calculate metric status based on current value and thresholds
-  const calculateStatus = (current: string, target: string, warningThreshold: string, errorThreshold: string): "success" | "warning" | "error" | "not-started" => {
-    if (!current || current === '0') return 'not-started';
-    
-    const currentValue = parseFloat(current);
-    const targetValue = parseFloat(target);
-    const warningValue = parseFloat(warningThreshold);
-    const errorValue = parseFloat(errorThreshold);
-    
-    // Simple comparison assuming higher is better
-    // This could be enhanced with more complex logic
-    if (currentValue >= targetValue) return 'success';
-    if (currentValue <= errorValue) return 'error';
-    if (currentValue <= warningValue) return 'warning';
-    
-    return 'success';
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name.trim() || !target.trim() || !category) {
-      setError('Please fill in all required fields');
+  const handleSelectChange = (name: string, value: string) => {
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.target) {
+      toast({
+        title: 'Validation error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
       return;
     }
-    
-    setIsSaving(true);
-    setError(null);
-    
+
+    setIsSubmitting(true);
+
     try {
-      // Calculate the status based on current values and thresholds
-      const calculatedStatus = status === 'not-started' && current && current !== '0' 
-        ? calculateStatus(current, target, warningThreshold, errorThreshold)
-        : status;
-      
-      const timestamp = new Date().toISOString();
-      const contextInfo = metric ? `Updated from ${metric.current || '0'} to ${current}` : 'Initial value';
+      // Calculate status based on current and target (if current is provided)
+      let status = 'not-started';
+      if (form.current) {
+        const currentValue = parseFloat(form.current);
+        const targetValue = parseFloat(form.target);
         
+        // Simple comparison - can be customized based on business needs
+        const ratio = currentValue / targetValue;
+        
+        if (ratio >= 1) status = 'success';
+        else if (ratio >= 0.7) status = 'warning';
+        else status = 'error';
+      }
+
+      const metricData = {
+        name: form.name,
+        description: form.description,
+        category: form.category,
+        current: form.current,
+        target: form.target,
+        status,
+        project_id: projectId,
+      };
+
       if (metric) {
-        // Update existing metric
-        const updates = {
-          updated_at: timestamp,
-          current: current,
-          name: name,
-          target: target,
-          description: description,
-          status: calculatedStatus,
-          category: category
-        };
+        // Updating existing metric
+        const metricId = metric.originalId || metric.id;
         
-        const { error: metricError } = await supabase
+        const { error } = await supabase
           .from('metrics')
-          .update(updates)
-          .eq('id', metric.originalId || metric.id);
-          
-        if (metricError) throw metricError;
-        
-        // Update thresholds
-        const { error: thresholdError } = await supabase
-          .from('metric_thresholds')
-          .upsert({
-            metric_id: metric.originalId || metric.id,
-            warning_threshold: warningThreshold,
-            error_threshold: errorThreshold,
-            updated_at: timestamp
-          });
-          
-        if (thresholdError) throw thresholdError;
-        
-        // Add to metric history with notes (if value has changed)
-        if (metric.current !== current) {
-          await supabase
-            .from('metric_history')
-            .insert({
-              metric_id: metric.originalId || metric.id,
-              value: current,
-              status: calculatedStatus,
-              recorded_at: timestamp,
-              notes: notes || null,
-              context: contextInfo
-            });
-        }
-          
-        // Check for active pivot triggers
-        checkPivotTriggers(metric.originalId || metric.id, current, calculatedStatus);
-        
-        toast({
-          title: 'Success',
-          description: `Metric "${name}" has been updated`,
-        });
-      } else {
-        // Create new metric
-        const newMetricData = {
-          name,
-          category,
-          target,
-          current: current || "0",
-          status: calculatedStatus,
-          description: description,
-          project_id: projectId,
-          created_at: timestamp,
-          updated_at: timestamp
-        };
-        
-        const { data, error } = await supabase
-          .from('metrics')
-          .insert(newMetricData)
-          .select();
+          .update(metricData)
+          .eq('id', metricId);
           
         if (error) throw error;
         
-        // If the insertion worked, create a threshold for this metric
-        if (data && data.length > 0) {
-          const metricId = data[0].id;
+        toast({
+          title: 'Metric updated',
+          description: 'The metric has been updated successfully',
+        });
+      } else {
+        // Creating new metric
+        const { error } = await supabase
+          .from('metrics')
+          .insert(metricData);
           
-          await supabase
-            .from('metric_thresholds')
-            .insert({
-              metric_id: metricId,
-              warning_threshold: warningThreshold || "0",
-              error_threshold: errorThreshold || "0",
-              created_at: timestamp,
-              updated_at: timestamp
-            });
-            
-          // Also add to metric history
-          await supabase
-            .from('metric_history')
-            .insert({
-              metric_id: metricId,
-              value: current || "0",
-              status: calculatedStatus,
-              recorded_at: timestamp,
-              notes: notes || null,
-              context: 'Initial value'
-            });
-        }
+        if (error) throw error;
         
         toast({
-          title: 'Success',
-          description: `Metric "${name}" has been created`,
+          title: 'Metric created',
+          description: 'The new metric has been created successfully',
         });
       }
-      
+
       onSave();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving metric:', error);
-      setError('Failed to save metric. Please try again.');
+      toast({
+        title: 'Error',
+        description: error.message || 'An error occurred while saving the metric',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
-  };
-
-  // Check if any pivot triggers should be activated based on metric changes
-  const checkPivotTriggers = async (metricId: string, currentValue: string, status: string) => {
-    if (status !== 'warning' && status !== 'error') return;
-    
-    try {
-      // Find pivot triggers linked to this metric
-      const { data: triggers, error } = await supabase
-        .from('pivot_metric_triggers')
-        .select(`
-          *,
-          pivot_options (*)
-        `)
-        .eq('metric_id', metricId);
-        
-      if (error) throw error;
-      
-      if (triggers && triggers.length > 0) {
-        // Notify user if any pivot options should be considered
-        const triggerNames = triggers.map((t: any) => t.pivot_options?.type || 'Unnamed pivot option').join(', ');
-        
-        toast({
-          title: status === 'error' ? 'Critical Pivot Alert' : 'Pivot Warning',
-          description: `Metric "${name}" has triggered pivot consideration for: ${triggerNames}`,
-          variant: status === 'error' ? 'destructive' : 'default',
-          duration: 10000, // Show for 10 seconds
-        });
-      }
-    } catch (err) {
-      console.error('Error checking pivot triggers:', err);
-    }
-  };
-
-  const handleStatusChange = (value: string) => {
-    setStatus(value as "success" | "warning" | "error" | "not-started");
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
-        <DialogHeader className="px-6 pt-6 pb-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white">
-          <DialogTitle className="text-xl font-bold">
-            {metric ? 'Edit Metric' : 'Create New Metric'}
-          </DialogTitle>
-          <DialogDescription className="text-sm opacity-90 mt-1 text-white">
-            {metric ? 'Update your metric and review the data' : 'Define a clear, measurable metric to track your progress'}
-          </DialogDescription>
-        </DialogHeader>
+    <FormSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={metric ? 'Edit Metric' : 'Add New Metric'}
+      description={metric ? 'Update the details of this metric' : 'Track a new validation metric for your startup'}
+      submitLabel={metric ? 'Save Changes' : 'Create Metric'}
+      isSubmitting={isSubmitting}
+      onSubmit={handleSubmit}
+    >
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="name">Metric Name <span className="text-red-500">*</span></Label>
+          <Input
+            id="name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="e.g., Customer Acquisition Cost"
+            required
+          />
+        </div>
         
-        <form onSubmit={handleSave}>
-          <Tabs defaultValue="details" className="w-full">
-            <div className="px-6">
-              <TabsList className="w-full mt-4 bg-gray-100 dark:bg-gray-700">
-                <TabsTrigger value="details" className="flex-1">
-                  Metric Details
-                </TabsTrigger>
-                {metric && (
-                  <TabsTrigger value="thresholds" className="flex-1">
-                    Thresholds & History
-                  </TabsTrigger>
-                )}
-              </TabsList>
-            </div>
-
-            <div className="px-6 py-4 space-y-6 max-h-[70vh] overflow-y-auto">
-              <TabsContent value="details" className="space-y-6 mt-0">
-                {error && <p className="text-red-500">{error}</p>}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Metric Name"
-                      required
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger id="category">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="acquisition">Acquisition</SelectItem>
-                        <SelectItem value="activation">Activation</SelectItem>
-                        <SelectItem value="retention">Retention</SelectItem>
-                        <SelectItem value="referral">Referral</SelectItem>
-                        <SelectItem value="revenue">Revenue</SelectItem>
-                        <SelectItem value="custom">Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what this metric measures and why it's important"
-                    className="min-h-[80px]"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="current">Current Value</Label>
-                    <Input
-                      type="number"
-                      id="current"
-                      value={current}
-                      onChange={(e) => setCurrent(e.target.value)}
-                      placeholder="Current Value"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="target">Target Value</Label>
-                    <Input
-                      type="number"
-                      id="target"
-                      value={target}
-                      onChange={(e) => setTarget(e.target.value)}
-                      placeholder="Target Value"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={status} onValueChange={handleStatusChange}>
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="error">Error</SelectItem>
-                      <SelectItem value="not-started">Not Started</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="thresholds" className="space-y-6 mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="warningThreshold">Warning Threshold</Label>
-                    <Input
-                      type="number"
-                      id="warningThreshold"
-                      value={warningThreshold}
-                      onChange={(e) => setWarningThreshold(e.target.value)}
-                      placeholder="Warning Threshold"
-                    />
-                    <p className="text-xs text-gray-500">Metric will show warning status when below this value</p>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="errorThreshold">Error Threshold</Label>
-                    <Input
-                      type="number"
-                      id="errorThreshold"
-                      value={errorThreshold}
-                      onChange={(e) => setErrorThreshold(e.target.value)}
-                      placeholder="Error Threshold"
-                    />
-                    <p className="text-xs text-gray-500">Metric will show error status when below this value</p>
-                  </div>
-                </div>
-                
-                {metric && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="notes">Update Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Add notes about this update (will be saved in history)"
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                )}
-                
-                {metric && (
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <div className="flex items-center mb-2">
-                      <LineChart className="h-5 w-5 text-blue-500 mr-2" />
-                      <h3 className="font-medium text-gray-900">Historical Data</h3>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Each update to this metric is recorded in its history. Update notes help provide context for changes.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            </div>
-          </Tabs>
-          
-          <DialogFooter className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-            <Button type="button" variant="outline" onClick={onClose} className="mr-2">
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : metric ? 'Update Metric' : 'Create Metric'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Describe what this metric measures and why it's important"
+            rows={3}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+          <Select 
+            value={form.category} 
+            onValueChange={(value) => handleSelectChange('category', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="acquisition">Acquisition</SelectItem>
+              <SelectItem value="activation">Activation</SelectItem>
+              <SelectItem value="retention">Retention</SelectItem>
+              <SelectItem value="revenue">Revenue</SelectItem>
+              <SelectItem value="referral">Referral</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="current">Current Value</Label>
+            <Input
+              id="current"
+              name="current"
+              value={form.current}
+              onChange={handleChange}
+              placeholder="e.g., 42"
+              type="text"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="target">Target Value <span className="text-red-500">*</span></Label>
+            <Input
+              id="target"
+              name="target"
+              value={form.target}
+              onChange={handleChange}
+              placeholder="e.g., 100"
+              type="text"
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="pt-4 flex justify-end space-x-2">
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {metric ? 'Saving...' : 'Creating...'}
+              </>
+            ) : (
+              metric ? 'Save Changes' : 'Create Metric'
+            )}
+          </Button>
+        </div>
+      </div>
+    </FormSheet>
   );
 };
 
 export default MetricForm;
-
