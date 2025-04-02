@@ -100,7 +100,7 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId, quickAddMetric
 
     try {
       // Calculate status based on current and target (if current is provided)
-      let status = 'not-started';
+      let calculatedStatus: 'success' | 'warning' | 'error' | 'not-started' = 'not-started';
       if (form.current) {
         const currentValue = parseFloat(form.current);
         const targetValue = parseFloat(form.target);
@@ -108,9 +108,9 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId, quickAddMetric
         // Simple comparison - can be customized based on business needs
         const ratio = currentValue / targetValue;
         
-        if (ratio >= 1) status = 'success';
-        else if (ratio >= 0.7) status = 'warning';
-        else status = 'error';
+        if (ratio >= 1) calculatedStatus = 'success';
+        else if (ratio >= 0.7) calculatedStatus = 'warning';
+        else calculatedStatus = 'error';
       }
 
       const metricData = {
@@ -119,7 +119,7 @@ const MetricForm = ({ isOpen, onClose, onSave, metric, projectId, quickAddMetric
         category: form.category,
         current: form.current,
         target: form.target,
-        status,
+        status: calculatedStatus,
         project_id: projectId,
       };
 
