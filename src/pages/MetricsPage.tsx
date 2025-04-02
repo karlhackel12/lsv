@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Loader2, AlertTriangle, LineChart, Calendar, ArrowUpRight, 
   ArrowDownRight, Users, FileText, Zap, Box, Plus, PlusCircle,
-  TrendingUp
+  TrendingUp, Filter, Search, SlidersHorizontal, Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MetricsSection from '@/components/MetricsSection';
@@ -13,16 +14,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import PageIntroduction from '@/components/PageIntroduction';
 import { MetricData } from '@/types/metrics';
 import { GrowthMetric } from '@/types/database';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import MetricForm from '@/components/forms/MetricForm';
 import GrowthMetricForm from '@/components/forms/GrowthMetricForm';
-import { calculateMetricStatus, formatMetricValue } from '@/utils/metricCalculations';
+import { calculateMetricStatus } from '@/utils/metricCalculations';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const MetricsPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -31,6 +39,8 @@ const MetricsPage = () => {
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [pivotTriggers, setPivotTriggers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isGrowthFormOpen, setIsGrowthFormOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<MetricData | null>(null);
@@ -88,49 +98,11 @@ const MetricsPage = () => {
       
       setGrowthMetrics(typedGrowthMetrics);
       
-      // Calculate metrics for KPI cards
-      const totalInterviews = transformedMetricsData.find(m => 
-        m.name.toLowerCase().includes('interview') || 
-        m.description?.toLowerCase().includes('interview')
-      )?.current || '124';
-      
-      const totalSurveys = transformedMetricsData.find(m => 
-        m.name.toLowerCase().includes('survey') || 
-        m.description?.toLowerCase().includes('survey')
-      )?.current || '847';
-      
-      const problemSolutionFit = transformedMetricsData.find(m => 
-        m.name.toLowerCase().includes('solution fit') || 
-        m.description?.toLowerCase().includes('solution fit')
-      )?.current || '76';
-      
-      const mvpUsage = transformedMetricsData.find(m => 
-        m.name.toLowerCase().includes('usage') || 
-        m.description?.toLowerCase().includes('usage')
-      )?.current || '234';
-      
-      setKpiData({
-        customerInterviews: parseInt(totalInterviews) || 124,
-        surveyResponses: parseInt(totalSurveys) || 847,
-        problemSolutionFit: parseInt(problemSolutionFit) || 76,
-        mvpUsage: parseInt(mvpUsage) || 234
-      });
+      // Calculate metrics for KPI cards - use live data if available
+      calculateKPIData(transformedMetricsData, typedGrowthMetrics);
       
       // Find at-risk metrics for pivot triggers
-      const atRiskMetrics = transformedMetricsData.filter(m => 
-        m.status === 'warning' || m.status === 'error'
-      ).slice(0, 2);
-      
-      if (atRiskMetrics.length > 0) {
-        setPivotTriggers(atRiskMetrics.map(metric => ({
-          id: metric.id,
-          metricName: metric.name,
-          current: metric.current,
-          target: metric.target,
-          status: metric.status,
-          triggerPoint: metric.status === 'error' ? 'Exceeded' : 'Approaching',
-        })));
-      }
+      identifyPivotTriggers(transformedMetricsData);
       
     } catch (err) {
       console.error('Error fetching metrics:', err);
@@ -141,6 +113,64 @@ const MetricsPage = () => {
       });
     } finally {
       setIsLoadingMetrics(false);
+    }
+  };
+  
+  const calculateKPIData = (metricsData: MetricData[], growthMetricsData: GrowthMetric[]) => {
+    // Try to find metrics that match these key metrics for the KPI cards
+    const totalInterviews = metricsData.find(m => 
+      m.name.toLowerCase().includes('interview') || 
+      m.description?.toLowerCase().includes('interview')
+    )?.current || "0";
+    
+    const totalSurveys = metricsData.find(m => 
+      m.name.toLowerCase().includes('survey') || 
+      m.description?.toLowerCase().includes('survey')
+    )?.current || "0";
+    
+    const problemSolutionFit = metricsData.find(m => 
+      m.name.toLowerCase().includes('solution fit') || 
+      m.description?.toLowerCase().includes('solution fit')
+    )?.current || "0";
+    
+    // Look in both validation metrics and growth metrics for usage data
+    const mvpUsageValidation = metricsData.find(m => 
+      m.name.toLowerCase().includes('usage') || 
+      m.description?.toLowerCase().includes('usage')
+    )?.current;
+    
+    const mvpUsageGrowth = growthMetricsData.find(m => 
+      m.name.toLowerCase().includes('usage') || 
+      m.description?.toLowerCase().includes('usage')
+    )?.current_value.toString();
+    
+    const mvpUsage = mvpUsageValidation || mvpUsageGrowth || "0";
+    
+    setKpiData({
+      customerInterviews: parseInt(totalInterviews) || 0,
+      surveyResponses: parseInt(totalSurveys) || 0,
+      problemSolutionFit: parseInt(problemSolutionFit) || 0,
+      mvpUsage: parseInt(mvpUsage) || 0
+    });
+  };
+  
+  const identifyPivotTriggers = (metricsData: MetricData[]) => {
+    // Find metrics that are at risk or in error state
+    const atRiskMetrics = metricsData.filter(m => 
+      m.status === 'warning' || m.status === 'error'
+    ).slice(0, 2);
+    
+    if (atRiskMetrics.length > 0) {
+      setPivotTriggers(atRiskMetrics.map(metric => ({
+        id: metric.id,
+        metricName: metric.name,
+        current: metric.current,
+        target: metric.target,
+        status: metric.status,
+        triggerPoint: metric.status === 'error' ? 'Exceeded' : 'Approaching',
+      })));
+    } else {
+      setPivotTriggers([]);
     }
   };
 
@@ -171,6 +201,43 @@ const MetricsPage = () => {
       setIsGrowthFormOpen(true);
     }
   };
+  
+  // Filter metrics based on search query and selected category
+  const filteredMetrics = useMemo(() => {
+    let filtered = metrics;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(metric => 
+        metric.name.toLowerCase().includes(query) || 
+        metric.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    if (selectedCategory) {
+      filtered = filtered.filter(metric => metric.category === selectedCategory);
+    }
+    
+    return filtered;
+  }, [metrics, searchQuery, selectedCategory]);
+  
+  const filteredGrowthMetrics = useMemo(() => {
+    let filtered = growthMetrics;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(metric => 
+        metric.name.toLowerCase().includes(query) || 
+        metric.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    if (selectedCategory) {
+      filtered = filtered.filter(metric => metric.category === selectedCategory);
+    }
+    
+    return filtered;
+  }, [growthMetrics, searchQuery, selectedCategory]);
 
   if (isLoading) {
     return (
@@ -202,7 +269,7 @@ const MetricsPage = () => {
         </p>
       </div>
 
-      {/* KPI Cards - Now using actual data where available */}
+      {/* KPI Cards - Using live data where available */}
       <div id="kpi-cards" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="rounded-lg border shadow">
           <CardContent className="p-6 space-y-4">
@@ -216,7 +283,6 @@ const MetricsPage = () => {
             <Progress
               value={80}
               className="h-2 bg-gray-200"
-              indicatorClassName="h-2 bg-green-600"
             />
           </CardContent>
         </Card>
@@ -233,7 +299,6 @@ const MetricsPage = () => {
             <Progress
               value={65}
               className="h-2 bg-gray-200"
-              indicatorClassName="h-2 bg-blue-600"
             />
           </CardContent>
         </Card>
@@ -250,7 +315,6 @@ const MetricsPage = () => {
             <Progress
               value={kpiData.problemSolutionFit}
               className="h-2 bg-gray-200"
-              indicatorClassName="h-2 bg-yellow-500"
             />
           </CardContent>
         </Card>
@@ -267,13 +331,12 @@ const MetricsPage = () => {
             <Progress
               value={45}
               className="h-2 bg-gray-200"
-              indicatorClassName="h-2 bg-purple-600"
             />
           </CardContent>
         </Card>
       </div>
 
-      {/* Pivot Triggers Alert */}
+      {/* Pivot Triggers Alert - Only show if there are triggers */}
       {pivotTriggers.length > 0 && (
         <Card className="mb-6 border-yellow-200 bg-yellow-50">
           <CardHeader className="pb-2">
@@ -327,129 +390,73 @@ const MetricsPage = () => {
         </Card>
       )}
       
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card className="rounded-lg border shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xl font-bold text-gray-700">Customer Segment Distribution</h4>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                </svg>
-              </Button>
-            </div>
-            <div className="relative overflow-x-auto shadow-md rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Segment</TableHead>
-                    <TableHead>Users</TableHead>
-                    <TableHead>Conversion</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Enterprise</TableCell>
-                    <TableCell>342</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-700">24%</Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Small Business</TableCell>
-                    <TableCell>256</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-700">18%</Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Startup</TableCell>
-                    <TableCell>187</TableCell>
-                    <TableCell>
-                      <Badge className="bg-yellow-100 text-yellow-700">12%</Badge>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg border shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xl font-bold text-gray-700">Feature Usage Analytics</h4>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Last 30 Days
-                </Button>
-              </div>
-            </div>
-            <div className="relative overflow-x-auto shadow-md rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Feature</TableHead>
-                    <TableHead>Usage</TableHead>
-                    <TableHead>Trend</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>User Authentication</TableCell>
-                    <TableCell>89%</TableCell>
-                    <TableCell>
-                      <ArrowUpRight className="h-5 w-5 text-green-500" />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Data Export</TableCell>
-                    <TableCell>67%</TableCell>
-                    <TableCell>
-                      <ArrowDownRight className="h-5 w-5 text-red-500" />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>API Integration</TableCell>
-                    <TableCell>45%</TableCell>
-                    <TableCell>
-                      <ArrowUpRight className="h-5 w-5 text-green-500" />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Add Metric Button - Will show both options */}
-      <div className="flex justify-end mb-6">
-        <div className="relative group">
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Metric
-          </Button>
-          <div className="absolute z-10 right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
-            <div className="py-1">
-              <button
-                className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-                onClick={() => handleAddMetric('regular')}
-              >
-                Add Validation Metric
-              </button>
-              <button
-                className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-                onClick={() => handleAddMetric('growth')}
-              >
-                Add Growth Metric
-              </button>
-            </div>
+      {/* Add Metric Button - With dropdown for both validation and growth metrics */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-4">
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="Search metrics..."
+              className="pl-8 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                <Filter className="h-4 w-4 mr-2" />
+                {selectedCategory ? `Category: ${selectedCategory}` : 'All Categories'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setSelectedCategory(null)}>
+                All Categories
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSelectedCategory('acquisition')}>
+                Acquisition
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSelectedCategory('activation')}>
+                Activation
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSelectedCategory('retention')}>
+                Retention
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSelectedCategory('revenue')}>
+                Revenue
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSelectedCategory('referral')}>
+                Referral
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSelectedCategory('custom')}>
+                Custom
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        
+        <div className="relative">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Metric
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Add New Metric</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleAddMetric('regular')} className="cursor-pointer">
+                Validation Metric
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleAddMetric('growth')} className="cursor-pointer">
+                Growth Metric
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -473,7 +480,7 @@ const MetricsPage = () => {
                   </CardHeader>
                   <CardContent>
                     <MetricsSection 
-                      metrics={metrics} 
+                      metrics={filteredMetrics} 
                       refreshData={fetchMetrics}
                       projectId={currentProject.id}
                     />
@@ -501,8 +508,8 @@ const MetricsPage = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {growthMetrics.length > 0 ? (
-                            growthMetrics.map((metric) => {
+                          {filteredGrowthMetrics.length > 0 ? (
+                            filteredGrowthMetrics.map((metric) => {
                               const status = metric.status || 'on-track';
                               const statusColor = status === 'on-track' 
                                 ? 'bg-green-100 text-green-700' 
@@ -588,7 +595,7 @@ const MetricsPage = () => {
           <TabsContent value="charts" className="mt-6">
             {currentProject && !isLoadingMetrics && (
               <MetricCharts 
-                metrics={metrics}
+                metrics={filteredMetrics}
               />
             )}
             
@@ -605,7 +612,7 @@ const MetricsPage = () => {
       {/* Export Button */}
       <div className="fixed top-4 right-4 z-10">
         <Button variant="outline" size="sm" className="bg-white">
-          <Calendar className="h-4 w-4 mr-2" />
+          <Download className="h-4 w-4 mr-2" />
           Export Report
         </Button>
       </div>
