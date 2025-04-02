@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Loader2, AlertTriangle, LineChart, Calendar, ArrowUpRight, 
-  ArrowDownRight, Users, FileText, Zap, Cube 
+  ArrowDownRight, Users, FileText, Zap, Box 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MetricsSection from '@/components/MetricsSection';
@@ -174,7 +173,7 @@ const MetricsPage = () => {
                 <p className="text-gray-500">MVP Usage</p>
                 <h3 className="text-2xl font-bold">234</h3>
               </div>
-              <Cube className="h-8 w-8 text-purple-500" />
+              <Box className="h-8 w-8 text-purple-500" />
             </div>
             <Progress
               value={45}
