@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Loader2, AlertTriangle, LineChart, Calendar, ArrowUpRight, 
-  ArrowDownRight, Users, FileText, Zap, Box, Plus, PlusCircle
+  ArrowDownRight, Users, FileText, Zap, Box, Plus, PlusCircle,
+  TrendingUp
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MetricsSection from '@/components/MetricsSection';
@@ -79,7 +79,14 @@ const MetricsPage = () => {
         
       if (growthMetricsError) throw growthMetricsError;
       
-      setGrowthMetrics(growthMetricsData || []);
+      // Properly cast the status to the expected type
+      const typedGrowthMetrics = growthMetricsData?.map(metric => ({
+        ...metric,
+        originalId: metric.id,
+        status: (metric.status as 'on-track' | 'at-risk' | 'off-track') || 'on-track'
+      })) as GrowthMetric[];
+      
+      setGrowthMetrics(typedGrowthMetrics);
       
       // Calculate metrics for KPI cards
       const totalInterviews = transformedMetricsData.find(m => 
