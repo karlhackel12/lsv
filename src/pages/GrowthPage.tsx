@@ -19,50 +19,7 @@ import ScalingReadinessMetrics from '@/components/growth/ScalingReadinessMetrics
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
 import { useNavigate } from 'react-router-dom';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
-
-interface MetricCardProps {
-  title: string;
-  value: string | number;
-  change?: string;
-  changeType?: 'positive' | 'negative';
-  progress: number;
-  progressColor: 'success' | 'warning' | 'error' | 'info';
-  icon: React.ReactNode;
-}
-
-const MetricCard: React.FC<MetricCardProps> = ({ 
-  title, 
-  value, 
-  change, 
-  changeType = 'positive',
-  progress,
-  progressColor,
-  icon
-}) => {
-  return (
-    <Card className="rounded-lg border shadow">
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-500">{title}</p>
-            <h3 className="text-2xl font-bold">{value}</h3>
-          </div>
-          {icon}
-        </div>
-        <Progress
-          value={progress}
-          className="h-2 bg-gray-200"
-          indicatorClassName={`h-2 ${
-            progressColor === 'success' ? 'bg-green-600' :
-            progressColor === 'warning' ? 'bg-yellow-500' :
-            progressColor === 'error' ? 'bg-red-600' :
-            'bg-blue-600'
-          }`}
-        />
-      </CardContent>
-    </Card>
-  );
-};
+import GrowthMetricsPanel from '@/components/dashboard/GrowthMetricsPanel';
 
 const GrowthPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -88,6 +45,10 @@ const GrowthPage = () => {
 
   const handleAddScalingMetric = () => {
     setShowAddScalingMetricForm(true);
+  };
+
+  const handleViewAllMetrics = () => {
+    navigate('/metrics');
   };
 
   const renderPivotCTA = () => {
@@ -139,25 +100,6 @@ const GrowthPage = () => {
     );
   }
 
-  // Calculate metrics for cards
-  const userMetric = growthMetrics.find(m => m.category === 'acquisition') || {
-    name: 'User Acquisition',
-    current_value: 1247,
-    status: 'on-track'
-  };
-
-  const retentionMetric = growthMetrics.find(m => m.category === 'retention') || {
-    name: 'Retention Rate',
-    current_value: 68,
-    status: 'at-risk'
-  };
-
-  const feedbackMetric = growthMetrics.find(m => m.category === 'satisfaction') || {
-    name: 'Customer Feedback',
-    current_value: 4.8,
-    status: 'on-track'
-  };
-
   return (
     <div className="p-6">
       <PageIntroduction 
@@ -175,65 +117,22 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="mt-6 space-y-6">
-          {/* Metrics Overview Cards */}
-          <h2 className="text-3xl font-bold tracking-tight text-gray-800">Growth Metrics Dashboard</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-            <MetricCard 
-              title="User Acquisition" 
-              value={userMetric.current_value}
-              change="+12.5%" 
-              changeType="positive"
-              progress={75}
-              progressColor="success"
-              icon={<Users className="h-8 w-8 text-green-500" />}
-            />
-            <MetricCard 
-              title="Retention Rate" 
-              value={`${retentionMetric.current_value}%`}
-              change="-2.3%" 
-              changeType="negative"
-              progress={68}
-              progressColor="warning"
-              icon={<LineChart className="h-8 w-8 text-yellow-500" />}
-            />
-            <Card className="rounded-lg border shadow">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500">Customer Feedback</p>
-                    <h3 className="text-2xl font-bold">{feedbackMetric.current_value}/5.0</h3>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700">
-                    <ArrowUpRight className="h-3 w-3 mr-1 inline" />
-                    +0.3
-                  </Badge>
-                </div>
-                <div className="flex items-center mt-4">
-                  {[1, 2, 3, 4].map((star) => (
-                    <svg
-                      key={star}
-                      className="text-yellow-300 w-5 h-5 ms-1"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="currentColor"
-                      viewBox="0 0 22 20"
-                    >
-                      <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z" />
-                    </svg>
-                  ))}
-                  <svg
-                    className="w-5 h-5 text-gray-300 ms-1"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="currentColor"
-                    viewBox="0 0 22 20"
-                  >
-                    <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z" />
-                  </svg>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Real Metrics Display */}
+          <div className="flex justify-between items-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-800">Growth Metrics Dashboard</h2>
+            <Button 
+              onClick={handleViewAllMetrics}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LineChart className="h-4 w-4" />
+              View All Metrics
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
+          
+          {/* Real Metrics Panel */}
+          <GrowthMetricsPanel />
           
           {/* Analytics & Functional Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
