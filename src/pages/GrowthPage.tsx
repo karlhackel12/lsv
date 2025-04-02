@@ -2,19 +2,23 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, TrendingUp, ArrowRight, CheckCircle2, ArrowUpRight, ArrowDownRight, Calendar, Users, DollarSign, LineChart } from 'lucide-react';
+import { 
+  Loader2, TrendingUp, ArrowRight, CheckCircle2, ArrowUpRight, 
+  ArrowDownRight, Calendar, Users, DollarSign, LineChart,
+  PlusCircle, Edit2, Trash2, Megaphone, FlaskConical 
+} from 'lucide-react';
 import PageIntroduction from '@/components/PageIntroduction';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import GrowthChannelsSection from '@/components/growth/GrowthChannelsSection';
 import ScalingReadinessMetrics from '@/components/growth/ScalingReadinessMetrics';
 import GrowthExperimentsSection from '@/components/growth/GrowthExperimentsSection';
 import { useNavigate } from 'react-router-dom';
 import { useGrowthModels } from '@/hooks/growth/use-growth-models';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Avatar } from '@/components/ui/avatar';
 
 interface MetricCardProps {
   title: string;
@@ -23,6 +27,7 @@ interface MetricCardProps {
   changeType?: 'positive' | 'negative';
   progress: number;
   progressColor: 'success' | 'warning' | 'error' | 'info';
+  icon: React.ReactNode;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ 
@@ -31,7 +36,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
   change, 
   changeType = 'positive',
   progress,
-  progressColor
+  progressColor,
+  icon
 }) => {
   return (
     <Card className="rounded-lg border shadow">
@@ -41,16 +47,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
             <p className="text-gray-500">{title}</p>
             <h3 className="text-2xl font-bold">{value}</h3>
           </div>
-          {change && (
-            <Badge className={`${changeType === 'positive' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-              {changeType === 'positive' ? (
-                <ArrowUpRight className="h-3 w-3 mr-1 inline" />
-              ) : (
-                <ArrowDownRight className="h-3 w-3 mr-1 inline" />
-              )}
-              {change}
-            </Badge>
-          )}
+          {icon}
         </div>
         <Progress
           value={progress}
@@ -188,6 +185,7 @@ const GrowthPage = () => {
               changeType="positive"
               progress={75}
               progressColor="success"
+              icon={<Users className="h-8 w-8 text-green-500" />}
             />
             <MetricCard 
               title="Retention Rate" 
@@ -196,6 +194,7 @@ const GrowthPage = () => {
               changeType="negative"
               progress={68}
               progressColor="warning"
+              icon={<LineChart className="h-8 w-8 text-yellow-500" />}
             />
             <Card className="rounded-lg border shadow">
               <CardContent className="p-6 space-y-4">
@@ -236,226 +235,37 @@ const GrowthPage = () => {
             </Card>
           </div>
           
-          {/* Analytics Section */}
-          <div id="growth-analytics" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Acquisition Channels Card */}
+          {/* Analytics & Functional Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Acquisition Channels */}
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-bold text-gray-700">Acquisition Channels</h4>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                    </svg>
-                  </Button>
-                </div>
-                <div className="relative overflow-x-auto shadow-md rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Channel</TableHead>
-                        <TableHead>Users</TableHead>
-                        <TableHead>Conversion</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>Organic Search</TableCell>
-                        <TableCell>542</TableCell>
-                        <TableCell>
-                          <Badge className="bg-green-100 text-green-700">4.2%</Badge>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Social Media</TableCell>
-                        <TableCell>387</TableCell>
-                        <TableCell>
-                          <Badge className="bg-yellow-100 text-yellow-700">2.8%</Badge>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Direct</TableCell>
-                        <TableCell>318</TableCell>
-                        <TableCell>
-                          <Badge className="bg-green-100 text-green-700">3.9%</Badge>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Customer Journey Stages Card */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-bold text-gray-700">Customer Journey Stages</h4>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                    </svg>
-                  </Button>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <p className="text-base text-gray-600">Awareness</p>
-                      <span className="text-sm font-medium">2,450</span>
-                    </div>
-                    <Progress value={85} indicatorClassName="bg-blue-500 h-2" className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <p className="text-base text-gray-600">Consideration</p>
-                      <span className="text-sm font-medium">1,832</span>
-                    </div>
-                    <Progress value={65} indicatorClassName="bg-yellow-500 h-2" className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <p className="text-base text-gray-600">Decision</p>
-                      <span className="text-sm font-medium">945</span>
-                    </div>
-                    <Progress value={45} indicatorClassName="bg-green-500 h-2" className="h-2" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Growth Initiatives Card */}
-          <div id="action-items" className="mt-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-bold text-gray-700">Growth Initiatives</h4>
-                  <Button size="sm" variant="outline" className="flex items-center">
-                    <svg className="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"></path>
-                    </svg>
-                    Add Initiative
-                  </Button>
-                </div>
-                <div className="relative overflow-x-auto shadow-md rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Initiative</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Impact</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>SEO Optimization</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 mr-2">
-                              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Alex Morgan" />
-                            </Avatar>
-                            <span>Alex Morgan</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>High</TableCell>
-                        <TableCell>
-                          <Badge className="bg-green-100 text-green-700">In Progress</Badge>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Referral Program</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 mr-2">
-                              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Sarah Chen" />
-                            </Avatar>
-                            <span>Sarah Chen</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>Medium</TableCell>
-                        <TableCell>
-                          <Badge className="bg-yellow-100 text-yellow-700">Planning</Badge>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Original Sections (Hidden by Default) */}
-          <div className="hidden">
-            {/* Acquisition Channels Card */}
-            <Card>
-              <CardHeader className="bg-blue-50">
-                <CardTitle className="text-lg flex items-center">
-                  <ArrowRight className="h-5 w-5 mr-2 text-blue-500" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center">
+                  <Megaphone className="h-5 w-5 mr-2 text-blue-500" />
                   Acquisition Channels
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <GrowthChannelsSection 
-                  channels={growthChannels}
-                  projectId={currentProject.id} 
-                  refreshData={() => fetchModelData(currentProject.id)} 
-                />
+                {currentProject && (
+                  <GrowthChannelsSection 
+                    channels={growthChannels}
+                    projectId={currentProject.id} 
+                    refreshData={() => fetchModelData(currentProject.id)} 
+                  />
+                )}
               </CardContent>
             </Card>
             
-            {/* Growth Metrics Card */}
+            {/* Growth Experiments */}
             <Card>
-              <CardHeader className="bg-green-50">
-                <CardTitle className="text-lg flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
-                  Growth Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Track key metrics related to your product's growth and market performance.
-                  </p>
-                  <Button 
-                    onClick={() => navigate('/metrics')} 
-                    className="w-full"
-                  >
-                    View All Metrics
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Scaling Readiness Card */}
-            <Card>
-              <CardHeader className="bg-purple-50">
-                <CardTitle className="text-lg flex items-center">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-purple-500" />
-                  Scaling Readiness
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ScalingReadinessMetrics 
-                  projectId={currentProject.id} 
-                  refreshData={() => fetchModelData(currentProject.id)} 
-                  growthMetrics={growthMetrics}
-                  isFormOpen={showAddScalingMetricForm}
-                  onFormClose={() => setShowAddScalingMetricForm(false)}
-                />
-              </CardContent>
-            </Card>
-            
-            {/* Growth Experiments Section */}
-            <Card>
-              <CardHeader className="bg-yellow-50">
-                <CardTitle className="text-lg flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-yellow-500" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center">
+                  <FlaskConical className="h-5 w-5 mr-2 text-yellow-500" />
                   Growth Experiments
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                {activeModelId && (
+                {activeModelId && currentProject && (
                   <GrowthExperimentsSection
                     projectId={currentProject.id}
                     growthModelId={activeModelId}
@@ -476,48 +286,32 @@ const GrowthPage = () => {
             </Card>
           </div>
           
+          {/* Scaling Readiness Section */}
+          <Card>
+            <CardHeader className="bg-purple-50">
+              <CardTitle className="text-lg flex items-center">
+                <CheckCircle2 className="h-5 w-5 mr-2 text-purple-500" />
+                Scaling Readiness
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {currentProject && (
+                <ScalingReadinessMetrics 
+                  projectId={currentProject.id} 
+                  refreshData={() => fetchModelData(currentProject.id)} 
+                  growthMetrics={growthMetrics}
+                  isFormOpen={showAddScalingMetricForm}
+                  onFormClose={() => setShowAddScalingMetricForm(false)}
+                />
+              )}
+            </CardContent>
+          </Card>
+          
           {isLoadingData && (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Loading growth data...</span>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Original function modals/dialogs */}
-      {currentProject && (
-        <div className="hidden">
-          <GrowthChannelsSection 
-            channels={growthChannels}
-            projectId={currentProject.id} 
-            refreshData={() => fetchModelData(currentProject.id)} 
-          />
-          
-          <ScalingReadinessMetrics 
-            projectId={currentProject.id} 
-            refreshData={() => fetchModelData(currentProject.id)} 
-            growthMetrics={growthMetrics}
-            isFormOpen={showAddScalingMetricForm}
-            onFormClose={() => setShowAddScalingMetricForm(false)}
-          />
-          
-          {activeModelId && (
-            <GrowthExperimentsSection
-              projectId={currentProject.id}
-              growthModelId={activeModelId}
-              growthModel={{
-                id: activeModelId,
-                name: 'Default Growth Model',
-                description: '',
-                framework: 'aarrr',
-                status: 'active',
-                project_id: currentProject.id,
-                created_at: '',
-                updated_at: '',
-                originalId: activeModelId
-              }}
-            />
           )}
         </div>
       )}

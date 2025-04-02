@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertTriangle, LineChart, Calendar, ArrowUpRight, ArrowDownRight, Users, FileText, Zap, Cube } from 'lucide-react';
+import { 
+  Loader2, AlertTriangle, LineChart, Calendar, ArrowUpRight, 
+  ArrowDownRight, Users, FileText, Zap, Cube 
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MetricsSection from '@/components/MetricsSection';
 import MetricCharts from '@/components/MetricCharts';
@@ -22,6 +25,7 @@ const MetricsPage = () => {
   const [metrics, setMetrics] = useState<MetricData[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [pivotTriggers, setPivotTriggers] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -235,7 +239,7 @@ const MetricsPage = () => {
       )}
       
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Card className="rounded-lg border shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -332,9 +336,9 @@ const MetricsPage = () => {
         </Card>
       </div>
 
-      {/* Original Tabs Content - Hidden by Default */}
-      <div className="hidden mt-6">
-        <Tabs defaultValue="dashboard" className="w-full">
+      {/* Original Tabs Content - With Improved Visualization */}
+      <div className="mt-6">
+        <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="dashboard">Metrics Dashboard</TabsTrigger>
             <TabsTrigger value="charts">Charts</TabsTrigger>
