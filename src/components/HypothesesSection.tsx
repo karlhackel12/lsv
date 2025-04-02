@@ -67,7 +67,8 @@ const HypothesesSection = ({
         <>
           <HypothesisTemplates 
             showTemplates={showTemplates} 
-            setShowTemplates={setShowTemplates} 
+            onClose={() => setShowTemplates(false)} 
+            onApply={handleSaveHypothesis} 
             phaseType={phaseType} 
           />
 

@@ -17,7 +17,7 @@ export interface HypothesisTemplate {
 export interface HypothesisTemplatesProps {
   showTemplates: boolean;
   onApply: (templateData: { statement: string; criteria: string; experiment: string; }) => void;
-  onClose?: () => void; // Make onClose optional
+  onClose: () => void;
   phaseType: 'problem' | 'solution';
 }
 
@@ -84,7 +84,7 @@ const solutionTemplates: HypothesisTemplate[] = [
 const HypothesisTemplates: React.FC<HypothesisTemplatesProps> = ({ 
   showTemplates, 
   onApply, 
-  onClose = () => {}, // Provide default empty function for onClose
+  onClose, 
   phaseType 
 }) => {
   if (!showTemplates) return null;
