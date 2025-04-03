@@ -1,18 +1,21 @@
 
 import React from 'react';
-import { Control } from 'react-hook-form';
+import { Control, UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export interface StatusRadioGroupProps {
   control: Control<any>;
   isGrowthExperiment?: boolean;
+  form?: UseFormReturn<any>;
 }
 
-const StatusRadioGroup = ({ control, isGrowthExperiment = false }: StatusRadioGroupProps) => {
+const StatusRadioGroup = ({ control, isGrowthExperiment = false, form }: StatusRadioGroupProps) => {
+  const controlToUse = form?.control || control;
+  
   return (
     <FormField
-      control={control}
+      control={controlToUse}
       name="status"
       render={({ field }) => (
         <FormItem className="space-y-2">

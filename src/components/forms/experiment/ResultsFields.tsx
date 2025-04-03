@@ -1,21 +1,24 @@
 
 import React from 'react';
-import { Control } from 'react-hook-form';
+import { Control, UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 
 export interface ResultsFieldsProps {
   control: Control<any>;
   isGrowthExperiment?: boolean;
+  form?: UseFormReturn<any>;
 }
 
-const ResultsFields = ({ control, isGrowthExperiment = false }: ResultsFieldsProps) => {
+const ResultsFields = ({ control, isGrowthExperiment = false, form }: ResultsFieldsProps) => {
+  const controlToUse = form?.control || control;
+  
   return (
     <div className="space-y-4 border-t pt-4 mt-4">
       <h3 className="text-lg font-medium mb-4">Results & Learnings</h3>
       
       <FormField
-        control={control}
+        control={controlToUse}
         name="results"
         render={({ field }) => (
           <FormItem>
@@ -34,7 +37,7 @@ const ResultsFields = ({ control, isGrowthExperiment = false }: ResultsFieldsPro
       
       {!isGrowthExperiment && (
         <FormField
-          control={control}
+          control={controlToUse}
           name="insights"
           render={({ field }) => (
             <FormItem>
@@ -54,7 +57,7 @@ const ResultsFields = ({ control, isGrowthExperiment = false }: ResultsFieldsPro
       
       {!isGrowthExperiment && (
         <FormField
-          control={control}
+          control={controlToUse}
           name="decisions"
           render={({ field }) => (
             <FormItem>

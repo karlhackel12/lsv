@@ -415,7 +415,7 @@ export interface Project {
   description: string;
   created_at: string;
   updated_at: string;
-  user_id: string;
+  user_id?: string;
   current_stage?: string;
   stage?: string;
   problem_tracking?: {
@@ -454,6 +454,7 @@ export interface Project {
     reasoning_documented: boolean;
     strategic_decision_made: boolean;
   };
+  owner_id?: string;
 }
 
 export interface SolutionTracking {

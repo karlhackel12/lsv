@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Control } from 'react-hook-form';
+import { Control, UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,13 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 export interface TextFieldGroupProps {
   control: Control<any>;
   isGrowthExperiment?: boolean;
+  form?: UseFormReturn<any>;
 }
 
-const TextFieldGroup = ({ control, isGrowthExperiment = false }: TextFieldGroupProps) => {
+const TextFieldGroup = ({ control, isGrowthExperiment = false, form }: TextFieldGroupProps) => {
+  const controlToUse = form?.control || control;
+  
   return (
     <div className="space-y-4">
       <FormField
-        control={control}
+        control={controlToUse}
         name="title"
         render={({ field }) => (
           <FormItem>
@@ -28,7 +31,7 @@ const TextFieldGroup = ({ control, isGrowthExperiment = false }: TextFieldGroupP
       />
       
       <FormField
-        control={control}
+        control={controlToUse}
         name="hypothesis"
         render={({ field }) => (
           <FormItem>
@@ -46,7 +49,7 @@ const TextFieldGroup = ({ control, isGrowthExperiment = false }: TextFieldGroupP
       />
       
       <FormField
-        control={control}
+        control={controlToUse}
         name="method"
         render={({ field }) => (
           <FormItem>
@@ -64,7 +67,7 @@ const TextFieldGroup = ({ control, isGrowthExperiment = false }: TextFieldGroupP
       />
       
       <FormField
-        control={control}
+        control={controlToUse}
         name="metrics"
         render={({ field }) => (
           <FormItem>

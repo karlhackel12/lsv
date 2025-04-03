@@ -36,7 +36,7 @@ export function useExperimentForm({
     title: z.string().min(1, 'Title is required'),
     hypothesis: z.string().min(1, 'Hypothesis is required'),
     method: z.string().min(1, 'Method is required'),
-    metrics: z.string().min(1, 'Metrics are required'),
+    metrics: z.array(z.string()).min(1, 'Metrics are required'),
     status: z.string(),
     category: z.string(),
     results: z.string().optional(),
@@ -52,6 +52,13 @@ export function useExperimentForm({
     originalId: z.string().optional(),
   });
 
+  // Ensure metrics is always an array
+  const getMetricsArray = (metrics: any): string[] => {
+    if (!metrics) return [''];
+    if (Array.isArray(metrics)) return metrics;
+    return [metrics];
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,7 +66,7 @@ export function useExperimentForm({
       title: experiment?.title || '',
       hypothesis: experiment?.hypothesis || '',
       method: experiment?.method || '',
-      metrics: experiment?.metrics || '',
+      metrics: getMetricsArray(experiment?.metrics),
       status: experiment?.status || 'planned',
       category: experiment?.category || experimentType,
       results: experiment?.results || '',
@@ -104,7 +111,7 @@ export function useExperimentForm({
             title: data.title,
             hypothesis: data.hypothesis,
             method: data.method,
-            metrics: data.metrics,
+            metrics: getMetricsArray(data.metrics),
             status: data.status,
             category: data.category,
             results: data.results || null,
@@ -128,7 +135,7 @@ export function useExperimentForm({
             title: data.title,
             hypothesis: data.hypothesis,
             method: data.method,
-            metrics: data.metrics,
+            metrics: getMetricsArray(data.metrics),
             status: data.status,
             category: data.category,
             results: data.results || null,

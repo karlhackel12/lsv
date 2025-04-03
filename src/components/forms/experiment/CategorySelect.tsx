@@ -2,16 +2,19 @@
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Control } from 'react-hook-form';
+import { Control, UseFormReturn } from 'react-hook-form';
 
 export interface CategorySelectProps {
   control: Control<any>;
+  form?: UseFormReturn<any>;
 }
 
-const CategorySelect = ({ control }: CategorySelectProps) => {
+const CategorySelect = ({ control, form }: CategorySelectProps) => {
+  const controlToUse = form?.control || control;
+  
   return (
     <FormField
-      control={control}
+      control={controlToUse}
       name="category"
       render={({ field }) => (
         <FormItem className="space-y-2">

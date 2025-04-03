@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 
 export interface InfoTooltipProps {
-  content: React.ReactNode;
+  content?: React.ReactNode;
   className?: string;
   text?: string; // For backward compatibility
   link?: string; // For backward compatibility

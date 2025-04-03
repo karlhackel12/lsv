@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Users, DollarSign, LineChart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -25,7 +24,7 @@ const MetricCard = ({ title, value, change, changeType, icon, tooltip }: MetricP
       <div className="flex justify-between items-start mb-2">
         <div className="text-sm text-gray-500 font-medium flex items-center gap-1">
           {title}
-          <InfoTooltip text={tooltip} link="/lean-startup-methodology" className="ml-1" />
+          <InfoTooltip content={tooltip} link="/lean-startup-methodology" className="ml-1" />
         </div>
         <div className="bg-blue-50 p-1.5 rounded-md">
           {icon}
@@ -112,7 +111,7 @@ const GrowthMetricsPanel = () => {
           <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />
           Growth Metrics
           <InfoTooltip 
-            text="Track key metrics related to your growth model" 
+            content="Track key metrics related to your growth model" 
             link="/lean-startup-methodology" 
             className="ml-2"
           />

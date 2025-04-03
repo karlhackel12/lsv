@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Control } from 'react-hook-form';
+import { Control, UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ export interface HypothesisSelectProps {
   experimentType?: string;
   setValue?: any;
   onHypothesisSelected?: (hypothesis: Hypothesis | null) => void;
+  form?: UseFormReturn<any>;
 }
 
 const HypothesisSelect = ({ 
@@ -19,10 +20,12 @@ const HypothesisSelect = ({
   projectId, 
   experimentType = 'problem',
   setValue,
-  onHypothesisSelected
+  onHypothesisSelected,
+  form
 }: HypothesisSelectProps) => {
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const controlToUse = form?.control || control;
 
   useEffect(() => {
     if (!projectId) return;
@@ -76,7 +79,7 @@ const HypothesisSelect = ({
 
   return (
     <FormField
-      control={control}
+      control={controlToUse}
       name="hypothesis_id"
       render={({ field }) => (
         <FormItem>
