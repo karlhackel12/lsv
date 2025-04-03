@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Hypothesis } from '@/types/database';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
+import { FormController } from '@/components/ui/form-controller';
 import HypothesisStatementField from './hypothesis/HypothesisStatementField';
 import CategoryField from './hypothesis/CategoryField';
 import StatusField from './hypothesis/StatusField';
@@ -38,8 +37,8 @@ const HypothesisForm = ({
   const [showTemplates, setShowTemplates] = React.useState(false);
   
   const formTitle = phaseType === 'problem' ? 
-    (isEditing ? 'Edit Problem Hypothesis' : 'Create Problem Hypothesis') :
-    (isEditing ? 'Edit Solution Hypothesis' : 'Create Solution Hypothesis');
+    (isEditing ? 'Editar Hipótese de Problema' : 'Criar Hipótese de Problema') :
+    (isEditing ? 'Editar Hipótese de Solução' : 'Criar Hipótese de Solução');
 
   // Update the applyTemplate function to match the expected type
   const handleApplyTemplate = (templateData: {
@@ -51,84 +50,87 @@ const HypothesisForm = ({
     setShowTemplates(false);
   };
 
+  const formDescription = phaseType === 'problem' ?
+    'Defina e teste hipóteses sobre os problemas dos seus clientes' :
+    'Defina e teste hipóteses sobre as soluções para os problemas validados';
+
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{formTitle}</DialogTitle>
-          </DialogHeader>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              <HypothesisStatementField control={form.control} />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <CategoryField control={form.control} />
-                <StatusField control={form.control} />
+      <FormController
+        isOpen={isOpen}
+        onClose={onClose}
+        title={formTitle}
+        description={formDescription}
+      >
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <HypothesisStatementField control={form.control} />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CategoryField control={form.control} />
+              <StatusField control={form.control} />
+            </div>
+            
+            <TextField 
+              name="criteria"
+              label="Critérios de Sucesso"
+              description="Como você saberá se essa hipótese é verdadeira?"
+              placeholder="Saberemos que isso é verdade se..."
+              control={form.control}
+            />
+            
+            <TextField 
+              name="experiment"
+              label="Design do Experimento"
+              description="Como você testará essa hipótese?"
+              placeholder="Testaremos isso através de..."
+              control={form.control}
+            />
+            
+            {isEditing && (
+              <>
+                <TextField 
+                  name="evidence"
+                  label="Evidências (Opcional)"
+                  description="Quais evidências você coletou?"
+                  placeholder="Nossas evidências mostram..."
+                  control={form.control}
+                />
+                
+                <TextField 
+                  name="result"
+                  label="Resultado (Opcional)"
+                  description="Qual foi o resultado do teste dessa hipótese?"
+                  placeholder="Com base em nossas evidências, concluímos que..."
+                  control={form.control}
+                />
+              </>
+            )}
+            
+            <div className="flex justify-between items-center gap-2 pt-4">
+              <div>
+                {!isEditing && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setShowTemplates(true)}
+                  >
+                    Usar Template
+                  </Button>
+                )}
               </div>
-              
-              <TextField 
-                name="criteria"
-                label="Success Criteria"
-                description="How will you know if this hypothesis is true?"
-                placeholder="We'll know this is true if..."
-                control={form.control}
-              />
-              
-              <TextField 
-                name="experiment"
-                label="Experiment Design"
-                description="How will you test this hypothesis?"
-                placeholder="We will test this by..."
-                control={form.control}
-              />
-              
-              {isEditing && (
-                <>
-                  <TextField 
-                    name="evidence"
-                    label="Evidence (Optional)"
-                    description="What evidence have you collected?"
-                    placeholder="Our evidence shows..."
-                    control={form.control}
-                  />
-                  
-                  <TextField 
-                    name="result"
-                    label="Result (Optional)"
-                    description="What was the outcome of testing this hypothesis?"
-                    placeholder="Based on our evidence, we conclude..."
-                    control={form.control}
-                  />
-                </>
-              )}
-              
-              <DialogFooter className="flex justify-between items-center gap-2 pt-4">
-                <div>
-                  {!isEditing && (
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setShowTemplates(true)}
-                    >
-                      Use Template
-                    </Button>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    {isEditing ? 'Save Changes' : 'Create Hypothesis'}
-                  </Button>
-                </div>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  {isEditing ? 'Salvar Alterações' : 'Criar Hipótese'}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </FormController>
       
       {showTemplates && (
         <HypothesisTemplates

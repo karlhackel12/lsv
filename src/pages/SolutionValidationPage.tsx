@@ -3,19 +3,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
 import HypothesesSection from '@/components/HypothesesSection';
 import PageIntroduction from '@/components/PageIntroduction';
-import { FlaskConical, Users, MessageCircle, Target } from 'lucide-react';
+import { Lightbulb, PenTool, Users, MessageCircle } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
-import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import BestPracticesCard, { BestPractice } from '@/components/ui/best-practices-card';
 import ChecklistCard, { ChecklistItem } from '@/components/ui/checklist-card';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/use-translation';
 
 // Define the interface for solution tracking
 interface SolutionTracking {
-  solution_hypotheses_defined: boolean;
+  solution_hypotheses_created: boolean;
   solution_sketches_created: boolean;
-  tested_with_customers: boolean;
-  positive_feedback_received: boolean;
+  customer_testing_conducted: boolean;
+  customer_feedback_implemented: boolean;
 }
 
 const SolutionValidationPage = () => {
@@ -24,12 +24,13 @@ const SolutionValidationPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createHypothesisTrigger, setCreateHypothesisTrigger] = useState(0);
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const [solutionTracking, setSolutionTracking] = useState<SolutionTracking>({
-    solution_hypotheses_defined: false,
+    solution_hypotheses_created: false,
     solution_sketches_created: false,
-    tested_with_customers: false,
-    positive_feedback_received: false
+    customer_testing_conducted: false,
+    customer_feedback_implemented: false
   });
   
   const fetchHypotheses = async () => {
@@ -61,8 +62,8 @@ const SolutionValidationPage = () => {
       setHypotheses(processedData || []);
       
       // Auto-update the solution_hypotheses_defined flag if hypotheses exist
-      if (processedData && processedData.length > 0 && !solutionTracking.solution_hypotheses_defined) {
-        updateSolutionTracking('solution_hypotheses_defined', true);
+      if (processedData && processedData.length > 0 && !solutionTracking.solution_hypotheses_created) {
+        updateSolutionTracking('solution_hypotheses_created', true);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -113,36 +114,64 @@ const SolutionValidationPage = () => {
   const updateSolutionTracking = async (field: keyof SolutionTracking, value: boolean) => {
     if (!currentProject) return;
     
-    try {
-      // Create a copy of the current tracking state
-      const updatedTracking = { ...solutionTracking, [field]: value };
-      
-      // Optimistically update the UI
-      setSolutionTracking(updatedTracking);
-      
-      // Update the database
-      const { error } = await supabase
-        .from('projects')
-        .update({ 
-          solution_tracking: updatedTracking 
-        })
-        .eq('id', currentProject.id);
+    // Primeiro, atualize o estado local para garantir que a UI seja responsiva
+    const updatedTracking = { ...solutionTracking, [field]: value };
+    setSolutionTracking(updatedTracking);
+    
+    // Função para salvar os dados no Supabase
+    const saveToDatabase = async (retryCount = 0, maxRetries = 3) => {
+      try {
+        // Atualiza o banco de dados
+        const { error } = await supabase
+          .from('projects')
+          .update({ 
+            solution_tracking: JSON.stringify(updatedTracking) // Garante que os dados sejam salvos como JSON
+          })
+          .eq('id', currentProject.id);
+          
+        // Se houver erro, tente novamente até atingir o máximo de tentativas
+        if (error) {
+          if (retryCount < maxRetries) {
+            // Aguarde um tempo exponencial entre as tentativas (300ms, 900ms, 2700ms...)
+            const waitTime = 300 * Math.pow(3, retryCount);
+            console.warn(`Tentativa ${retryCount + 1} falhou, tentando novamente em ${waitTime}ms`, error);
+            
+            setTimeout(() => {
+              saveToDatabase(retryCount + 1, maxRetries);
+            }, waitTime);
+            return;
+          } else {
+            throw error;
+          }
+        }
         
-      if (error) throw error;
-      
-      // Dispatch custom event to notify ValidationProgressSummary to refresh
-      window.dispatchEvent(new CustomEvent('validation-progress-update'));
-      
-      toast({
-        title: 'Solution Progress Updated',
-        description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? 'completed' : 'marked as incomplete'}.`
-      });
-    } catch (err) {
-      console.error('Error updating solution tracking:', err);
-      
-      // Revert the local state change on error
-      setSolutionTracking(solutionTracking);
-    }
+        // Se salvou com sucesso, dispare o evento de atualização
+        window.dispatchEvent(new CustomEvent('validation-progress-update'));
+        
+        toast({
+          title: t.validation.progress.updated,
+          description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? t.validation.progress.completed : t.validation.progress.incomplete}.`,
+          variant: 'success',
+        });
+        
+      } catch (err) {
+        console.error('Erro ao atualizar o rastreamento da solução:', err);
+        
+        // Mesmo se falhar após todas as tentativas, mantenha a UI atualizada
+        // para evitar confusão do usuário, mas mostre uma mensagem de erro
+        toast({
+          title: t.validation.progress.warning.title,
+          description: t.validation.progress.warning.saveFailed,
+          variant: 'destructive',
+        });
+        
+        // Importante: NÃO revertemos o estado local aqui para evitar confusão do usuário
+        // A alteração continua visível, mesmo que não tenha sido salva no banco
+      }
+    };
+    
+    // Inicie o processo de salvamento
+    saveToDatabase();
   };
   
   useEffect(() => {
@@ -159,104 +188,99 @@ const SolutionValidationPage = () => {
   // Generate best practices for the BestPracticesCard component
   const bestPractices: BestPractice[] = [
     {
-      icon: <Users />,
-      title: 'Test with Real Users',
-      description: "Show prototypes to potential users who have the problem you're solving."
+      icon: <PenTool />,
+      title: t.validation.solution.bestPractices.sketchSolutions.title,
+      description: t.validation.solution.bestPractices.sketchSolutions.description
     },
     {
-      icon: <Target />,
-      title: 'Measure Solution-Problem Fit',
-      description: 'Assess how well your solution addresses the validated problem.'
+      icon: <Users />,
+      title: t.validation.solution.bestPractices.testWithCustomers.title,
+      description: t.validation.solution.bestPractices.testWithCustomers.description
     },
     {
       icon: <MessageCircle />,
-      title: 'Collect Actionable Feedback',
-      description: 'Get specific feedback about what works and what needs improvement.'
+      title: t.validation.solution.bestPractices.iterateBasedOnFeedback.title,
+      description: t.validation.solution.bestPractices.iterateBasedOnFeedback.description
     }
   ];
   
   // Generate checklist items for the ChecklistCard component
   const checklistItems: ChecklistItem[] = [
     {
-      key: 'solution_hypotheses_defined',
-      label: 'Solution Hypotheses Defined',
-      description: 'Automatically tracked when you create solution hypotheses',
-      icon: <FlaskConical />,
-      checked: solutionTracking.solution_hypotheses_defined,
+      key: 'solution_hypotheses_created',
+      label: t.validation.solution.checklist.solutionHypothesesCreated.label,
+      description: t.validation.solution.checklist.solutionHypothesesCreated.description,
+      icon: <Lightbulb />,
+      checked: solutionTracking.solution_hypotheses_created,
       disabled: true
     },
     {
       key: 'solution_sketches_created',
-      label: 'Solution Sketches Created',
-      description: 'Toggle when you\'ve created wireframes or mockups',
-      icon: <Target />,
+      label: t.validation.solution.checklist.solutionSketchesCreated.label,
+      description: t.validation.solution.checklist.solutionSketchesCreated.description,
+      icon: <PenTool />,
       checked: solutionTracking.solution_sketches_created,
       onCheckedChange: (checked) => updateSolutionTracking('solution_sketches_created', checked)
     },
     {
-      key: 'tested_with_customers',
-      label: 'Tested With Customers',
-      description: 'Toggle when you\'ve shown your solution to potential customers',
+      key: 'customer_testing_conducted',
+      label: t.validation.solution.checklist.customerTestingConducted.label,
+      description: t.validation.solution.checklist.customerTestingConducted.description,
       icon: <Users />,
-      checked: solutionTracking.tested_with_customers,
-      onCheckedChange: (checked) => updateSolutionTracking('tested_with_customers', checked)
+      checked: solutionTracking.customer_testing_conducted,
+      onCheckedChange: (checked) => updateSolutionTracking('customer_testing_conducted', checked)
     },
     {
-      key: 'positive_feedback_received',
-      label: 'Positive Feedback Received',
-      description: 'Toggle when you\'ve received positive validation from users',
+      key: 'customer_feedback_implemented',
+      label: t.validation.solution.checklist.customerFeedbackImplemented.label,
+      description: t.validation.solution.checklist.customerFeedbackImplemented.description,
       icon: <MessageCircle />,
-      checked: solutionTracking.positive_feedback_received,
-      onCheckedChange: (checked) => updateSolutionTracking('positive_feedback_received', checked)
+      checked: solutionTracking.customer_feedback_implemented,
+      onCheckedChange: (checked) => updateSolutionTracking('customer_feedback_implemented', checked)
     }
   ];
   
+  // Show a message if no project is selected
   if (!currentProject) {
-    return <div className="flex justify-center items-center h-full p-8">
-      <div className="text-center">
-        <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
-        <p className="text-gray-500">Select a project from the dropdown in the header to view hypotheses.</p>
+    return (
+      <div className="p-8 text-center">
+        <p className="text-lg text-gray-500">Por favor, selecione um projeto para visualizar a validação de solução.</p>
       </div>
-    </div>;
+    );
   }
   
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="container mx-auto p-4">
       <PageIntroduction 
-        title="Solution Validation" 
-        icon={<FlaskConical className="h-5 w-5 text-blue-500" />}
-        description="Test whether your proposed solution effectively addresses the validated problem."
-        showDescription={false}
+        title={t.validation.solution.title}
+        description={t.validation.solution.description}
       />
       
-      <BestPracticesCard 
-        title="Best Practices for Solution Validation"
-        color="green"
-        tooltip="These practices help you validate your solution ideas more effectively."
-        practices={bestPractices}
-      />
-      
-      <ChecklistCard 
-        title="Solution Validation Checklist"
-        color="green"
-        items={checklistItems}
-      />
-      
-      <ValidationPhaseIntro 
-        phase="solution" 
-        onCreateNew={handleCreateHypothesis}
-        createButtonText="Create Solution Hypothesis"
-      />
-      
-      <HypothesesSection 
-        hypotheses={hypotheses}
-        refreshData={fetchHypotheses}
-        projectId={currentProject.id}
-        isLoading={isLoading}
-        phaseType="solution"
-        createTrigger={createHypothesisTrigger}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <div className="lg:col-span-2">
+          <HypothesesSection
+            title={t.hypotheses.solutionHypotheses}
+            hypotheses={hypotheses}
+            isLoading={isLoading}
+            phase="solution"
+            onCreateTrigger={createHypothesisTrigger}
+            onHypothesesUpdated={fetchHypotheses}
+          />
+        </div>
+        
+        <div className="space-y-6">
+          <BestPracticesCard 
+            title={t.common.bestPractices}
+            practices={bestPractices} 
+          />
+          
+          <ChecklistCard
+            title={t.common.progressChecklist}
+            color="cyan"
+            items={checklistItems}
+          />
+        </div>
+      </div>
     </div>
   );
 };

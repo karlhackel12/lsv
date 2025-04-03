@@ -131,9 +131,18 @@ const MetricsPage = () => {
         console.error('Error fetching project data:', projectError);
       } else if (projectData) {
         // Use type assertion to safely access metrics_tracking
-        const trackingData = (projectData as any).metrics_tracking as MetricsTracking | null;
-        if (trackingData) {
-          setMetricsTracking(trackingData);
+        let trackingData: MetricsTracking | null = null;
+        
+        if (projectData.metrics_tracking) {
+          try {
+            trackingData = typeof projectData.metrics_tracking === 'string'
+              ? JSON.parse(projectData.metrics_tracking)
+              : projectData.metrics_tracking as MetricsTracking;
+              
+            setMetricsTracking(trackingData);
+          } catch (err) {
+            console.error('Error parsing metrics tracking data:', err);
+          }
         }
       }
       

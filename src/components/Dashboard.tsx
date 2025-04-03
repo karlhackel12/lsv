@@ -11,14 +11,14 @@ import { adaptGrowthExperimentToExperiment } from '@/utils/experiment-adapters';
 import { GrowthExperiment } from '@/types/database';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { RecommendedExperimentsPanel } from '@/components/ai/RecommendedExperimentsPanel';
-import { ExperimentInsightsPanel } from '@/components/ai/ExperimentInsightsPanel';
+import { useTranslation } from '@/hooks/use-translation';
 
 const Dashboard = () => {
   const {
     currentProject
   } = useProject();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [hypotheses, setHypotheses] = useState<any[]>([]);
   const [experiments, setExperiments] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any[]>([]);
@@ -127,7 +127,7 @@ const Dashboard = () => {
   };
   
   if (!currentProject) {
-    return <div>Please select a project to view the dashboard.</div>;
+    return <div>{t('dashboard.selectProject')}</div>;
   }
   
   return <div className="space-y-6">
@@ -136,14 +136,14 @@ const Dashboard = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
               <Lightbulb className="mr-2 h-5 w-5 text-blue-500" />
-              Hypothesis Testing
-              <InfoTooltip content="Validate your business assumptions systematically" className="ml-2" />
+              {t('dashboard.hypothesisTesting')}
+              <InfoTooltip content={t('dashboard.validateAssumptions')} className="ml-2" />
             </CardTitle>
-            <CardDescription>Validate your business assumptions</CardDescription>
+            <CardDescription>{t('dashboard.validateAssumptions')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{hypotheses.length}</div>
-            <p className="text-sm text-muted-foreground">Active hypotheses</p>
+            <p className="text-sm text-muted-foreground">{t('dashboard.activeHypotheses')}</p>
             
             {hypotheses.length > 0 ? <div className="mt-4 space-y-3">
                 {hypotheses.slice(0, 3).map(hypothesis => <div key={hypothesis.id} className="flex items-start">
@@ -151,12 +151,12 @@ const Dashboard = () => {
                     <div className="text-sm line-clamp-2">{hypothesis.statement}</div>
                   </div>)}
               </div> : <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
-                No hypotheses created yet
+                {t('dashboard.noHypotheses')}
               </div>}
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full text-blue-600" onClick={() => navigate('/problem-validation')}>
-              View All Hypotheses
+              {t('dashboard.viewAllHypotheses')}
             </Button>
           </CardFooter>
         </Card>
@@ -165,14 +165,14 @@ const Dashboard = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
               <Beaker className="mr-2 h-5 w-5 text-green-500" />
-              Experiments
-              <InfoTooltip content="Test and learn systematically through structured experiments" className="ml-2" />
+              {t('dashboard.experiments')}
+              <InfoTooltip content={t('dashboard.systematicTesting')} className="ml-2" />
             </CardTitle>
-            <CardDescription>Test and learn systematically</CardDescription>
+            <CardDescription>{t('dashboard.systematicTesting')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{experiments.length}</div>
-            <p className="text-sm text-muted-foreground">Total experiments</p>
+            <p className="text-sm text-muted-foreground">{t('dashboard.totalExperiments')}</p>
             
             {experiments.length > 0 ? <div className="mt-4 space-y-3">
                 {experiments.slice(0, 3).map(experiment => <div key={experiment.id} className="flex items-start">
@@ -180,12 +180,12 @@ const Dashboard = () => {
                     <div className="text-sm line-clamp-2">{experiment.title}</div>
                   </div>)}
               </div> : <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
-                No experiments created yet
+                {t('dashboard.noExperiments')}
               </div>}
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full text-green-600" onClick={() => navigate('/experiments')}>
-              View All Experiments
+              {t('dashboard.viewAllExperiments')}
             </Button>
           </CardFooter>
         </Card>
@@ -194,14 +194,14 @@ const Dashboard = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
               <Layers className="mr-2 h-5 w-5 text-yellow-500" />
-              MVP Features
-              <InfoTooltip content="Minimum Viable Product features that deliver core value" className="ml-2" />
+              {t('dashboard.mvpFeatures')}
+              <InfoTooltip content={t('dashboard.trackCoreDevelopment')} className="ml-2" />
             </CardTitle>
-            <CardDescription>Track your core feature development</CardDescription>
+            <CardDescription>{t('dashboard.trackCoreDevelopment')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mvpFeatures.length}</div>
-            <p className="text-sm text-muted-foreground">Defined features</p>
+            <p className="text-sm text-muted-foreground">{t('dashboard.definedFeatures')}</p>
             
             {mvpFeatures.length > 0 ? <div className="mt-4 space-y-3">
                 {mvpFeatures.slice(0, 3).map(feature => <div key={feature.id} className="flex items-start">
@@ -209,12 +209,12 @@ const Dashboard = () => {
                     <div className="text-sm line-clamp-2">{feature.feature}</div>
                   </div>)}
               </div> : <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
-                No MVP features defined yet
+                {t('dashboard.noMvpFeatures')}
               </div>}
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full text-yellow-600" onClick={() => navigate('/mvp')}>
-              View MVP Features
+              {t('dashboard.viewMvpFeatures')}
             </Button>
           </CardFooter>
         </Card>
@@ -224,14 +224,14 @@ const Dashboard = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
-            Growth Experiments
-            <InfoTooltip content="Optimize your growth metrics through focused experiments" className="ml-2" />
+            {t('dashboard.growthExperiments')}
+            <InfoTooltip content={t('dashboard.accelerateGrowth')} className="ml-2" />
           </CardTitle>
-          <CardDescription>Accelerate your growth metrics</CardDescription>
+          <CardDescription>{t('dashboard.accelerateGrowth')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{growthExperiments.length}</div>
-          <p className="text-sm text-muted-foreground">Growth experiments</p>
+          <p className="text-sm text-muted-foreground">{t('dashboard.growthExperiments')}</p>
           
           {growthExperiments.length > 0 ? (
             <div className="mt-4 space-y-4">
@@ -249,10 +249,12 @@ const Dashboard = () => {
                       <div className="text-sm font-medium">{experiment.title}</div>
                     </div>
                     <div className="ml-4 flex items-center mt-1 text-xs text-gray-500">
-                      <span>Expected lift: {experiment.expected_lift}%</span>
-                      {experiment.actual_lift !== null && (
-                        <span className="ml-3">Actual: {experiment.actual_lift}%</span>
-                      )}
+                      <span>{t('dashboard.expectedLift')}: {experiment.expected_lift}%</span>
+                      {experiment.actual_lift ? (
+                        <Badge variant={parseFloat(experiment.actual_lift) > 0 ? "success" : "destructive"} className="ml-2">
+                          {experiment.actual_lift}%
+                        </Badge>
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -260,83 +262,180 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
-              No growth experiments created yet
+              Nenhum experimento de crescimento definido ainda
             </div>
           )}
+          
+          <div className="mt-4 space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full text-purple-600"
+              onClick={() => navigate('/growth')}
+            >
+              {t('dashboard.viewGrowthExperiments')}
+            </Button>
+            <Button 
+              className="w-full"
+              onClick={() => navigate('/experiments?create=true&type=growth')}
+            >
+              {t('dashboard.createGrowthExperiment')}
+            </Button>
+          </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="outline" className="w-full text-purple-600" onClick={() => navigate('/growth')}>
-            View Growth Strategy
-          </Button>
-        </CardFooter>
       </Card>
       
-      {/* AI-powered sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* AI-recommended experiments */}
-        <RecommendedExperimentsPanel 
-          projectId={currentProject.id} 
-          stage={currentProject.current_stage || currentProject.stage}
-        />
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <BarChart2 className="mr-2 h-5 w-5 text-indigo-500" />
+              {t('dashboard.keyMetrics')}
+              <InfoTooltip content={t('dashboard.trackProgress')} className="ml-2" />
+            </CardTitle>
+            <CardDescription>{t('dashboard.trackProgress')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {metrics.length > 0 ? (
+              <div className="space-y-4">
+                {metrics.slice(0, 3).map(metric => (
+                  <div key={metric.id} className="flex flex-col">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">{metric.name}</span>
+                      <span className="text-sm">
+                        {metric.current_value} / {metric.target_value} 
+                        <span className="text-xs text-gray-500 ml-1">{metric.unit}</span>
+                      </span>
+                    </div>
+                    <Progress 
+                      className="mt-2" 
+                      value={(metric.current_value / metric.target_value) * 100} 
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-md text-sm text-gray-500 text-center">
+                {t('dashboard.noMetrics')}
+              </div>
+            )}
+            
+            <div className="mt-4 space-y-2">
+              <Button 
+                variant="outline" 
+                className="w-full text-indigo-600"
+                onClick={() => navigate('/metrics')}
+              >
+                {t('dashboard.viewAllMetrics')}
+              </Button>
+              <Button 
+                className="w-full"
+                onClick={() => navigate('/metrics?create=true')}
+              >
+                {t('dashboard.createNewMetric')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
-        {/* AI-generated insights */}
-        <ExperimentInsightsPanel 
-          projectId={currentProject.id}
-        />
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Target className="mr-2 h-5 w-5 text-rose-500" />
+              {t('dashboard.scalingReadiness')}
+              <InfoTooltip content="Avalie sua preparação para escalar com base em métricas críticas de negócio" className="ml-2" />
+            </CardTitle>
+            <CardDescription>Avalie sua preparação para escalar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center py-2">
+              <div className="relative h-32 w-32 flex items-center justify-center">
+                <svg viewBox="0 0 100 100" className="h-full w-full">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#f1f5f9"
+                    strokeWidth="10"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke={`${calculateReadinessScore() > 70 ? '#10b981' : calculateReadinessScore() > 40 ? '#eab308' : '#ef4444'}`}
+                    strokeWidth="10"
+                    strokeDasharray={`${calculateReadinessScore() * 2.83} 283`}
+                    strokeDashoffset="0"
+                    transform="rotate(-90 50 50)"
+                  />
+                </svg>
+                <div className="absolute text-3xl font-bold">{calculateReadinessScore()}%</div>
+              </div>
+              <div className="mt-2 text-sm text-center text-gray-500">
+                {t('dashboard.readinessScore')}
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full text-rose-600"
+                onClick={() => navigate('/scaling-readiness')}
+              >
+                {t('dashboard.viewScalingDetails')}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
-            <CheckCircle2 className="mr-2 h-5 w-5 text-teal-500" />
-            Scaling Readiness
-            <InfoTooltip content="Track your startup's readiness to scale" className="ml-2" />
+            <CheckCircle2 className="mr-2 h-5 w-5 text-green-500" />
+            {t('dashboard.validationProgress')}
           </CardTitle>
-          <CardDescription>Evaluate your scaling readiness</CardDescription>
+          <CardDescription>Progresso através das fases da metodologia Lean Startup</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold">{calculateReadinessScore()}%</div>
-            <p className="text-sm text-muted-foreground">Overall readiness</p>
-          </div>
-          
-          <div className="mt-2">
-            <Progress value={calculateReadinessScore()} className="h-2" />
-          </div>
-          
-          {scalingMetrics.length > 0 ? (
-            <div className="mt-4 space-y-3">
-              {scalingMetrics.slice(0, 3).map(metric => {
-                const statusColor = metric.status === 'achieved' ? 'bg-green-100 text-green-800 border-green-200' : 
-                                   metric.status === 'on-track' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
-                                   metric.status === 'needs-improvement' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                                   metric.status === 'critical' ? 'bg-red-100 text-red-800 border-red-200' :
-                                   'bg-gray-100 text-gray-800 border-gray-200';
-                                   
-                return (
-                  <div key={metric.id} className="flex items-center justify-between">
-                    <div className="flex items-start flex-1">
-                      <div className="text-sm line-clamp-1">{metric.name}</div>
-                    </div>
-                    <Badge variant="outline" className={statusColor}>
-                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1).replace('-', ' ')}
-                    </Badge>
-                  </div>
-                );
-              })}
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm font-medium">{t('dashboard.problemDefinition')}</span>
+                <span className="text-xs">{hypotheses.filter(h => h.is_validated).length}/{hypotheses.length}</span>
+              </div>
+              <Progress value={hypotheses.length > 0 ? (hypotheses.filter(h => h.is_validated).length / hypotheses.length) * 100 : 0} />
             </div>
-          ) : (
-            <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm text-gray-500">
-              No scaling metrics defined yet
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm font-medium">{t('dashboard.solutionExploration')}</span>
+                <span className="text-xs">{experiments.filter(e => e.status === 'completed').length}/{experiments.length}</span>
+              </div>
+              <Progress value={experiments.length > 0 ? (experiments.filter(e => e.status === 'completed').length / experiments.length) * 100 : 0} />
             </div>
-          )}
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm font-medium">{t('dashboard.productMarketFit')}</span>
+                <span className="text-xs">{mvpFeatures.filter(f => f.status === 'completed').length}/{mvpFeatures.length}</span>
+              </div>
+              <Progress value={mvpFeatures.length > 0 ? (mvpFeatures.filter(f => f.status === 'completed').length / mvpFeatures.length) * 100 : 0} />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm font-medium">{t('dashboard.scalingMotion')}</span>
+                <span className="text-xs">{calculateReadinessScore()}%</span>
+              </div>
+              <Progress value={calculateReadinessScore()} />
+            </div>
+          </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="outline" className="w-full text-teal-600" onClick={() => navigate('/growth?tab=scaling_readiness')}>
-            View Scaling Readiness
-          </Button>
-        </CardFooter>
       </Card>
     </div>;
 };
+
 export default Dashboard;

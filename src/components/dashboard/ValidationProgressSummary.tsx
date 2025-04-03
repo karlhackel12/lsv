@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Lightbulb, FlaskConical, Beaker, Layers, LineChart, GitFork, TrendingUp, CheckCircle, Circle } from 'lucide-react';
+import { Lightbulb, FlaskConical, Beaker, Layers, LineChart, GitFork, TrendingUp, CheckCircle, Circle, LucideIcon } from 'lucide-react';
 import { Project } from '@/types/database';
+import { toast } from '@/components/ui/use-toast';
+import React from 'react';
 
 const VALIDATION_STAGES = [
   { 
     id: 'problem', 
     label: 'Problem Validation', 
-    icon: Lightbulb, 
+    icon: Lightbulb as LucideIcon, 
     color: 'bg-blue-500',
     criteria: [
       'Created problem hypotheses',
@@ -21,7 +23,7 @@ const VALIDATION_STAGES = [
   { 
     id: 'solution', 
     label: 'Solution Validation', 
-    icon: FlaskConical, 
+    icon: FlaskConical as LucideIcon, 
     color: 'bg-purple-500',
     criteria: [
       'Defined solution hypotheses',
@@ -31,21 +33,9 @@ const VALIDATION_STAGES = [
     ]
   },
   { 
-    id: 'experiments', 
-    label: 'Experiments', 
-    icon: Beaker, 
-    color: 'bg-amber-500',
-    criteria: [
-      'Designed validation experiments',
-      'Collected measurable data',
-      'Analyzed results',
-      'Iterated based on findings'
-    ]
-  },
-  { 
     id: 'mvp', 
     label: 'MVP', 
-    icon: Layers, 
+    icon: Layers as LucideIcon, 
     color: 'bg-green-500',
     criteria: [
       'Defined core features',
@@ -57,7 +47,7 @@ const VALIDATION_STAGES = [
   { 
     id: 'metrics', 
     label: 'Metrics', 
-    icon: LineChart, 
+    icon: LineChart as LucideIcon, 
     color: 'bg-cyan-500',
     criteria: [
       'Established key metrics',
@@ -69,7 +59,7 @@ const VALIDATION_STAGES = [
   { 
     id: 'pivot', 
     label: 'Pivot Decision', 
-    icon: GitFork, 
+    icon: GitFork as LucideIcon, 
     color: 'bg-pink-500',
     criteria: [
       'Evaluated all validation data',
@@ -81,7 +71,7 @@ const VALIDATION_STAGES = [
   { 
     id: 'growth', 
     label: 'Growth', 
-    icon: TrendingUp, 
+    icon: TrendingUp as LucideIcon, 
     color: 'bg-indigo-500',
     criteria: [
       'Identified growth channels',
@@ -97,19 +87,24 @@ interface ValidationProgressSummaryProps {
 }
 
 interface StageData {
-  id: string;
-  count: number;
-  hasVisited: boolean;
-  completedCriteria: number;
+  [key: string]: {
+    criteria: Array<{
+      text: string;
+      completed: boolean;
+    }>;
+    completedCriteria: number;
+  };
 }
 
 const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps) => {
-  const [stageData, setStageData] = useState<StageData[]>([]);
+  const [stageData, setStageData] = useState<StageData>({});
   const [isLoading, setIsLoading] = useState(true);
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [currentStage, setCurrentStage] = useState('problem');
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [typedProjectData, setTypedProjectData] = useState<Project | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   // Refresh function that can be called to update the validation progress
   const refreshProgress = () => {
@@ -336,8 +331,8 @@ const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps
       
       // If current_stage exists in the result, use it
       const defaultStage = 'problem';
-      if (typedProjectData && typedProjectData.current_stage) {
-        setCurrentStage(typedProjectData.current_stage || defaultStage);
+      if (typedProjectData && typedProjectData.stage) {
+        setCurrentStage(typedProjectData.stage || defaultStage);
       } else {
         setCurrentStage(defaultStage);
       }
@@ -376,11 +371,6 @@ const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps
             if (solutionTrackingData.tested_with_customers) solutionCriteriaCount++;
             if (solutionTrackingData.positive_feedback_received) solutionCriteriaCount++;
             return solutionCriteriaCount;
-          case 'experiments':
-            return Math.min(
-              (experiments?.length || 0) > 0 ? 2 : 0, 
-              4
-            );
           case 'mvp':
             // Count completed MVP criteria
             let mvpCriteriaCount = 0;
@@ -419,109 +409,70 @@ const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps
       };
       
       // Build stage data
-      const newStageData: StageData[] = [
-        { 
-          id: 'problem', 
-          count: problemHypotheses?.length || 0, 
-          hasVisited: true || 
-                     (typedProjectData && typedProjectData.problem_tracking && problemTrackingData.problem_hypotheses_created) || 
-                     (typedProjectData && typedProjectData.problem_tracking && problemTrackingData.customer_interviews_conducted) || 
-                     (typedProjectData && typedProjectData.problem_tracking && problemTrackingData.pain_points_identified) ||
-                     (typedProjectData && typedProjectData.problem_tracking && problemTrackingData.market_need_validated), 
-          completedCriteria: getCompletedCriteria('problem') 
+      const newStageData: StageData = {
+        problem: {
+          criteria: VALIDATION_STAGES.find(s => s.id === 'problem')?.criteria.map(c => ({ text: c, completed: false })) || [],
+          completedCriteria: getCompletedCriteria('problem')
         },
-        { 
-          id: 'solution', 
-          count: solutionHypotheses?.length || 0, 
-          hasVisited: !!solutionHypotheses?.length || 
-                     (typedProjectData && typedProjectData.solution_tracking && solutionTrackingData.solution_hypotheses_defined) || 
-                     (typedProjectData && typedProjectData.solution_tracking && solutionTrackingData.solution_sketches_created) ||
-                     (typedProjectData && typedProjectData.solution_tracking && solutionTrackingData.tested_with_customers) ||
-                     (typedProjectData && typedProjectData.solution_tracking && solutionTrackingData.positive_feedback_received) ||
-                     (currentStage === 'solution'), 
-          completedCriteria: getCompletedCriteria('solution') 
+        solution: {
+          criteria: VALIDATION_STAGES.find(s => s.id === 'solution')?.criteria.map(c => ({ text: c, completed: false })) || [],
+          completedCriteria: getCompletedCriteria('solution')
         },
-        { 
-          id: 'experiments', 
-          count: experiments?.length || 0, 
-          hasVisited: !!experiments?.length || (currentStage === 'experiments'), 
-          completedCriteria: getCompletedCriteria('experiments') 
+        mvp: {
+          criteria: VALIDATION_STAGES.find(s => s.id === 'mvp')?.criteria.map(c => ({ text: c, completed: false })) || [],
+          completedCriteria: getCompletedCriteria('mvp')
         },
-        { 
-          id: 'mvp', 
-          count: experimentsByCategory.mvp || 0, 
-          hasVisited: !!experimentsByCategory.mvp || 
-                     (typedProjectData && typedProjectData.mvp_tracking && mvpTrackingData.core_features_defined) || 
-                     (typedProjectData && typedProjectData.mvp_tracking && mvpTrackingData.mvp_built) || 
-                     (typedProjectData && typedProjectData.mvp_tracking && mvpTrackingData.released_to_users) || 
-                     (typedProjectData && typedProjectData.mvp_tracking && mvpTrackingData.metrics_gathered) || 
-                     (currentStage === 'mvp'), 
-          completedCriteria: getCompletedCriteria('mvp') 
+        metrics: {
+          criteria: VALIDATION_STAGES.find(s => s.id === 'metrics')?.criteria.map(c => ({ text: c, completed: false })) || [],
+          completedCriteria: getCompletedCriteria('metrics')
         },
-        { 
-          id: 'metrics', 
-          count: experimentsByCategory.metrics || 0, 
-          hasVisited: !!experimentsByCategory.metrics || 
-                     (typedProjectData && typedProjectData.metrics_tracking && metricsTrackingData.key_metrics_established) || 
-                     (typedProjectData && typedProjectData.metrics_tracking && metricsTrackingData.tracking_systems_setup) || 
-                     (typedProjectData && typedProjectData.metrics_tracking && metricsTrackingData.dashboards_created) || 
-                     (typedProjectData && typedProjectData.metrics_tracking && metricsTrackingData.data_driven_decisions) || 
-                     (currentStage === 'metrics'), 
-          completedCriteria: getCompletedCriteria('metrics') 
+        pivot: {
+          criteria: VALIDATION_STAGES.find(s => s.id === 'pivot')?.criteria.map(c => ({ text: c, completed: false })) || [],
+          completedCriteria: getCompletedCriteria('pivot')
         },
-        { 
-          id: 'pivot', 
-          count: 0, 
-          hasVisited: currentStage === 'pivot' || 
-                     (typedProjectData && typedProjectData.pivot_tracking && pivotTrackingData.validation_data_evaluated) || 
-                     (typedProjectData && typedProjectData.pivot_tracking && pivotTrackingData.pivot_assessment_conducted) || 
-                     (typedProjectData && typedProjectData.pivot_tracking && pivotTrackingData.strategic_decision_made) || 
-                     (typedProjectData && typedProjectData.pivot_tracking && pivotTrackingData.reasoning_documented), 
-          completedCriteria: getCompletedCriteria('pivot') 
-        },
-        { 
-          id: 'growth', 
-          count: experimentsByCategory.growth || 0, 
-          hasVisited: !!experimentsByCategory.growth || 
-                     (typedProjectData && typedProjectData.growth_tracking && growthTrackingData.channels_identified) || 
-                     (typedProjectData && typedProjectData.growth_tracking && growthTrackingData.growth_experiments_setup) || 
-                     (typedProjectData && typedProjectData.growth_tracking && growthTrackingData.funnel_optimized) || 
-                     (typedProjectData && typedProjectData.growth_tracking && growthTrackingData.repeatable_growth) || 
-                     (currentStage === 'growth'), 
-          completedCriteria: getCompletedCriteria('growth') 
+        growth: {
+          criteria: VALIDATION_STAGES.find(s => s.id === 'growth')?.criteria.map(c => ({ text: c, completed: false })) || [],
+          completedCriteria: getCompletedCriteria('growth')
         }
-      ];
+      };
       
       // Calculate previous stage completion percentage to determine if a stage should be marked as visited
       const calculatePreviousStageCompletion = (stageIndex: number): number => {
         if (stageIndex <= 0) return 100; // First stage is always considered "visited"
         
-        const prevStage = newStageData[stageIndex - 1];
+        const prevStage = newStageData[Object.keys(newStageData)[stageIndex - 1]];
         const stageConfig = VALIDATION_STAGES[stageIndex - 1];
         return (prevStage.completedCriteria / stageConfig.criteria.length) * 100;
       };
       
       // Update hasVisited based on previous stage completion
-      for (let i = 1; i < newStageData.length; i++) {
+      for (let i = 1; i < Object.keys(newStageData).length; i++) {
         // Also count as visited if any criteria are completed
-        if (calculatePreviousStageCompletion(i) >= 50 || newStageData[i].completedCriteria > 0) {
-          newStageData[i].hasVisited = true;
+        if (calculatePreviousStageCompletion(i) >= 50 || newStageData[Object.keys(newStageData)[i]].completedCriteria > 0) {
+          newStageData[Object.keys(newStageData)[i]].completedCriteria = Math.min(
+            newStageData[Object.keys(newStageData)[i]].completedCriteria,
+            VALIDATION_STAGES[i - 1].criteria.length
+          );
         }
       }
       
       setStageData(newStageData);
       
-      // Calculate progress percentage
-      const visitedStages = newStageData.filter(stage => stage.hasVisited).length;
-      const totalStages = VALIDATION_STAGES.length;
-
       // Calculate a more accurate progress percentage based on criteria completion
       const totalCriteriaCount = VALIDATION_STAGES.reduce((acc, stage) => acc + stage.criteria.length, 0);
-      const completedCriteriaCount = newStageData.reduce((acc, stage) => acc + stage.completedCriteria, 0);
-      const accurateProgressPercentage = Math.round((completedCriteriaCount / totalCriteriaCount) * 100);
+      const completedCriteriaCount = Object.values(newStageData).reduce((acc, stage) => acc + stage.completedCriteria, 0);
+      
+      // Garantir que a porcentagem seja calculada corretamente
+      let accurateProgressPercentage = 0;
+      if (totalCriteriaCount > 0) {
+        accurateProgressPercentage = Math.round((completedCriteriaCount / totalCriteriaCount) * 100);
+      }
 
-      // Use the more accurate percentage based on criteria completion
+      // Atualizar o progresso na UI
       setProgressPercentage(accurateProgressPercentage);
+      
+      // Atualizar o estado local
+      setTypedProjectData(typedProjectData);
       
     } catch (error) {
       console.error('Error fetching validation data:', error);
@@ -541,6 +492,172 @@ const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps
     }
   };
   
+  // Função para atualizar o progresso de um estágio específico
+  const updateStageProgress = async (stageId: string, completedCriteriaCount: number) => {
+    if (!projectId) return;
+    
+    try {
+      // Pega o estágio que está sendo atualizado
+      const stageToUpdate = stageData[stageId];
+      if (!stageToUpdate) return;
+      
+      // Pega o estágio na definição para conhecer os critérios
+      const stageDefinition = VALIDATION_STAGES.find(s => s.id === stageId);
+      if (!stageDefinition) return;
+      
+      // Atualiza o objeto de acompanhamento correspondente
+      let trackingKey = '';
+      let trackingData = {};
+      
+      switch (stageId) {
+        case 'problem':
+          trackingKey = 'problem_tracking';
+          trackingData = {
+            problem_hypotheses_created: completedCriteriaCount >= 1,
+            customer_interviews_conducted: completedCriteriaCount >= 2,
+            pain_points_identified: completedCriteriaCount >= 3,
+            market_need_validated: completedCriteriaCount >= 4
+          };
+          break;
+        case 'solution':
+          trackingKey = 'solution_tracking';
+          trackingData = {
+            solution_hypotheses_defined: completedCriteriaCount >= 1,
+            solution_sketches_created: completedCriteriaCount >= 2,
+            tested_with_customers: completedCriteriaCount >= 3,
+            positive_feedback_received: completedCriteriaCount >= 4
+          };
+          break;
+        case 'mvp':
+          trackingKey = 'mvp_tracking';
+          trackingData = {
+            core_features_defined: completedCriteriaCount >= 1,
+            mvp_built: completedCriteriaCount >= 2,
+            released_to_users: completedCriteriaCount >= 3,
+            metrics_gathered: completedCriteriaCount >= 4
+          };
+          break;
+        case 'metrics':
+          trackingKey = 'metrics_tracking';
+          trackingData = {
+            key_metrics_established: completedCriteriaCount >= 1,
+            tracking_systems_setup: completedCriteriaCount >= 2,
+            dashboards_created: completedCriteriaCount >= 3,
+            data_driven_decisions: completedCriteriaCount >= 4
+          };
+          break;
+        case 'pivot':
+          trackingKey = 'pivot_tracking';
+          trackingData = {
+            validation_data_evaluated: completedCriteriaCount >= 1,
+            pivot_assessment_conducted: completedCriteriaCount >= 2,
+            strategic_decision_made: completedCriteriaCount >= 3,
+            reasoning_documented: completedCriteriaCount >= 4
+          };
+          break;
+        case 'growth':
+          trackingKey = 'growth_tracking';
+          trackingData = {
+            channels_identified: completedCriteriaCount >= 1,
+            growth_experiments_setup: completedCriteriaCount >= 2,
+            funnel_optimized: completedCriteriaCount >= 3,
+            repeatable_growth: completedCriteriaCount >= 4
+          };
+          break;
+      }
+      
+      // Atualizar o banco de dados - garantir que seja uma string JSON
+      if (trackingKey) {
+        const trackingDataString = JSON.stringify(trackingData);
+        
+        const updateData = {
+          [trackingKey]: trackingDataString,
+          updated_at: new Date().toISOString()
+        };
+        
+        const { data, error } = await supabase
+          .from('projects')
+          .update(updateData)
+          .eq('id', projectId)
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('Erro ao atualizar progresso:', error);
+          toast({
+            title: 'Erro',
+            description: 'Falha ao salvar o progresso',
+            variant: 'destructive',
+          });
+        } else {
+          console.log(`Progresso da etapa ${stageId} atualizado com sucesso:`, trackingData);
+          
+          // Atualizar o typedProjectData com os novos dados
+          if (data && typedProjectData) {
+            setTypedProjectData({
+              ...typedProjectData,
+              [trackingKey]: trackingDataString
+            });
+          }
+        }
+      }
+      
+    } catch (err) {
+      console.error('Erro ao atualizar progresso da etapa:', err);
+      toast({
+        title: 'Erro',
+        description: 'Falha ao salvar o progresso',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Função para atualizar a etapa atual do projeto
+  const updateProjectCurrentStage = async (stageId: string) => {
+    try {
+      setIsUpdating(true);
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ 
+          stage: stageId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', projectId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Atualizar o estado local
+      if (data) {
+        // Se typedProjectData estiver definido, atualize seu valor de estágio
+        if (typedProjectData) {
+          setTypedProjectData({
+            ...typedProjectData,
+            stage: stageId
+          });
+        }
+        
+        // Atualizar o estágio atual se estiver sendo mostrado na UI
+        setCurrentStage(stageId);
+        
+        toast({
+          title: 'Estágio atualizado',
+          description: `O estágio do projeto foi atualizado com sucesso`,
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar estágio:', err);
+      toast({
+        title: 'Erro',
+        description: err instanceof Error ? err.message : 'Falha ao atualizar o estágio',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -553,82 +670,149 @@ const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps
         <Progress value={progressPercentage} className="h-2 mb-6" />
         
         <div className="space-y-4">
-          {VALIDATION_STAGES.map((stage, index) => {
-            const StageIcon = stage.icon;
-            const stageInfo = stageData.find(s => s.id === stage.id) || { count: 0, hasVisited: false, completedCriteria: 0 };
-            const isCurrent = stage.id === currentStage;
-            const isCompleted = index < currentStageIndex;
-            const isExpanded = expandedStage === stage.id;
-            const criteriaPercentage = stageInfo.completedCriteria / stage.criteria.length * 100;
-            
+          {VALIDATION_STAGES.map((stage) => {
+            const stageId = stage.id;
+            const isExpanded = expandedStage === stageId;
+            const stageCriteria = stageData[stageId]?.criteria || [];
+            const completedCriteria = stageData[stageId]?.completedCriteria || 0;
+            const totalCriteria = stage.criteria.length;
+            const percentComplete = totalCriteria > 0 ? Math.round((completedCriteria / totalCriteria) * 100) : 0;
+            const isCurrentStage = currentStage === stageId;
+
             return (
-              <div key={stage.id}>
-                <div 
-                  className={`flex items-center p-2 rounded-md cursor-pointer ${
-                    isCurrent ? 'bg-blue-50 border border-blue-100' : 
-                    (stageInfo.completedCriteria === stage.criteria.length) ? 'bg-green-50 border border-green-100' : 
-                    stageInfo.hasVisited ? 'bg-blue-50/30 border border-blue-50' : ''
+              <div key={stageId} className="mb-4">
+                <div
+                  className={`flex flex-col p-4 rounded-lg cursor-pointer ${
+                    isCurrentStage
+                      ? "bg-blue-50 border border-blue-200"
+                      : "bg-white border border-gray-200"
                   }`}
-                  onClick={() => toggleStageExpansion(stage.id)}
+                  onClick={() => setExpandedStage(isExpanded ? null : stageId)}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage.color} text-white mr-3`}>
-                    <StageIcon className="h-4 w-4" />
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className={`font-medium ${isCurrent ? 'text-blue-700' : ''}`}>{stage.label}</span>
-                      {stageInfo.count > 0 && (
-                        <span className="text-sm text-gray-500">{stageInfo.count} {stage.id === 'problem' || stage.id === 'solution' ? 'hypotheses' : 'items'}</span>
-                      )}
-                    </div>
-                    
-                    {isCurrent && (
-                      <p className="text-xs text-blue-600 mt-1">Current focus area</p>
-                    )}
-                    
-                    {/* Small progress bar for criteria completion */}
-                    <div className="w-full mt-2">
-                      <div className="h-1 w-full bg-gray-100 rounded-full">
-                        <div 
-                          className={`h-1 rounded-full ${
-                            criteriaPercentage >= 75 ? 'bg-green-500' :
-                            criteriaPercentage >= 50 ? 'bg-yellow-500' :
-                            criteriaPercentage > 0 ? 'bg-blue-500' : 'bg-gray-200'
-                          }`}
-                          style={{ width: `${criteriaPercentage}%` }}
-                        />
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div
+                        className={`mr-3 rounded-full p-2 ${
+                          isCurrentStage ? "bg-blue-100" : "bg-slate-100"
+                        }`}
+                      >
+                        {React.createElement(stage.icon, { className: "h-5 w-5" })}
+                      </div>
+                      <div>
+                        <div className="text-lg font-medium">{stage.label}</div>
+                        <div className="text-sm text-gray-500">
+                          {completedCriteria} de {totalCriteria} critérios completados
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      {!isCurrentStage && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Previne que o clique expanda/contraia a seção
+                            updateProjectCurrentStage(stageId);
+                          }}
+                          className="px-3 py-1 text-sm bg-slate-100 hover:bg-slate-200 rounded-md text-gray-700 transition-colors"
+                          disabled={isUpdating}
+                        >
+                          Definir como atual
+                        </button>
+                      )}
+                      {isCurrentStage && (
+                        <span className="px-3 py-1 text-sm bg-blue-100 rounded-md text-blue-700">
+                          Estágio atual
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  
-                  {stageInfo.hasVisited && !isCurrent && !isCompleted && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">In progress</span>
-                  )}
-                  
-                  {isCompleted && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Completed</span>
-                  )}
+
+                  {/* Progress bar section */}
+                  <div className="mt-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-gray-600">
+                        {completedCriteria}/{totalCriteria} ({percentComplete}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className={`h-1.5 rounded-full ${
+                          percentComplete >= 75 
+                            ? "bg-green-500" 
+                            : percentComplete >= 50 
+                              ? "bg-yellow-500" 
+                              : percentComplete > 0 
+                                ? "bg-orange-500" 
+                                : "bg-gray-300"
+                        }`}
+                        style={{ width: `${percentComplete}%` }}
+                        role="progressbar"
+                        aria-valuenow={percentComplete}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
-                
+
                 {/* Show checklist when expanded */}
                 {isExpanded && (
                   <div className="mt-2 ml-11 space-y-2 p-2 text-sm">
                     <p className="text-xs text-gray-500 mb-2">Validation Checklist:</p>
                     <ul className="space-y-2">
                       {stage.criteria.map((criterion, idx) => {
-                        const isChecked = idx < stageInfo.completedCriteria;
+                        const isChecked = idx < (stageData[stageId]?.completedCriteria || 0);
                         return (
                           <li key={idx} className="flex items-start">
-                            <span className="mr-2 mt-0.5">
-                              {isChecked ? 
-                                <CheckCircle className="h-3.5 w-3.5 text-green-500" /> : 
-                                <Circle className="h-3.5 w-3.5 text-gray-300" />
-                              }
-                            </span>
-                            <span className={`${isChecked ? 'text-gray-700' : 'text-gray-500'}`}>
-                              {criterion}
-                            </span>
+                            <label className="flex items-start cursor-pointer">
+                              <input 
+                                type="checkbox"
+                                checked={Boolean(isChecked)}
+                                onChange={(e) => {
+                                  e.stopPropagation(); // Evitar propagação do clique
+                                  
+                                  // Update the number of completed criteria for this stage
+                                  let newCompletedCriteria = completedCriteria;
+                                  
+                                  if (e.target.checked) {
+                                    // If not already checked, increment the count
+                                    if (!isChecked) {
+                                      newCompletedCriteria = Math.min(
+                                        completedCriteria + 1,
+                                        stage.criteria.length
+                                      );
+                                    }
+                                  } else {
+                                    // If was checked, decrement the count
+                                    if (isChecked) {
+                                      newCompletedCriteria = Math.max(
+                                        completedCriteria - 1,
+                                        0
+                                      );
+                                    }
+                                  }
+                                  
+                                  // Atualizar dados locais imediatamente para feedback visual
+                                  const newStageData = {...stageData};
+                                  if (newStageData[stageId]) {
+                                    newStageData[stageId].completedCriteria = newCompletedCriteria;
+                                    setStageData(newStageData);
+                                  }
+                                  
+                                  // Atualizar no banco de dados com o novo valor
+                                  // Usamos setTimeout para garantir que o estado local seja atualizado primeiro
+                                  setTimeout(() => {
+                                    updateStageProgress(stageId, newCompletedCriteria);
+                                  }, 0);
+                                  
+                                  // Não disparamos o evento aqui para evitar loop de atualização
+                                  // A atualização deve vir apenas do retorno da chamada ao servidor
+                                }}
+                                className="mr-2 h-4 w-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className={`${isChecked ? 'text-gray-700' : 'text-gray-500'}`}>
+                                {criterion}
+                              </span>
+                            </label>
                           </li>
                         );
                       })}
@@ -644,4 +828,4 @@ const ValidationProgressSummary = ({ projectId }: ValidationProgressSummaryProps
   );
 };
 
-export default ValidationProgressSummary; 
+export default ValidationProgressSummary;

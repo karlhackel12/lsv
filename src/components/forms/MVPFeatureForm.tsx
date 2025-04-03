@@ -1,13 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormController } from '@/components/ui/form-controller';
 
 // Update the MVPFeature interface to include originalId if it's being used
 interface ExtendedMVPFeature extends MVPFeature {
@@ -93,7 +86,7 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
     e.preventDefault();
     
     if (!featureText.trim()) {
-      setError("Feature name is required");
+      setError("O nome da funcionalidade é obrigatório");
       return;
     }
     
@@ -136,8 +129,8 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
         }
         
         toast({
-          title: "Success",
-          description: "Feature updated successfully",
+          title: "Sucesso",
+          description: "Funcionalidade atualizada com sucesso",
         });
       } else {
         // Create new feature
@@ -173,8 +166,8 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
         }
         
         toast({
-          title: "Success",
-          description: "Feature created successfully",
+          title: "Sucesso",
+          description: "Funcionalidade criada com sucesso",
         });
       }
       
@@ -182,136 +175,137 @@ const MVPFeatureForm = ({ isOpen, onClose, onSave, feature, projectId }: MVPFeat
       onClose();
     } catch (error: any) {
       console.error("Error saving feature:", error);
-      setError(error.message || "An error occurred while saving the feature");
+      setError(error.message || "Ocorreu um erro ao salvar a funcionalidade");
     } finally {
       setIsSaving(false);
     }
   };
+
+  const formTitle = feature ? "Editar Funcionalidade" : "Criar Nova Funcionalidade";
+  const formDescription = "Defina as características essenciais para o seu MVP";
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{feature ? "Edit Feature" : "Create New Feature"}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          {error && <p className="text-red-500">{error}</p>}
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="feature">Feature</Label>
-              <Input
-                id="feature"
-                value={featureText}
-                onChange={(e) => setFeatureText(e.target.value)}
-                placeholder="Feature Name"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select 
-                value={priority} 
-                onValueChange={(value: "high" | "medium" | "low") => setPriority(value)}
-              >
-                <SelectTrigger id="priority">
-                  <SelectValue placeholder="Select a priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="effort">Effort</Label>
-              <Select 
-                value={effort} 
-                onValueChange={(value: "high" | "medium" | "low") => setEffort(value)}
-              >
-                <SelectTrigger id="effort">
-                  <SelectValue placeholder="Select effort level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="impact">Impact</Label>
-              <Select 
-                value={impact} 
-                onValueChange={(value: "high" | "medium" | "low") => setImpact(value)}
-              >
-                <SelectTrigger id="impact">
-                  <SelectValue placeholder="Select impact level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select 
-                value={status} 
-                onValueChange={(value: "planned" | "in-progress" | "completed" | "post-mvp") => setStatus(value)}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select a status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planned">Planned</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="post-mvp">Post MVP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="growthMetric">Growth Metric (Impact)</Label>
-              <Select 
-                value={growthMetricId || "none"} 
-                onValueChange={(value) => setGrowthMetricId(value === "none" ? null : value)}
-              >
-                <SelectTrigger id="growthMetric">
-                  <SelectValue placeholder="Select a growth metric" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {growthMetrics.map(metric => (
-                    <SelectItem key={metric.id} value={metric.id}>
-                      {metric.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Additional notes about this feature"
-              />
-            </div>
+    <FormController
+      isOpen={isOpen}
+      onClose={onClose}
+      title={formTitle}
+      description={formDescription}
+      isSubmitting={isSaving}
+      submitLabel={feature ? "Atualizar" : "Criar"}
+      onSubmit={handleSubmit}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <p className="text-red-500">{error}</p>}
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="feature">Funcionalidade</Label>
+            <Input
+              id="feature"
+              value={featureText}
+              onChange={(e) => setFeatureText(e.target.value)}
+              placeholder="Nome da Funcionalidade"
+              required
+            />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} className="mr-2">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : feature ? "Update Feature" : "Create Feature"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="grid gap-2">
+            <Label htmlFor="priority">Prioridade</Label>
+            <Select 
+              value={priority} 
+              onValueChange={(value: "high" | "medium" | "low") => setPriority(value)}
+            >
+              <SelectTrigger id="priority">
+                <SelectValue placeholder="Selecione a prioridade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">Alta</SelectItem>
+                <SelectItem value="medium">Média</SelectItem>
+                <SelectItem value="low">Baixa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="effort">Esforço</Label>
+            <Select 
+              value={effort} 
+              onValueChange={(value: "high" | "medium" | "low") => setEffort(value)}
+            >
+              <SelectTrigger id="effort">
+                <SelectValue placeholder="Selecione o nível de esforço" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">Alto</SelectItem>
+                <SelectItem value="medium">Médio</SelectItem>
+                <SelectItem value="low">Baixo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="impact">Impacto</Label>
+            <Select 
+              value={impact} 
+              onValueChange={(value: "high" | "medium" | "low") => setImpact(value)}
+            >
+              <SelectTrigger id="impact">
+                <SelectValue placeholder="Selecione o nível de impacto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">Alto</SelectItem>
+                <SelectItem value="medium">Médio</SelectItem>
+                <SelectItem value="low">Baixo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="status">Status</Label>
+            <Select 
+              value={status} 
+              onValueChange={(value: "planned" | "in-progress" | "completed" | "post-mvp") => 
+                setStatus(value)
+              }
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="planned">Planejado</SelectItem>
+                <SelectItem value="in-progress">Em Progresso</SelectItem>
+                <SelectItem value="completed">Concluído</SelectItem>
+                <SelectItem value="post-mvp">Pós-MVP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="metric">Métrica de Crescimento (Opcional)</Label>
+            <Select 
+              value={growthMetricId || ""} 
+              onValueChange={(value) => setGrowthMetricId(value || null)}
+            >
+              <SelectTrigger id="metric">
+                <SelectValue placeholder="Selecione uma métrica relacionada" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nenhuma</SelectItem>
+                {growthMetrics.map((metric) => (
+                  <SelectItem key={metric.id} value={metric.id}>
+                    {metric.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Detalhes adicionais sobre esta funcionalidade..."
+              className="min-h-[100px]"
+            />
+          </div>
+        </div>
+      </form>
+    </FormController>
   );
 };
 
