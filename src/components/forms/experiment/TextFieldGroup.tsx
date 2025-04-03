@@ -6,13 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 export interface TextFieldGroupProps {
-  control: Control<any>;
+  control?: Control<any>;
   isGrowthExperiment?: boolean;
   form?: UseFormReturn<any>;
 }
 
 const TextFieldGroup = ({ control, isGrowthExperiment = false, form }: TextFieldGroupProps) => {
   const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to TextFieldGroup');
+    return null;
+  }
   
   return (
     <div className="space-y-4">

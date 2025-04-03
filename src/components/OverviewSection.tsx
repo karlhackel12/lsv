@@ -1,211 +1,157 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useProject } from '@/hooks/use-project';
-import StageEditDialog from '@/components/stage/StageEditDialog';
-import StepJourney, { Step } from '@/components/StepJourney';
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import Card from '@/components/Card';
-
-// Update the StatusType definition to match the enum from the database
-type StatusType = 'not-started' | 'in-progress' | 'complete';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowRight, CheckCircle, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const OverviewSection = () => {
-  const { currentProject, fetchProjectStages, updateStage } = useProject();
-  const [currentStages, setCurrentStages] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  }[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  } | null>(null);
-
+  const { currentProject, fetchProjectStages, updateStage, updateProjectStage } = useProject();
+  const [stages, setStages] = useState<any[]>([]);
+  const [currentTab, setCurrentTab] = useState('pipeline');
+  const { toast } = useToast();
+  
   useEffect(() => {
-    const loadStages = async () => {
-      if (currentProject) {
-        const stages = await fetchProjectStages(currentProject.id);
-        // Ensure the status is of type StatusType
-        const typedStages = stages.map(stage => ({
-          ...stage,
-          status: stage.status as StatusType,
-        }));
-        setCurrentStages(typedStages);
+    if (currentProject) {
+      loadStages();
+    }
+  }, [currentProject]);
+  
+  const loadStages = async () => {
+    try {
+      const stageData = await fetchProjectStages();
+      if (stageData) {
+        setStages(stageData);
       }
-    };
-
-    loadStages();
-  }, [currentProject, fetchProjectStages]);
-
-  const handleEditStage = (stage: {
-    id: string;
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  }) => {
-    setSelectedStage(stage);
-    setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setSelectedStage(null);
-  };
-
-  const handleStageSave = async (stageData: Partial<{
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  }>) => {
-    if (selectedStage) {
-      await updateStage(selectedStage.id, stageData);
-      // Refresh stages after saving
-      if (currentProject) {
-        const stages = await fetchProjectStages(currentProject.id);
-        // Ensure the status is of type StatusType
-        const typedStages = stages.map(stage => ({
-          ...stage,
-          status: stage.status as StatusType,
-        }));
-        setCurrentStages(typedStages);
-      }
+    } catch (error) {
+      console.error('Failed to load stages:', error);
     }
   };
-
-  // Convert stages to steps for the StepJourney component
-  const stageSteps: Step[] = currentStages.map(stage => {
-    let icon;
-    switch (stage.status) {
-      case 'complete':
-        icon = <CheckCircle2 className="h-5 w-5 text-green-500" />;
-        break;
-      case 'in-progress':
-        icon = <Clock className="h-5 w-5 text-blue-500" />;
-        break;
-      default:
-        icon = <AlertCircle className="h-5 w-5 text-gray-400" />;
+  
+  const markStageComplete = async (stageId: string) => {
+    try {
+      await updateStage(stageId, { status: 'complete' });
+      toast({
+        title: 'Stage Updated',
+        description: 'Stage marked as complete',
+      });
+      loadStages();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update stage',
+        variant: 'destructive',
+      });
     }
-    
-    return {
-      id: stage.id,
-      label: stage.name,
-      description: stage.description,
-      icon
-    };
-  });
-
-  // Get the current active stage (the first in-progress one, or the last complete one)
-  const getCurrentStageId = () => {
-    const inProgressStage = currentStages.find(stage => stage.status === 'in-progress');
-    if (inProgressStage) return inProgressStage.id;
-    
-    // If no in-progress stage, get the last complete one
-    const completeStages = currentStages.filter(stage => stage.status === 'complete');
-    if (completeStages.length > 0) {
-      return completeStages[completeStages.length - 1].id;
-    }
-    
-    // If no stages are complete, return the first one
-    return currentStages.length > 0 ? currentStages[0].id : '';
   };
-
-  // Get completed stage IDs
-  const getCompletedStageIds = () => {
-    return currentStages
-      .filter(stage => stage.status === 'complete')
-      .map(stage => stage.id);
-  };
-
-  return (
-    <div className="mb-8">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">Project Overview</h3>
+  
+  const moveToStage = async (stageName: string) => {
+    try {
+      if (!currentProject) return;
       
-      {currentStages.length > 0 ? (
-        <Card className="p-5" variant="muted">
-          <StepJourney
-            steps={stageSteps}
-            currentStepId={getCurrentStageId()}
-            completedStepIds={getCompletedStageIds()}
-            variant="cards"
-            className="mb-6"
-          />
-          
-          <div className="mt-4 space-y-4">
-            {currentStages.map((stage) => (
-              <div key={stage.id} className="mb-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-gray-700">{stage.name}</h4>
-                  <button
-                    onClick={() => handleEditStage(stage)}
-                    className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
-                  >
-                    Edit
-                  </button>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 my-2">
-                  <div
-                    className={`h-2.5 rounded-full ${
-                      stage.status === 'complete'
-                        ? 'bg-green-600' 
-                        : stage.status === 'in-progress'
-                        ? 'bg-blue-600'
-                        : 'bg-gray-400'
-                    }`}
-                    style={{ width: getStatusPercentage(stage.status) }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-5 text-center" variant="muted">
-          <p className="text-gray-500">No project stages defined yet.</p>
-        </Card>
-      )}
-
-      <StageEditDialog
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        stage={selectedStage}
-        onSave={handleStageSave}
-      />
-    </div>
-  );
-};
-
-// Make sure getStatusPercentage function uses the correct types:
-const getStatusPercentage = (status: StatusType) => {
-  switch (status) {
-    case 'complete':
-      return '100%';
-    case 'in-progress':
-      return '50%';
-    case 'not-started':
-    default:
-      return '0%';
+      const result = await updateProjectStage(stageName);
+      if (result) {
+        toast({
+          title: 'Stage Updated',
+          description: `Moved to ${stageName} stage`,
+        });
+        loadStages();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update current stage',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  if (!currentProject) {
+    return (
+      <Card className="col-span-3">
+        <CardHeader>
+          <CardTitle>Project Overview</CardTitle>
+          <CardDescription>Select a project to view its details</CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
+  
+  return (
+    <Card className="col-span-3">
+      <CardHeader>
+        <CardTitle>{currentProject.name}</CardTitle>
+        <CardDescription>{currentProject.description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="pipeline">Validation Pipeline</TabsTrigger>
+            <TabsTrigger value="metrics">Key Metrics</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="pipeline" className="space-y-4">
+            <div className="flex flex-nowrap overflow-x-auto gap-4 pb-2">
+              {stages.map((stage) => (
+                <Card 
+                  key={stage.id} 
+                  className={`min-w-[220px] ${stage.name === currentProject.current_stage ? 'border-2 border-primary' : ''}`}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-sm font-medium">{stage.name}</CardTitle>
+                      {stage.status === 'complete' ? (
+                        <Badge variant="success" className="ml-2">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Complete
+                        </Badge>
+                      ) : stage.name === currentProject.current_stage ? (
+                        <Badge variant="secondary" className="ml-2">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Current
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-gray-500">{stage.description}</p>
+                    <div className="mt-3 flex justify-between">
+                      {stage.name === currentProject.current_stage ? (
+                        <Button size="sm" variant="outline" onClick={() => markStageComplete(stage.id)}>
+                          Mark Complete
+                        </Button>
+                      ) : stage.status !== 'complete' ? (
+                        <Button size="sm" variant="outline" onClick={() => moveToStage(stage.name)}>
+                          Make Current
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled>
+                          Completed
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="metrics">
+            <div className="text-center p-8">
+              <p className="text-gray-500">Metrics dashboard coming soon</p>
+              <Button variant="outline" className="mt-4">
+                View All Metrics
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default OverviewSection;

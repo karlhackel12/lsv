@@ -5,13 +5,18 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Textarea } from '@/components/ui/textarea';
 
 export interface ResultsFieldsProps {
-  control: Control<any>;
+  control?: Control<any>;
   isGrowthExperiment?: boolean;
   form?: UseFormReturn<any>;
 }
 
 const ResultsFields = ({ control, isGrowthExperiment = false, form }: ResultsFieldsProps) => {
   const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to ResultsFields');
+    return null;
+  }
   
   return (
     <div className="space-y-4 border-t pt-4 mt-4">

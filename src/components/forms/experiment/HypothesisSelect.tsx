@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
 
 export interface HypothesisSelectProps {
-  control: Control<any>;
+  control?: Control<any>;
   projectId?: string;
   experimentType?: string;
   setValue?: any;
@@ -26,6 +26,11 @@ const HypothesisSelect = ({
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to HypothesisSelect');
+    return null;
+  }
 
   useEffect(() => {
     if (!projectId) return;

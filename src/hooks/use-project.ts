@@ -1,49 +1,35 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/database';
-import { useToast } from '@/hooks/use-toast';
 
-interface UseProjectReturn {
-  projects: Project[];
-  currentProject: Project | null;
-  selectProject: (projectId: string) => Promise<void>;
-  createProject: (projectData: { name: string; description: string }) => Promise<Project | null>;
-  fetchProjects: () => Promise<void>;
-  isLoading: boolean;
-  error: Error | null;
-  updateProjectStage?: (projectId: string, stageName: string) => Promise<void>;
-  fetchProjectStages?: () => Promise<void>;
-  updateStage?: (stage: string) => Promise<void>;
-  updateCurrentStage?: (stage: string) => Promise<void>;
-}
-
-export const useProject = (): UseProjectReturn => {
+export const useProject = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
 
-  const fetchProjects = useCallback(async () => {
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
     try {
       setIsLoading(true);
-      
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .order('created_at', { ascending: false });
-        
+        .order('name', { ascending: true });
+
       if (error) throw error;
-      
-      // Cast the response data to the Project type
-      const typedProjects = data as unknown as Project[];
-      setProjects(typedProjects);
-      
-      // If there's at least one project and no current project selected, select the first one
-      if (typedProjects.length > 0 && !currentProject) {
-        setCurrentProject(typedProjects[0]);
-        localStorage.setItem('currentProjectId', typedProjects[0].id);
+
+      // Convert to typed data
+      const typedData = data as unknown as Project[];
+      setProjects(typedData || []);
+
+      // Set first project as current if none is selected
+      if (typedData?.length > 0 && !currentProject) {
+        setCurrentProject(typedData[0] as Project);
       }
     } catch (err) {
       console.error('Error fetching projects:', err);
@@ -51,102 +37,134 @@ export const useProject = (): UseProjectReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentProject]);
+  };
 
-  const selectProject = useCallback(async (projectId: string) => {
-    setIsLoading(true);
+  const selectProject = async (projectId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .single();
-        
-      if (error) throw error;
-      
-      const project = data as unknown as Project;
-      setCurrentProject(project);
-      localStorage.setItem('currentProjectId', projectId);
+      const selectedProject = projects.find(p => p.id === projectId);
+      if (selectedProject) {
+        setCurrentProject(selectedProject as Project);
+        // Store in local storage for persistence
+        localStorage.setItem('currentProjectId', projectId);
+      }
     } catch (err) {
       console.error('Error selecting project:', err);
-      setError(err as Error);
-      toast({
-        title: 'Error',
-        description: 'Failed to select project',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      throw err;
     }
-  }, [toast]);
+  };
 
-  const createProject = useCallback(async (projectData: { name: string; description: string }): Promise<Project | null> => {
-    setIsLoading(true);
+  const createProject = async (projectData: { name: string; description: string }) => {
     try {
-      // Add the stage field with "problem" as default
-      const dataWithStage = {
-        ...projectData,
-        current_stage: 'problem',
-        stage: 'problem'
-      };
-      
       const { data, error } = await supabase
         .from('projects')
-        .insert([dataWithStage])
-        .select()
-        .single();
+        .insert([
+          { 
+            name: projectData.name, 
+            description: projectData.description, 
+            stage: 'problem',
+            current_stage: 'problem'
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+      
+      await fetchProjects();
+      
+      // Set as current project if it's our first project
+      if (data && data.length > 0) {
+        setCurrentProject(data[0] as Project);
+        localStorage.setItem('currentProjectId', data[0].id);
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error creating project:', err);
+      throw err;
+    }
+  };
+
+  // New methods to handle stages
+  const fetchProjectStages = async () => {
+    try {
+      if (!currentProject) return [];
+      
+      const { data, error } = await supabase
+        .from('stages')
+        .select('*')
+        .eq('project_id', currentProject.id)
+        .order('position', { ascending: true });
         
       if (error) throw error;
       
-      const newProject = data as unknown as Project;
-      
-      await fetchProjects(); // Refresh the projects list
-      await selectProject(newProject.id); // Select the newly created project
-      
-      toast({
-        title: 'Success',
-        description: 'Project created successfully',
-      });
-      
-      return newProject;
+      return data;
     } catch (err) {
-      console.error('Error creating project:', err);
-      setError(err as Error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create project',
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching project stages:', err);
+      return [];
     }
-  }, [fetchProjects, selectProject, toast]);
-
-  // Mock implementations for the missing methods
-  const updateProjectStage = async (projectId: string, stageName: string) => {
-    console.log('updateProjectStage called with', projectId, stageName);
-    // Implement this functionality if needed
   };
 
-  const fetchProjectStages = async () => {
-    console.log('fetchProjectStages called');
-    // Implement this functionality if needed
+  const updateStage = async (stageId: string, updates: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('stages')
+        .update(updates)
+        .eq('id', stageId)
+        .select();
+        
+      if (error) throw error;
+      
+      return data;
+    } catch (err) {
+      console.error('Error updating stage:', err);
+      throw err;
+    }
   };
 
-  const updateStage = async (stage: string) => {
-    console.log('updateStage called with', stage);
-    // Implement this functionality if needed
+  const updateProjectStage = async (stage: string) => {
+    if (!currentProject) return;
+    
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ current_stage: stage })
+        .eq('id', currentProject.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      const updatedProject = { ...currentProject, current_stage: stage };
+      setCurrentProject(updatedProject as Project);
+      
+      return updatedProject;
+    } catch (err) {
+      console.error('Error updating project stage:', err);
+      throw err;
+    }
   };
-
-  const updateCurrentStage = async (stage: string) => {
-    console.log('updateCurrentStage called with', stage);
-    // Implement this functionality if needed
+  
+  const updateCurrentStage = async (projectId: string, stageName: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ current_stage: stageName })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      // Update local state if this is the current project
+      if (currentProject && currentProject.id === projectId) {
+        const updatedProject = { ...currentProject, current_stage: stageName };
+        setCurrentProject(updatedProject as Project);
+      }
+      
+      // Refresh projects list
+      await fetchProjects();
+    } catch (err) {
+      console.error('Error updating current stage:', err);
+      throw err;
+    }
   };
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
 
   return {
     projects,
@@ -156,9 +174,10 @@ export const useProject = (): UseProjectReturn => {
     fetchProjects,
     isLoading,
     error,
-    updateProjectStage,
+    // Add new methods
     fetchProjectStages,
     updateStage,
+    updateProjectStage,
     updateCurrentStage
   };
 };

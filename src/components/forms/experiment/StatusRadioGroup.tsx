@@ -5,13 +5,18 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export interface StatusRadioGroupProps {
-  control: Control<any>;
+  control?: Control<any>;
   isGrowthExperiment?: boolean;
   form?: UseFormReturn<any>;
 }
 
 const StatusRadioGroup = ({ control, isGrowthExperiment = false, form }: StatusRadioGroupProps) => {
   const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to StatusRadioGroup');
+    return null;
+  }
   
   return (
     <FormField

@@ -5,12 +5,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Control, UseFormReturn } from 'react-hook-form';
 
 export interface CategorySelectProps {
-  control: Control<any>;
+  control?: Control<any>;
   form?: UseFormReturn<any>;
 }
 
 const CategorySelect = ({ control, form }: CategorySelectProps) => {
   const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to CategorySelect');
+    return null;
+  }
   
   return (
     <FormField
