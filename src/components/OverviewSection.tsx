@@ -1,156 +1,127 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useProject } from '@/hooks/use-project';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, CheckCircle, Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Check, ArrowRight, CircleHelp } from 'lucide-react';
+import { Stage } from '@/types/database';
+import { toast } from '@/hooks/use-toast';
+import InfoTooltip from '@/components/InfoTooltip';
 
-const OverviewSection = () => {
-  const { currentProject, fetchProjectStages, updateStage, updateProjectStage } = useProject();
-  const [stages, setStages] = useState<any[]>([]);
-  const [currentTab, setCurrentTab] = useState('pipeline');
-  const { toast } = useToast();
-  
+interface OverviewSectionProps {
+  onboardingComplete?: boolean;
+}
+
+const OverviewSection = ({ onboardingComplete }: OverviewSectionProps = {}) => {
+  const { currentProject, isLoading } = useProject();
+  const [stages, setStages] = useState<Stage[]>([]);
+
   useEffect(() => {
     if (currentProject) {
-      loadStages();
+      const projectStages: Stage[] = [
+        {
+          id: 'problem',
+          title: 'Problem Validation',
+          description: 'Understand the problem you are solving and validate the market need.',
+          status: currentProject.problem_tracking?.market_need_validated ? 'completed' :
+                    currentProject.problem_tracking?.customer_interviews_conducted ? 'in-progress' : 'not-started',
+          link: '/problem-validation',
+          tracking: currentProject.problem_tracking,
+        },
+        {
+          id: 'solution',
+          title: 'Solution Validation',
+          description: 'Define and validate your proposed solution with potential customers.',
+          status: currentProject.solution_tracking?.positive_feedback_received ? 'completed' :
+                    currentProject.solution_tracking?.tested_with_customers ? 'in-progress' : 'not-started',
+          link: '/solution-validation',
+          tracking: currentProject.solution_tracking,
+        },
+        {
+          id: 'mvp',
+          title: 'MVP & Testing',
+          description: 'Build a Minimum Viable Product and gather initial user feedback.',
+          status: currentProject.mvp_tracking?.metrics_gathered ? 'completed' :
+                    currentProject.mvp_tracking?.released_to_users ? 'in-progress' : 'not-started',
+          link: '/mvp',
+          tracking: currentProject.mvp_tracking,
+        },
+        {
+          id: 'metrics',
+          title: 'Metrics & Analysis',
+          description: 'Establish key metrics and analyze your product performance.',
+          status: currentProject.metrics_tracking?.data_driven_decisions ? 'completed' :
+                    currentProject.metrics_tracking?.dashboards_created ? 'in-progress' : 'not-started',
+          link: '/metrics',
+          tracking: currentProject.metrics_tracking,
+        },
+        {
+          id: 'growth',
+          title: 'Growth & Scaling',
+          description: 'Focus on scaling your product and expanding your user base.',
+          status: currentProject.growth_tracking?.repeatable_growth ? 'completed' :
+                    currentProject.growth_tracking?.funnel_optimized ? 'in-progress' : 'not-started',
+          link: '/growth',
+          tracking: currentProject.growth_tracking,
+        },
+        {
+          id: 'pivot',
+          title: 'Pivot or Persevere',
+          description: 'Evaluate your progress and decide whether to pivot or continue.',
+          status: currentProject.pivot_tracking?.strategic_decision_made ? 'completed' :
+                    currentProject.pivot_tracking?.reasoning_documented ? 'in-progress' : 'not-started',
+          link: '/pivot',
+          tracking: currentProject.pivot_tracking,
+        },
+      ];
+      setStages(projectStages);
     }
   }, [currentProject]);
-  
-  const loadStages = async () => {
-    try {
-      const stageData = await fetchProjectStages();
-      if (stageData) {
-        setStages(stageData);
-      }
-    } catch (error) {
-      console.error('Failed to load stages:', error);
-    }
-  };
-  
-  const markStageComplete = async (stageId: string) => {
-    try {
-      await updateStage(stageId, { status: 'complete' });
-      toast({
-        title: 'Stage Updated',
-        description: 'Stage marked as complete',
-      });
-      loadStages();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update stage',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  const moveToStage = async (stageName: string) => {
-    try {
-      if (!currentProject) return;
-      
-      const result = await updateProjectStage(stageName);
-      if (result) {
-        toast({
-          title: 'Stage Updated',
-          description: `Moved to ${stageName} stage`,
-        });
-        loadStages();
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update current stage',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  if (!currentProject) {
-    return (
-      <Card className="col-span-3">
-        <CardHeader>
-          <CardTitle>Project Overview</CardTitle>
-          <CardDescription>Select a project to view its details</CardDescription>
-        </CardHeader>
-      </Card>
-    );
+
+  if (isLoading) {
+    return <p>Loading...</p>;
   }
-  
+
+  if (!currentProject) {
+    return <p>No project selected.</p>;
+  }
+
+  // Fix the button variant type error - changing 'success' to 'default'
+  const getButtonVariant = (stageStatus: string) => {
+    switch(stageStatus) {
+      case 'completed':
+        return 'default'; // Changed from 'success' to 'default'
+      case 'in-progress':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  };
+
   return (
-    <Card className="col-span-3">
-      <CardHeader>
-        <CardTitle>{currentProject.name}</CardTitle>
-        <CardDescription>{currentProject.description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={currentTab} onValueChange={setCurrentTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="pipeline">Validation Pipeline</TabsTrigger>
-            <TabsTrigger value="metrics">Key Metrics</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="pipeline" className="space-y-4">
-            <div className="flex flex-nowrap overflow-x-auto gap-4 pb-2">
-              {stages.map((stage) => (
-                <Card 
-                  key={stage.id} 
-                  className={`min-w-[220px] ${stage.name === currentProject.current_stage ? 'border-2 border-primary' : ''}`}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-sm font-medium">{stage.name}</CardTitle>
-                      {stage.status === 'complete' ? (
-                        <Badge variant="success" className="ml-2">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Complete
-                        </Badge>
-                      ) : stage.name === currentProject.current_stage ? (
-                        <Badge variant="secondary" className="ml-2">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Current
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-gray-500">{stage.description}</p>
-                    <div className="mt-3 flex justify-between">
-                      {stage.name === currentProject.current_stage ? (
-                        <Button size="sm" variant="outline" onClick={() => markStageComplete(stage.id)}>
-                          Mark Complete
-                        </Button>
-                      ) : stage.status !== 'complete' ? (
-                        <Button size="sm" variant="outline" onClick={() => moveToStage(stage.name)}>
-                          Make Current
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled>
-                          Completed
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="metrics">
-            <div className="text-center p-8">
-              <p className="text-gray-500">Metrics dashboard coming soon</p>
-              <Button variant="outline" className="mt-4">
-                View All Metrics
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {stages.map((stage) => (
+        <Card key={stage.id} className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium flex items-center">
+              {stage.status === 'completed' && <Check className="mr-2 h-4 w-4 text-green-500" />}
+              {stage.title}
+              <InfoTooltip content={stage.description} className="ml-2" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs text-gray-500">
+              {stage.description}
+            </CardDescription>
+          </CardContent>
+          <Button asChild variant={getButtonVariant(stage.status)} className="w-full justify-start rounded-none rounded-b-md text-xs">
+            <a href={stage.link} className="flex justify-between w-full items-center">
+              <span>{stage.status === 'completed' ? 'View Results' : 'Get Started'}</span>
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+        </Card>
+      ))}
+    </div>
   );
 };
 

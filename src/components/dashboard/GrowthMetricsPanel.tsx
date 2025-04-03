@@ -1,121 +1,119 @@
-
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TrendingUp, Plus, ArrowUpRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { InfoTooltip } from '@/components';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TrendingUp, TrendingDown, ArrowRight, Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useProject } from '@/hooks/use-project';
-import { GrowthMetric } from '@/types/database';
+import { Button } from '@/components/ui/button';
+import InfoTooltip from '@/components/ui/InfoTooltip'; // Fixed import path
+import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface GrowthMetricsPanelProps {
   projectId: string;
-  metrics?: GrowthMetric[];
-  isLoading?: boolean;
 }
 
-const GrowthMetricsPanel = ({ projectId, metrics = [], isLoading = false }: GrowthMetricsPanelProps) => {
+const GrowthMetricsPanel: React.FC<GrowthMetricsPanelProps> = ({ projectId }) => {
+  const [growthMetrics, setGrowthMetrics] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const { currentProject } = useProject();
-  
+
+  useEffect(() => {
+    fetchGrowthMetrics();
+  }, [projectId]);
+
+  const fetchGrowthMetrics = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('growth_metrics')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (error) {
+        console.error('Error fetching growth metrics:', error);
+        return;
+      }
+
+      setGrowthMetrics(data || []);
+    } catch (error) {
+      console.error('Error fetching growth metrics:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'on-track':
+        return 'bg-green-100 text-green-800';
+      case 'at-risk':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'off-track':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleAddMetric = () => {
+    navigate('/metrics?create=true');
+  };
+
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5 text-green-500" />
-            <CardTitle className="text-lg">Growth Metrics</CardTitle>
-            <InfoTooltip 
-              content="Track key metrics that indicate your business growth"
-              className="ml-1" 
-            />
-          </div>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs"
-            onClick={() => navigate('/growth/metrics')}
-          >
-            View All
-            <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-          </Button>
+    <div className="space-y-4">
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <CardTitle><Skeleton className="h-5 w-32" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-8 w-full mt-2" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
-        <CardDescription>
-          {metrics.length > 0 
-            ? "Your key growth metrics"
-            : "No growth metrics defined yet"}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            <div className="h-16 bg-gray-100 animate-pulse rounded-md"></div>
-            <div className="h-16 bg-gray-100 animate-pulse rounded-md"></div>
-          </div>
-        ) : metrics.length > 0 ? (
-          <div className="space-y-3">
-            {metrics.slice(0, 3).map((metric) => (
-              <div 
-                key={metric.id} 
-                className="flex justify-between items-center p-3 rounded-md border hover:bg-gray-50 transition-colors"
-              >
-                <div>
-                  <h4 className="font-medium">{metric.name}</h4>
-                  <p className="text-sm text-gray-500">{metric.description || metric.category}</p>
-                </div>
-                <div className="text-right">
-                  <div className={`text-lg font-medium ${
-                    metric.status === 'on-track' ? 'text-green-600' : 
-                    metric.status === 'at-risk' ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
-                    {metric.current_value} {metric.unit}
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {growthMetrics.length > 0 ? (
+            growthMetrics.map((metric) => (
+              <Card key={metric.id}>
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-sm font-medium leading-none flex items-center">
+                    {metric.name}
+                    <InfoTooltip content={metric.description || 'No description provided'} className="ml-2" />
+                  </CardTitle>
+                  {metric.status === 'on-track' ? (
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {metric.current_value} / {metric.target_value} {metric.unit}
                   </div>
-                  <p className="text-xs text-gray-500">Target: {metric.target_value} {metric.unit}</p>
-                </div>
-              </div>
-            ))}
-            
-            {metrics.length > 3 && (
-              <div className="text-center text-sm text-gray-500 pt-2">
-                {metrics.length - 3} more metrics available in the growth section
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-6 space-y-4">
-            <p className="text-gray-500">Define growth metrics to track your progress</p>
-            <Button 
-              onClick={() => navigate('/growth/metrics/new')}
-              variant="outline"
-              className="mx-auto"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Growth Metric
-            </Button>
-          </div>
-        )}
-        
-        {!isLoading && (
-          <div className="mt-4 flex justify-between">
-            <Link to="/metrics">
-              <Button variant="ghost" size="sm" className="text-xs">
-                Business Metrics
-              </Button>
-            </Link>
-            
-            <Link to="/growth">
-              <Button variant="ghost" size="sm" className="text-xs">
-                Growth Dashboard
-                <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-              </Button>
-            </Link>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  <Badge className={getStatusColor(metric.status || '')}>{metric.status}</Badge>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <p className="text-sm text-gray-500 mb-4">No growth metrics defined yet.</p>
+                <Button onClick={handleAddMetric} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Metric
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 

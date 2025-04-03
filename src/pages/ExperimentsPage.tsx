@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Experiment, ExperimentTemplate } from '@/types/database';
-import ExperimentList from '@/components/experiments/ExperimentList';
+import { Experiment } from '@/types/database';
+import { adaptExperiments } from '@/utils/experiment-adapter';
 import { FlaskConical, Info, ArrowLeft } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
 import { Button } from '@/components/ui/button';
@@ -63,17 +63,10 @@ const ExperimentsPage = () => {
         return;
       }
       
-      const processedData = data?.map(item => ({
-        ...item,
-        originalId: item.id,
-        metrics: Array.isArray(item.metrics) ? item.metrics : [item.metrics || ''],
-        insights: item.insights || '',
-        decisions: item.decisions || '',
-        hypothesis_id: item.hypothesis_id || null
-      })) as Experiment[];
+      const processedData = adaptExperiments(data || []);
       
       console.log("Fetched experiments:", processedData);
-      setExperiments(processedData || []);
+      setExperiments(processedData);
     } catch (err) {
       console.error('Error:', err);
     } finally {
@@ -126,6 +119,7 @@ const ExperimentsPage = () => {
       status: 'planned',
       category: template.category || 'problem',
       project_id: currentProject.id,
+      metrics: [''], // Ensure metrics is an array
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     } as Experiment);

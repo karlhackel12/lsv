@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -18,6 +17,7 @@ import TextFieldGroup from './TextFieldGroup';
 import HypothesisSelect from './HypothesisSelect';
 import ResultsFields from './ResultsFields';
 import InfoTooltip from '@/components/InfoTooltip';
+import { adaptExperimentForDb } from '@/utils/experiment-adapter';
 
 const experimentSchema = z.object({
   title: z.string().min(5, {
@@ -62,7 +62,6 @@ export default function ExperimentForm({
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if we have prefill data from location state (for recommendations)
   const locationPrefill = location.state?.prefillData;
   const combinedPrefill = { ...prefillData, ...locationPrefill };
   
@@ -95,26 +94,25 @@ export default function ExperimentForm({
     }
 
     try {
-      // Create experiment in Supabase
+      const dbReadyData = {
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        method: values.method,
+        hypothesis: values.hypothesis,
+        status: values.status,
+        results: values.results || null,
+        metrics: values.metrics?.join(',') || '',
+        learnings: values.learnings || null,
+        decisions: values.decisions || null,
+        insights: values.insights || null,
+        project_id: currentProject.id,
+        hypothesis_id: values.hypothesis_id || null,
+      };
+
       const { data, error } = await supabase
         .from('experiments')
-        .insert([
-          {
-            title: values.title,
-            description: values.description,
-            category: values.category,
-            method: values.method,
-            hypothesis: values.hypothesis,
-            status: values.status,
-            results: values.results,
-            metrics: values.metrics || [],
-            learnings: values.learnings,
-            decisions: values.decisions,
-            insights: values.insights,
-            project_id: currentProject.id,
-            hypothesis_id: values.hypothesis_id,
-          },
-        ])
+        .insert(dbReadyData)
         .select();
 
       if (error) throw error;

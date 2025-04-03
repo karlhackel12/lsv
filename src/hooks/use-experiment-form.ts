@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -7,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Experiment } from '@/types/database';
 import { FormData } from '@/components/forms/ExperimentForm';
+import { adaptExperimentForDb } from '@/utils/experiment-adapter';
 
 interface UseExperimentFormProps {
   experiment: Experiment | null | undefined;
@@ -30,7 +30,6 @@ export function useExperimentForm({
   const { toast } = useToast();
   const isEditing = !!experiment;
   
-  // Form validation schema
   const formSchema = z.object({
     id: z.string().optional(),
     title: z.string().min(1, 'Title is required'),
@@ -46,13 +45,11 @@ export function useExperimentForm({
     hypothesis_id: z.string().nullable().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
-    // Allow additional properties for growth experiments
     isGrowthExperiment: z.boolean().optional(),
     originalGrowthExperiment: z.any().optional(),
     originalId: z.string().optional(),
   });
 
-  // Ensure metrics is always an array
   const getMetricsArray = (metrics: any): string[] => {
     if (!metrics) return [''];
     if (Array.isArray(metrics)) return metrics;
@@ -86,12 +83,9 @@ export function useExperimentForm({
     try {
       console.log("Form submitted with data:", data);
       
-      // Ensure hypothesis_id is null if it's an empty string or "none"
       const sanitizedHypothesisId = 
         data.hypothesis_id === "" || data.hypothesis_id === "none" ? null : data.hypothesis_id;
       
-      // If this is a growth experiment, we just pass the data back
-      // to be handled by the parent component
       if (isGrowthExperiment) {
         onSave({
           ...data,
@@ -103,23 +97,18 @@ export function useExperimentForm({
         return;
       }
       
-      // For regular experiments, handle the database operations here
       if (isEditing && experiment) {
+        const dbData = adaptExperimentForDb({
+          ...data,
+          hypothesis_id: sanitizedHypothesisId,
+          updated_at: new Date().toISOString()
+        });
+        
+        const { isGrowthExperiment, originalGrowthExperiment, originalId, ...dbReadyData } = dbData as any;
+        
         const { error } = await supabase
           .from('experiments')
-          .update({
-            title: data.title,
-            hypothesis: data.hypothesis,
-            method: data.method,
-            metrics: getMetricsArray(data.metrics),
-            status: data.status,
-            category: data.category,
-            results: data.results || null,
-            insights: data.insights || null,
-            decisions: data.decisions || null,
-            hypothesis_id: sanitizedHypothesisId,
-            updated_at: new Date().toISOString()
-          })
+          .update(dbReadyData)
           .eq('id', experiment.id);
           
         if (error) throw error;
@@ -129,21 +118,17 @@ export function useExperimentForm({
           description: 'The experiment has been successfully updated.',
         });
       } else {
+        const dbData = adaptExperimentForDb({
+          ...data,
+          hypothesis_id: sanitizedHypothesisId,
+          project_id: projectId,
+        });
+        
+        const { isGrowthExperiment, originalGrowthExperiment, originalId, ...dbReadyData } = dbData as any;
+        
         const { error } = await supabase
           .from('experiments')
-          .insert({
-            title: data.title,
-            hypothesis: data.hypothesis,
-            method: data.method,
-            metrics: getMetricsArray(data.metrics),
-            status: data.status,
-            category: data.category,
-            results: data.results || null,
-            insights: data.insights || null,
-            decisions: data.decisions || null,
-            project_id: projectId,
-            hypothesis_id: sanitizedHypothesisId,
-          });
+          .insert(dbReadyData);
           
         if (error) throw error;
         
