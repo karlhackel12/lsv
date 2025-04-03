@@ -11,12 +11,13 @@ import {
 export interface InfoTooltipProps {
   content: React.ReactNode;
   className?: string;
-  text?: string; // Add this prop for backward compatibility
-  link?: string; // Add this prop for backward compatibility
+  text?: string; // For backward compatibility
+  link?: string; // For backward compatibility
 }
 
 const InfoTooltip = ({ content, className, text, link }: InfoTooltipProps) => {
-  const tooltipContent = text || content;
+  // Support both new content prop and backward compatibility with text prop
+  const tooltipContent = content || text;
   
   return (
     <TooltipProvider>

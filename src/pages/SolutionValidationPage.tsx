@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { updateProject } from '@/lib/projects';
 import { useToast } from '@/hooks/use-toast';
-import { Project, SolutionTracking } from '@/types/database';
+import { Project } from '@/types/database';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,6 +15,14 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+
+// Define the SolutionTracking interface
+interface SolutionTracking {
+  solution_hypotheses_defined: boolean;
+  solution_sketches_created: boolean;
+  tested_with_customers: boolean;
+  positive_feedback_received: boolean;
+}
 
 const SolutionValidationPage = () => {
   const { currentProject, fetchProjects } = useProject();
@@ -33,8 +42,18 @@ const SolutionValidationPage = () => {
     setIsSaving(true);
 
     try {
+      // Convert solution_tracking to a proper object if it's not already
+      const currentTracking = typeof currentProject.solution_tracking === 'object' && currentProject.solution_tracking 
+        ? currentProject.solution_tracking as unknown as SolutionTracking
+        : {
+            solution_hypotheses_defined: false,
+            solution_sketches_created: false,
+            tested_with_customers: false,
+            positive_feedback_received: false
+          };
+
       const updatedSolutionTracking = {
-        ...currentProject.solution_tracking,
+        ...currentTracking,
         [field]: checked,
       };
 
@@ -56,13 +75,19 @@ const SolutionValidationPage = () => {
     }
   };
 
-  // Update the handling of the solutionTracking object
-  const solutionTracking = currentProject?.solution_tracking as unknown as SolutionTracking || {
+  // Convert solution_tracking to the proper type
+  const rawSolutionTracking = currentProject?.solution_tracking;
+  const defaultTracking: SolutionTracking = {
     solution_hypotheses_defined: false,
     solution_sketches_created: false,
     tested_with_customers: false,
     positive_feedback_received: false
   };
+  
+  // Safely convert to SolutionTracking type
+  const solutionTracking: SolutionTracking = typeof rawSolutionTracking === 'object' && rawSolutionTracking
+    ? rawSolutionTracking as unknown as SolutionTracking
+    : defaultTracking;
 
   return (
     <div className="container mx-auto py-10">
@@ -96,8 +121,8 @@ const SolutionValidationPage = () => {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="solution_hypotheses_defined"
-                  checked={solutionTracking?.solution_hypotheses_defined || false}
-                  onCheckedChange={(checked) => handleCheckboxChange('solution_hypotheses_defined', checked || false)}
+                  checked={solutionTracking.solution_hypotheses_defined}
+                  onCheckedChange={(checked) => handleCheckboxChange('solution_hypotheses_defined', checked === true)}
                   disabled={isSaving}
                 />
                 <label
@@ -121,8 +146,8 @@ const SolutionValidationPage = () => {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="solution_sketches_created"
-                  checked={solutionTracking?.solution_sketches_created || false}
-                  onCheckedChange={(checked) => handleCheckboxChange('solution_sketches_created', checked || false)}
+                  checked={solutionTracking.solution_sketches_created}
+                  onCheckedChange={(checked) => handleCheckboxChange('solution_sketches_created', checked === true)}
                   disabled={isSaving}
                 />
                 <label
@@ -146,8 +171,8 @@ const SolutionValidationPage = () => {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="tested_with_customers"
-                  checked={solutionTracking?.tested_with_customers || false}
-                  onCheckedChange={(checked) => handleCheckboxChange('tested_with_customers', checked || false)}
+                  checked={solutionTracking.tested_with_customers}
+                  onCheckedChange={(checked) => handleCheckboxChange('tested_with_customers', checked === true)}
                   disabled={isSaving}
                 />
                 <label
@@ -171,8 +196,8 @@ const SolutionValidationPage = () => {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="positive_feedback_received"
-                  checked={solutionTracking?.positive_feedback_received || false}
-                  onCheckedChange={(checked) => handleCheckboxChange('positive_feedback_received', checked || false)}
+                  checked={solutionTracking.positive_feedback_received}
+                  onCheckedChange={(checked) => handleCheckboxChange('positive_feedback_received', checked === true)}
                   disabled={isSaving}
                 />
                 <label
@@ -188,7 +213,7 @@ const SolutionValidationPage = () => {
       </div>
 
       <div className="mt-8">
-        <Button onClick={() => navigate('/mvp-definition')} disabled={isSaving}>
+        <Button onClick={() => navigate('/mvp')} disabled={isSaving}>
           Proceed to MVP Definition
         </Button>
       </div>
