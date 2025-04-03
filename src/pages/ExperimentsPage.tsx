@@ -65,7 +65,11 @@ const ExperimentsPage = () => {
       
       const processedData = data?.map(item => ({
         ...item,
-        originalId: item.id
+        originalId: item.id,
+        metrics: Array.isArray(item.metrics) ? item.metrics : [item.metrics || ''],
+        insights: item.insights || '',
+        decisions: item.decisions || '',
+        hypothesis_id: item.hypothesis_id || null
       })) as Experiment[];
       
       console.log("Fetched experiments:", processedData);
@@ -95,7 +99,6 @@ const ExperimentsPage = () => {
   }, [searchParams, experiments]);
   
   useEffect(() => {
-    // Check for create=true in URL to open form
     const createParam = searchParams.get('create');
     if (createParam === 'true') {
       handleCreateNew();
@@ -107,8 +110,6 @@ const ExperimentsPage = () => {
   }
   
   const handleCreateNew = () => {
-    // Temporarily open form directly instead of showing template selector
-    // setIsTemplateSelectorOpen(true);
     setIsFormOpen(true);
   };
   
@@ -116,7 +117,6 @@ const ExperimentsPage = () => {
     setSelectedTemplate(template);
     setIsTemplateSelectorOpen(false);
     
-    // Open the form with template data
     setSelectedExperiment({
       id: '',
       title: template.name,
@@ -176,7 +176,6 @@ const ExperimentsPage = () => {
     <div className="space-y-6">
       {viewMode === 'list' ? (
         <>
-          {/* Breadcrumb */}
           <div className="mb-4">
             <Breadcrumb>
               <BreadcrumbList>

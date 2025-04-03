@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -34,7 +33,8 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
   const [evidenceInput, setEvidenceInput] = useState(hypothesis.evidence || '');
   const [resultInput, setResultInput] = useState(hypothesis.result || '');
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [relatedExperiments, setRelatedExperiments] = useState<Experiment[]>([]);
+
   useEffect(() => {
     if (hypothesis && hypothesis.id) {
       fetchLinkedExperiments();
@@ -64,6 +64,39 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
       setIsLoadingExperiments(false);
     }
   };
+  
+  useEffect(() => {
+    const fetchRelatedExperiments = async () => {
+      try {
+        if (!hypothesis || !projectId) return;
+        
+        const { data, error } = await supabase
+          .from('experiments')
+          .select('*')
+          .eq('project_id', projectId)
+          .eq('hypothesis_id', hypothesis.id);
+          
+        if (error) {
+          console.error('Error fetching related experiments:', error);
+          return;
+        }
+        
+        const typedData = data?.map(item => ({
+          ...item,
+          metrics: Array.isArray(item.metrics) ? item.metrics : [item.metrics || ''],
+          insights: item.insights || '',
+          decisions: item.decisions || '',
+          hypothesis_id: item.hypothesis_id || null
+        })) as Experiment[];
+        
+        setRelatedExperiments(typedData || []);
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    };
+    
+    fetchRelatedExperiments();
+  }, [hypothesis, projectId]);
   
   const handleCreateExperiment = () => {
     navigate('/experiments', { 

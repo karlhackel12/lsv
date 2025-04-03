@@ -1,50 +1,47 @@
 
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UseFormReturn } from 'react-hook-form';
-import { Experiment } from '@/types/database';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Control } from 'react-hook-form';
 
-interface CategorySelectProps {
-  form: UseFormReturn<Experiment>;
+export interface CategorySelectProps {
+  control: Control<any>;
 }
 
-const EXPERIMENT_CATEGORIES = [
-  { value: 'problem', label: 'Problem' },
-  { value: 'solution', label: 'Solution' },
-  { value: 'business-model', label: 'Business Model' },
-  { value: 'growth', label: 'Growth' },
-  { value: 'other', label: 'Other' }
-];
-
-const CategorySelect = ({ form }: CategorySelectProps) => {
-  console.log("CategorySelect rendering with value:", form.watch('category'));
-  
+const CategorySelect = ({ control }: CategorySelectProps) => {
   return (
     <FormField
-      control={form.control}
+      control={control}
       name="category"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="space-y-2">
           <FormLabel>Category</FormLabel>
-          <Select 
-            onValueChange={field.onChange} 
-            value={field.value || 'problem'}
-            defaultValue={field.value || 'problem'}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {EXPERIMENT_CATEGORIES.map(category => (
-                <SelectItem key={category.value} value={category.value}>
-                  {category.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FormControl>
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex flex-col space-y-1"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="problem" id="problem" />
+                <label htmlFor="problem" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Problem Validation
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="solution" id="solution" />
+                <label htmlFor="solution" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Solution Validation
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="business-model" id="business-model" />
+                <label htmlFor="business-model" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Business Model Validation
+                </label>
+              </div>
+            </RadioGroup>
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}
