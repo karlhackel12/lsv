@@ -911,11 +911,23 @@ export const GROWTH_METRIC_TEMPLATES = {
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  stage: string;
-  owner_id: string | null;
+  description?: string;
+  user_id: string;
   created_at: string;
   updated_at: string;
+  vision?: string;
+  problem_statement?: string;
+  customer_segments?: string[];
+  current_stage?: string;
+  owner_id?: string;
+  stage?: string;
+  mvp_tracking?: Record<string, boolean> | string;
+  metrics_tracking?: Record<string, boolean> | string;
+  growth_tracking?: Record<string, boolean> | string;
+  pivot_tracking?: Record<string, boolean> | string;
+  problem_tracking?: Record<string, boolean> | string;
+  solution_tracking?: Record<string, boolean> | string;
+  milestones?: string | any[];
 }
 
 export interface Hypothesis {
@@ -936,23 +948,23 @@ export interface Hypothesis {
 
 export interface Experiment {
   id: string;
-  originalId?: string;
   title: string;
+  description?: string;
   hypothesis: string;
   method: string;
-  metrics: string;
+  expected_outcome?: string;
+  results?: string;
   status: 'planned' | 'in-progress' | 'completed';
-  category: string;
-  results?: string | null;
-  insights?: string | null;
-  decisions?: string | null;
   project_id: string;
-  hypothesis_id: string | null;
-  created_at?: string;
-  updated_at?: string;
-  // Additional fields for tracking growth experiments
-  isGrowthExperiment?: boolean;
-  originalGrowthExperiment?: GrowthExperiment;
+  created_at: string;
+  updated_at: string;
+  category?: string;
+  success_criteria?: string;
+  originalId?: string;
+  user_id?: string;
+  feedback?: string;
+  metrics?: string[];
+  learnings?: string;
 }
 
 export interface Metric {
@@ -1076,3 +1088,15 @@ export const SCALING_METRIC_UNITS = [
   { value: 'count', label: 'Count (#)' },
   { value: 'time', label: 'Time (days)' }
 ];
+
+// New type for experiment templates
+export interface ExperimentTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  method?: string;
+  hypothesis_template?: string;
+  created_at: string;
+  updated_at: string;
+}

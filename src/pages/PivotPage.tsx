@@ -2,13 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, GitBranch } from 'lucide-react';
+import { Loader2, GitBranch, GitFork, CheckCircle, Clipboard, FileCheck, FileText } from 'lucide-react';
 import { PivotOption } from '@/types/pivot';
 import PageIntroduction from '@/components/PageIntroduction';
 import PivotOptionsTable from '@/components/pivot/PivotOptionsTable';
+import PivotDecisionFramework from '@/components/pivot/PivotDecisionFramework';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import PivotOptionForm from '@/components/forms/PivotOptionForm';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import InfoTooltip from '@/components/InfoTooltip';
+import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
+import BestPracticesCard, { BestPractice } from '@/components/ui/best-practices-card';
+import ChecklistCard, { ChecklistItem } from '@/components/ui/checklist-card';
+import { Project } from '@/types/database';
+
+interface PivotTracking {
+  validation_data_evaluated: boolean;
+  pivot_assessment_conducted: boolean;
+  strategic_decision_made: boolean;
+  reasoning_documented: boolean;
+}
 
 const PivotPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -18,6 +35,13 @@ const PivotPage = () => {
   const [selectedPivotOption, setSelectedPivotOption] = useState<PivotOption | null>(null);
   const [pivotToDelete, setPivotToDelete] = useState<PivotOption | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('framework');
+  const [pivotTracking, setPivotTracking] = useState<PivotTracking>({
+    validation_data_evaluated: false,
+    pivot_assessment_conducted: false,
+    strategic_decision_made: false,
+    reasoning_documented: false
+  });
   const { toast } = useToast();
 
   const fetchPivotOptions = async () => {
@@ -56,6 +80,70 @@ const PivotPage = () => {
       });
     } finally {
       setIsLoadingPivotOptions(false);
+    }
+  };
+
+  const fetchPivotTrackingData = async () => {
+    if (!currentProject) return;
+    
+    try {
+      // Fetch project pivot tracking data
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', currentProject.id)
+        .single();
+      
+      if (projectError) {
+        console.error('Error fetching project data:', projectError);
+        return;
+      }
+      
+      if (projectData) {
+        // Use type assertion to safely access pivot_tracking
+        const trackingData = (projectData as any).pivot_tracking as PivotTracking | null;
+        if (trackingData) {
+          setPivotTracking(trackingData);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching pivot tracking data:', err);
+    }
+  };
+  
+  // Function to update pivot tracking in the database
+  const updatePivotTracking = async (field: keyof PivotTracking, value: boolean) => {
+    if (!currentProject) return;
+    
+    try {
+      // Create a copy of the current tracking state
+      const updatedTracking = { ...pivotTracking, [field]: value };
+      
+      // Optimistically update the UI
+      setPivotTracking(updatedTracking);
+      
+      // Update the database
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          pivot_tracking: updatedTracking 
+        } as Partial<Project>)
+        .eq('id', currentProject.id);
+        
+      if (error) throw error;
+      
+      // Dispatch custom event to notify ValidationProgressSummary to refresh
+      window.dispatchEvent(new CustomEvent('validation-progress-update'));
+      
+      toast({
+        title: 'Pivot Progress Updated',
+        description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? 'completed' : 'marked as incomplete'}.`
+      });
+    } catch (err) {
+      console.error('Error updating pivot tracking:', err);
+      
+      // Revert the local state change on error
+      setPivotTracking(pivotTracking);
     }
   };
 
@@ -98,6 +186,7 @@ const PivotPage = () => {
   useEffect(() => {
     if (currentProject) {
       fetchPivotOptions();
+      fetchPivotTrackingData();
     }
   }, [currentProject]);
   
@@ -115,6 +204,74 @@ const PivotPage = () => {
     setPivotToDelete(option);
     setIsDeleteDialogOpen(true);
   };
+
+  const handleAssessmentComplete = () => {
+    setActiveTab('options');
+    
+    // Update tracking when assessment is completed
+    updatePivotTracking('validation_data_evaluated', true);
+    updatePivotTracking('pivot_assessment_conducted', true);
+    
+    toast({
+      title: 'Assessment Complete',
+      description: 'Your pivot assessment has been saved successfully. Now you can define potential pivot options.'
+    });
+  };
+  
+  // Generate best practices for the BestPracticesCard component
+  const bestPractices: BestPractice[] = [
+    {
+      icon: <Clipboard />,
+      title: 'Data-Based Decisions',
+      description: 'Base your pivot decision on real metrics and customer evidence.'
+    },
+    {
+      icon: <GitFork />,
+      title: 'Consider Multiple Options',
+      description: 'Evaluate different types of pivots before choosing a direction.'
+    },
+    {
+      icon: <FileCheck />,
+      title: 'Keep What Works',
+      description: 'Preserve the validated elements while changing what doesn\'t work.'
+    }
+  ];
+  
+  // Generate checklist items for the ChecklistCard component
+  const checklistItems: ChecklistItem[] = [
+    {
+      key: 'validation_data_evaluated',
+      label: 'Validation Data Evaluated',
+      description: 'Automatically tracked when using the framework',
+      icon: <Clipboard />,
+      checked: pivotTracking.validation_data_evaluated,
+      disabled: true
+    },
+    {
+      key: 'pivot_assessment_conducted',
+      label: 'Pivot Assessment Conducted',
+      description: 'Automatically tracked when completing assessment',
+      icon: <GitFork />,
+      checked: pivotTracking.pivot_assessment_conducted,
+      disabled: true
+    },
+    {
+      key: 'strategic_decision_made',
+      label: 'Strategic Decision Made',
+      description: 'Toggle when you\'ve made your final pivot decision',
+      icon: <FileCheck />,
+      checked: pivotTracking.strategic_decision_made,
+      onCheckedChange: (checked) => updatePivotTracking('strategic_decision_made', checked)
+    },
+    {
+      key: 'reasoning_documented',
+      label: 'Decision Reasoning Documented',
+      description: 'Toggle when you\'ve documented your pivot decision reasoning',
+      icon: <FileText />,
+      checked: pivotTracking.reasoning_documented,
+      onCheckedChange: (checked) => updatePivotTracking('reasoning_documented', checked)
+    }
+  ];
 
   if (isLoading) {
     return (
@@ -136,41 +293,74 @@ const PivotPage = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <PageIntroduction
         title="Pivot Planning and Framework"
         icon={<GitBranch className="h-5 w-5 text-blue-500" />}
-        description={
-          <p>
-            A pivot is a structured course correction designed to test a new fundamental hypothesis about your product,
-            business model, or growth strategy when metrics indicate your current approach isn't working.
-          </p>
-        }
-        storageKey="pivot-page"
+        description="A pivot is a structured course correction designed to test a new fundamental hypothesis about your product, business model, or growth strategy when metrics indicate your current approach isn't working."
+        showDescription={false}
       />
       
-      <div className="flex justify-between items-center mb-6 mt-8">
-        <h2 className="text-2xl font-bold">Pivot Options</h2>
-        <Button 
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={handleCreateNew}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Pivot Option
-        </Button>
-      </div>
+      <BestPracticesCard 
+        title="Best Practices for Pivot Decisions"
+        color="pink"
+        tooltip="These practices help you make effective pivot decisions based on validated learning."
+        practices={bestPractices}
+      />
+      
+      <ChecklistCard 
+        title="Pivot Decision Checklist"
+        color="pink"
+        items={checklistItems}
+      />
+      
+      {/* Add ValidationPhaseIntro for consistency */}
+      <ValidationPhaseIntro 
+        phase="pivot"
+        onCreateNew={handleCreateNew}
+        createButtonText="Add Pivot Option"
+      />
+      
+      {currentProject && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 w-full max-w-md mb-6">
+            <TabsTrigger value="framework">Decision Framework</TabsTrigger>
+            <TabsTrigger value="options">Pivot Options</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="framework" className="mt-0">
+            <PivotDecisionFramework 
+              projectId={currentProject.id}
+              onComplete={handleAssessmentComplete}
+            />
+          </TabsContent>
+          
+          <TabsContent value="options" className="mt-0">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Pivot Options</h2>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleCreateNew}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Pivot Option
+              </Button>
+            </div>
 
-      {currentProject && !isLoadingPivotOptions ? (
-        <PivotOptionsTable
-          pivotOptions={pivotOptions}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      ) : (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading pivot options...</span>
-        </div>
+            {!isLoadingPivotOptions ? (
+              <PivotOptionsTable
+                pivotOptions={pivotOptions}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading pivot options...</span>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
       
       {isFormOpen && currentProject && (

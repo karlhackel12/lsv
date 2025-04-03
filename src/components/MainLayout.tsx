@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import MainHeader from '@/components/MainHeader';
 import SideNavigation from '@/components/SideNavigation';
+// import ProgressTracker from '@/components/ProgressTracker';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useProject } from '@/hooks/use-project';
 
@@ -17,6 +17,7 @@ const MainLayout = () => {
           <SideNavigation />
           <main className="flex-1 p-4 md:p-6 overflow-y-auto">
             <div className="max-w-7xl mx-auto w-full h-full">
+              {/* Temporarily disabled: <ProgressTracker /> */}
               <Outlet />
             </div>
           </main>

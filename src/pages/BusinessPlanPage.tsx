@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -244,6 +243,7 @@ const BusinessPlanPage = () => {
         title="Business Plan" 
         description="Create and edit your business plan sections to complement your Lean Startup approach. Document your market research, strategy, and other key business information."
         icon={<FileText className="h-6 w-6" />}
+        showDescription={false}
       />
 
       <div className="flex justify-between items-center mb-6">

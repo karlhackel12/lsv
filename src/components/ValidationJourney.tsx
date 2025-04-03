@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Lightbulb, Beaker, Layers, BarChart2, GitFork } from 'lucide-react';
@@ -28,7 +27,7 @@ const JourneyStep = ({ icon, title, description, color, isActive = false }: Jour
 };
 
 interface ValidationJourneyProps {
-  activePhase?: 'problem' | 'solution' | 'mvp' | 'growth' | 'pivot';
+  activePhase?: 'problem' | 'solution' | 'mvp' | 'metrics' | 'growth' | 'pivot';
   className?: string;
 }
 

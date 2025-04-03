@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -276,6 +275,47 @@ export function useProject() {
     }
   }, [projects]);
 
+  // Update the current validation stage of a project
+  const updateCurrentStage = async (projectId: string, stageName: string) => {
+    try {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ 
+          current_stage: stageName,
+          updated_at: now
+        })
+        .eq('id', projectId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update the current project in state
+      if (data && currentProject?.id === projectId) {
+        setCurrentProject({
+          ...currentProject,
+          current_stage: stageName
+        });
+      }
+      
+      toast({
+        title: 'Validation Stage Updated',
+        description: `Project validation stage updated to ${stageName}`,
+      });
+      
+      return data;
+    } catch (err) {
+      console.error('Error updating current stage:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to update validation stage',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
   return {
     projects,
     currentProject,
@@ -285,6 +325,7 @@ export function useProject() {
     fetchProjectStages,
     updateStage,
     createDefaultStages,
+    updateCurrentStage,
     isLoading,
     error,
   };

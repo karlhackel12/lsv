@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Experiment } from '@/types/database';
+import { Experiment, ExperimentTemplate } from '@/types/database';
 import ExperimentList from '@/components/experiments/ExperimentList';
 import { FlaskConical, Info, ArrowLeft } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
@@ -11,6 +10,8 @@ import ExperimentForm from '@/components/forms/ExperimentForm';
 import { Card, CardContent } from '@/components/ui/card';
 import ExperimentDetailView from '@/components/experiments/ExperimentDetailView';
 import DeleteExperimentDialog from '@/components/experiments/DeleteExperimentDialog';
+import TemplateSelector from '@/components/experiments/TemplateSelector';
+import { useExperimentTemplates } from '@/hooks/use-experiment-templates';
 import { 
   Breadcrumb,
   BreadcrumbItem,
@@ -29,6 +30,10 @@ const ExperimentsPage = () => {
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [experimentToDelete, setExperimentToDelete] = useState<Experiment | null>(null);
+  const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<ExperimentTemplate | null>(null);
+  
+  const { templates, isLoading: isLoadingTemplates } = useExperimentTemplates();
   
   const rawStatus = searchParams.get('status');
   const statusFilter = rawStatus && ['planned', 'in-progress', 'completed'].includes(rawStatus) 
@@ -89,16 +94,48 @@ const ExperimentsPage = () => {
     }
   }, [searchParams, experiments]);
   
+  useEffect(() => {
+    // Check for create=true in URL to open form
+    const createParam = searchParams.get('create');
+    if (createParam === 'true') {
+      handleCreateNew();
+    }
+  }, [searchParams]);
+  
   if (!currentProject) {
     return <div>Select a project to view experiments</div>;
   }
   
   const handleCreateNew = () => {
+    // Temporarily open form directly instead of showing template selector
+    // setIsTemplateSelectorOpen(true);
+    setIsFormOpen(true);
+  };
+  
+  const handleTemplateSelected = (template: ExperimentTemplate) => {
+    setSelectedTemplate(template);
+    setIsTemplateSelectorOpen(false);
+    
+    // Open the form with template data
+    setSelectedExperiment({
+      id: '',
+      title: template.name,
+      description: template.description || '',
+      hypothesis: template.hypothesis_template || '',
+      method: template.method || '',
+      status: 'planned',
+      category: template.category || 'problem',
+      project_id: currentProject.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } as Experiment);
+    
     setIsFormOpen(true);
   };
   
   const handleFormClose = () => {
     setIsFormOpen(false);
+    setSelectedTemplate(null);
     const params = new URLSearchParams(searchParams);
     params.delete('create');
     setSearchParams(params);
@@ -107,6 +144,7 @@ const ExperimentsPage = () => {
   const handleFormSave = (experiment: Experiment) => {
     fetchExperiments();
     setIsFormOpen(false);
+    setSelectedTemplate(null);
   };
   
   const handleEdit = (experiment: Experiment) => {
@@ -230,6 +268,14 @@ const ExperimentsPage = () => {
         onOpenChange={setIsDeleteDialogOpen}
         experimentToDelete={experimentToDelete}
         refreshData={fetchExperiments}
+      />
+      
+      <TemplateSelector
+        open={isTemplateSelectorOpen}
+        onOpenChange={setIsTemplateSelectorOpen}
+        templates={templates}
+        onSelectTemplate={handleTemplateSelected}
+        isLoading={isLoadingTemplates}
       />
     </div>
   );

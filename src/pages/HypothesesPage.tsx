@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -94,6 +93,7 @@ const HypothesesPage = () => {
           ? "Create and test hypotheses to validate if your target customers have the problem you think they have."
           : "Test whether your proposed solution effectively addresses the validated problem."
         }
+        showDescription={false}
       />
       
       <Tabs value={currentPhase} onValueChange={handleTabChange} className="w-full">

@@ -3,19 +3,80 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/use-project';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Lightbulb, Plus } from 'lucide-react';
+import { LayoutGrid, Lightbulb, Plus, Beaker } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageIntroduction from '@/components/PageIntroduction';
 import Dashboard from '@/components/Dashboard';
-import LeanStartupBanner from '@/components/dashboard/LeanStartupBanner';
-import MilestoneCards from '@/components/dashboard/MilestoneCards';
-import FeedbackSection from '@/components/dashboard/FeedbackSection';
+import ValidationProgressSummary from '@/components/dashboard/ValidationProgressSummary';
+import MilestoneAchievements from '@/components/dashboard/MilestoneAchievements';
 import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { user } = useAuth();
-  const { projects, currentProject, isLoading, error } = useProject();
+  const { 
+    projects, 
+    currentProject, 
+    isLoading, 
+    error, 
+    updateCurrentStage 
+  } = useProject();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Function to move to a specific validation stage
+  const moveToStage = async (stageName: string) => {
+    if (!currentProject) {
+      toast({
+        title: "No Project Selected",
+        description: "Please select a project first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await updateCurrentStage(currentProject.id, stageName);
+      toast({
+        title: "Stage Updated",
+        description: `Moved to ${stageName} stage`,
+      });
+      
+      // Navigate to the appropriate page based on stage
+      switch (stageName) {
+        case 'problem':
+          navigate('/problem-validation');
+          break;
+        case 'solution':
+          navigate('/solution-validation');
+          break;
+        case 'experiments':
+          navigate('/experiments');
+          break;
+        case 'mvp':
+          navigate('/mvp');
+          break;
+        case 'metrics':
+          navigate('/metrics');
+          break;
+        case 'pivot':
+          navigate('/pivot');
+          break;
+        case 'growth':
+          navigate('/growth');
+          break;
+        default:
+          break;
+      }
+    } catch (err) {
+      console.error('Error moving to stage:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update the validation stage",
+        variant: "destructive"
+      });
+    }
+  };
   
   if (isLoading) {
     return (
@@ -62,9 +123,14 @@ const Index = () => {
   
   return (
     <div className="space-y-6">
-      <LeanStartupBanner />
-      <MilestoneCards />
-      <FeedbackSection />
+      {currentProject && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ValidationProgressSummary projectId={currentProject.id} />
+            <MilestoneAchievements projectId={currentProject.id} />
+          </div>
+        </>
+      )}
       
       {/* Keep existing dashboard functionality */}
       <div className="mt-8">

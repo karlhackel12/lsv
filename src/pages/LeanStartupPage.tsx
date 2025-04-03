@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -20,6 +19,7 @@ const LeanStartupPage = () => {
             </p>
           </>
         }
+        showDescription={false}
       />
 
       <div className="grid grid-cols-1 gap-6">

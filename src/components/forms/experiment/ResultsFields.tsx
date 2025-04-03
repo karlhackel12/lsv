@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
@@ -34,6 +33,24 @@ const ResultsFields: React.FC<ResultsFieldsProps> = ({
                 }
                 className="min-h-[80px] resize-y"
                 {...field}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="learnings"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Key Learnings</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="What are the most important things you learned from this experiment?"
+                className="min-h-[80px] resize-y"
+                {...field}
+                value={field.value || ''}
               />
             </FormControl>
           </FormItem>

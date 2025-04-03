@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +8,7 @@ interface PageIntroductionProps {
   icon?: React.ReactNode;
   className?: string;
   storageKey?: string;
+  showDescription?: boolean;
 }
 
 const PageIntroduction: React.FC<PageIntroductionProps> = ({
@@ -16,7 +16,8 @@ const PageIntroduction: React.FC<PageIntroductionProps> = ({
   description,
   icon = <Info className="h-5 w-5 text-blue-500" />,
   className = '',
-  storageKey
+  storageKey,
+  showDescription = false
 }: PageIntroductionProps) => {
   // Use localStorage to remember the user's preference if storageKey is provided
   const getInitialState = () => {
@@ -48,25 +49,27 @@ const PageIntroduction: React.FC<PageIntroductionProps> = ({
             <div className="mr-3 mt-0.5">{icon}</div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-              {isExpanded && (
+              {showDescription && isExpanded && (
                 <div className="mt-1 text-gray-600 text-sm max-w-3xl">
                   {description}
                 </div>
               )}
             </div>
           </div>
-          <button
-            onClick={toggleExpanded}
-            className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? "Collapse description" : "Expand description"}
-          >
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </button>
+          {showDescription && (
+            <button
+              onClick={toggleExpanded}
+              className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? "Collapse description" : "Expand description"}
+            >
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
       </CardContent>
     </Card>

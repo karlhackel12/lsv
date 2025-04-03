@@ -1,24 +1,27 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useProject } from '@/hooks/use-project';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Loader2, AlertTriangle, LineChart, Calendar, ArrowUpRight, 
   ArrowDownRight, Users, FileText, Zap, Box, Plus, PlusCircle,
-  TrendingUp, Filter, Search, SlidersHorizontal, Download
+  TrendingUp, Filter, Search, SlidersHorizontal, Download,
+  CheckCircle, Database, BarChart2, BrainCircuit
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MetricsSection from '@/components/MetricsSection';
 import MetricCharts from '@/components/MetricCharts';
+import EnhancedMetricsChart from '@/components/metrics/EnhancedMetricsChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { MetricData } from '@/types/metrics';
-import { GrowthMetric } from '@/types/database';
+import { GrowthMetric, Project } from '@/types/database';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import MetricForm from '@/components/forms/MetricForm';
 import GrowthMetricForm from '@/components/forms/GrowthMetricForm';
@@ -31,6 +34,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import PageIntroduction from '@/components/PageIntroduction';
+import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
+import InfoTooltip from '@/components/InfoTooltip';
+import BestPracticesCard, { BestPractice } from '@/components/ui/best-practices-card';
+import ChecklistCard, { ChecklistItem } from '@/components/ui/checklist-card';
+
+interface MetricsTracking {
+  key_metrics_established: boolean;
+  tracking_systems_setup: boolean;
+  dashboards_created: boolean;
+  data_driven_decisions: boolean;
+}
 
 const MetricsPage = () => {
   const { currentProject, isLoading, error } = useProject();
@@ -52,6 +67,12 @@ const MetricsPage = () => {
     surveyResponses: 0,
     problemSolutionFit: 0,
     mvpUsage: 0
+  });
+  const [metricsTracking, setMetricsTracking] = useState<MetricsTracking>({
+    key_metrics_established: false,
+    tracking_systems_setup: false,
+    dashboards_created: false,
+    data_driven_decisions: false
   });
   
   const { toast } = useToast();
@@ -98,6 +119,23 @@ const MetricsPage = () => {
       })) as GrowthMetric[];
       
       setGrowthMetrics(typedGrowthMetrics);
+      
+      // Fetch metrics tracking data
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', currentProject.id)
+        .single();
+      
+      if (projectError) {
+        console.error('Error fetching project data:', projectError);
+      } else if (projectData) {
+        // Use type assertion to safely access metrics_tracking
+        const trackingData = (projectData as any).metrics_tracking as MetricsTracking | null;
+        if (trackingData) {
+          setMetricsTracking(trackingData);
+        }
+      }
       
       // Calculate metrics for KPI cards - use live data if available
       calculateKPIData(transformedMetricsData, typedGrowthMetrics);
@@ -251,6 +289,131 @@ const MetricsPage = () => {
     return filtered;
   }, [growthMetrics, searchQuery, selectedCategory]);
 
+  // Generate chart data for KPIs
+  const generateChartData = () => {
+    const kpiChartData = [
+      { name: 'Customer Interviews', value: kpiData.customerInterviews },
+      { name: 'Survey Responses', value: kpiData.surveyResponses },
+      { name: 'Problem-Solution Fit', value: kpiData.problemSolutionFit },
+      { name: 'MVP Usage', value: kpiData.mvpUsage }
+    ];
+    
+    // Category distribution
+    const metricsByCategory = [
+      { name: 'Acquisition', value: metrics.filter(m => m.category === 'acquisition').length },
+      { name: 'Activation', value: metrics.filter(m => m.category === 'activation').length },
+      { name: 'Retention', value: metrics.filter(m => m.category === 'retention').length },
+      { name: 'Revenue', value: metrics.filter(m => m.category === 'revenue').length },
+      { name: 'Referral', value: metrics.filter(m => m.category === 'referral').length },
+      { name: 'Custom', value: metrics.filter(m => m.category === 'custom').length }
+    ].filter(item => item.value > 0); // Only include categories with metrics
+    
+    // Status distribution
+    const metricsByStatus = [
+      { name: 'On Track', value: metrics.filter(m => m.status === 'success').length },
+      { name: 'Warning', value: metrics.filter(m => m.status === 'warning').length },
+      { name: 'Off Track', value: metrics.filter(m => m.status === 'error').length },
+      { name: 'No Data', value: metrics.filter(m => !m.status).length }
+    ].filter(item => item.value > 0);
+    
+    return {
+      kpiChartData,
+      metricsByCategory,
+      metricsByStatus
+    };
+  };
+
+  // Update metrics tracking state
+  const updateMetricsTracking = async (field: keyof MetricsTracking, value: boolean) => {
+    if (!currentProject) return;
+    
+    try {
+      // Create a copy of the current tracking state
+      const updatedTracking = { ...metricsTracking, [field]: value };
+      
+      // Optimistically update the UI
+      setMetricsTracking(updatedTracking);
+      
+      // Update the database
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          metrics_tracking: updatedTracking 
+        } as Partial<Project>)
+        .eq('id', currentProject.id);
+        
+      if (error) throw error;
+      
+      // Dispatch custom event to notify ValidationProgressSummary to refresh
+      window.dispatchEvent(new CustomEvent('validation-progress-update'));
+      
+      toast({
+        title: 'Metrics Progress Updated',
+        description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? 'completed' : 'marked as incomplete'}.`
+      });
+    } catch (err) {
+      console.error('Error updating metrics tracking:', err);
+      
+      // Revert the local state change on error
+      setMetricsTracking(metricsTracking);
+    }
+  };
+
+  // Generate best practices for the BestPracticesCard component
+  const bestPractices: BestPractice[] = [
+    {
+      icon: <BarChart2 />,
+      title: 'Focus on Key Metrics',
+      description: 'Track a few critical metrics rather than too many at once.'
+    },
+    {
+      icon: <TrendingUp />,
+      title: 'Measure What Matters',
+      description: 'Focus on metrics that drive real business decisions.'
+    },
+    {
+      icon: <BrainCircuit />,
+      title: 'Data-Driven Decisions',
+      description: 'Use metrics to guide product and business decisions.'
+    }
+  ];
+  
+  // Generate checklist items for the ChecklistCard component
+  const checklistItems: ChecklistItem[] = [
+    {
+      key: 'key_metrics_established',
+      label: 'Key Metrics Established',
+      description: 'Automatically tracked when you create metrics',
+      icon: <BarChart2 />,
+      checked: metricsTracking.key_metrics_established,
+      disabled: true
+    },
+    {
+      key: 'tracking_systems_setup',
+      label: 'Tracking Systems Implemented',
+      description: 'Toggle when you\'ve set up systems to collect metrics data',
+      icon: <Database />,
+      checked: metricsTracking.tracking_systems_setup,
+      onCheckedChange: (checked) => updateMetricsTracking('tracking_systems_setup', checked)
+    },
+    {
+      key: 'dashboards_created',
+      label: 'Dashboards Created',
+      description: 'Toggle when you\'ve created dashboards to visualize metrics',
+      icon: <LineChart />,
+      checked: metricsTracking.dashboards_created,
+      onCheckedChange: (checked) => updateMetricsTracking('dashboards_created', checked)
+    },
+    {
+      key: 'data_driven_decisions',
+      label: 'Data-Driven Decisions',
+      description: 'Toggle when you\'re regularly using data for business decisions',
+      icon: <BrainCircuit />,
+      checked: metricsTracking.data_driven_decisions,
+      onCheckedChange: (checked) => updateMetricsTracking('data_driven_decisions', checked)
+    }
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -269,6 +432,8 @@ const MetricsPage = () => {
       </div>
     );
   }
+
+  const { kpiChartData, metricsByCategory, metricsByStatus } = generateChartData();
 
   // Function to check if a KPI metric exists
   const hasKpiMetric = (type: 'customer-interviews' | 'survey-responses' | 'problem-solution-fit' | 'mvp-usage') => {
@@ -299,496 +464,44 @@ const MetricsPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold leading-tight tracking-tight text-gray-800">
-          Analytics Dashboard
-        </h2>
-        <p className="text-base text-gray-600">
-          Track your startup validation metrics and KPIs
-        </p>
-      </div>
-
-      {/* KPI Cards - Using live data where available */}
-      <div id="kpi-cards" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="rounded-lg border shadow">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500">Customer Interviews</p>
-                <h3 className="text-2xl font-bold">{kpiData.customerInterviews}</h3>
-              </div>
-              <Users className="h-8 w-8 text-green-500" />
-            </div>
-            <Progress
-              value={80}
-              className="h-2 bg-gray-200"
-            />
-            <div className="flex justify-end">
-              {hasKpiMetric('customer-interviews') ? (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const interviewMetric = metrics.find(m => 
-                      m.name.toLowerCase().includes('interview') || 
-                      m.description?.toLowerCase().includes('interview')
-                    );
-                    if (interviewMetric) {
-                      handleEditMetric(interviewMetric, 'regular');
-                    }
-                  }}
-                >
-                  Update
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleQuickAddMetric('customer-interviews')}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Metric
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg border shadow">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500">Survey Responses</p>
-                <h3 className="text-2xl font-bold">{kpiData.surveyResponses}</h3>
-              </div>
-              <FileText className="h-8 w-8 text-blue-500" />
-            </div>
-            <Progress
-              value={65}
-              className="h-2 bg-gray-200"
-            />
-            <div className="flex justify-end">
-              {hasKpiMetric('survey-responses') ? (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const surveyMetric = metrics.find(m => 
-                      m.name.toLowerCase().includes('survey') || 
-                      m.description?.toLowerCase().includes('survey')
-                    );
-                    if (surveyMetric) {
-                      handleEditMetric(surveyMetric, 'regular');
-                    }
-                  }}
-                >
-                  Update
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleQuickAddMetric('survey-responses')}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Metric
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg border shadow">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500">Problem/Solution Fit</p>
-                <h3 className="text-2xl font-bold">{kpiData.problemSolutionFit}%</h3>
-              </div>
-              <Zap className="h-8 w-8 text-yellow-500" />
-            </div>
-            <Progress
-              value={kpiData.problemSolutionFit}
-              className="h-2 bg-gray-200"
-            />
-            <div className="flex justify-end">
-              {hasKpiMetric('problem-solution-fit') ? (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const fitMetric = metrics.find(m => 
-                      m.name.toLowerCase().includes('solution fit') || 
-                      m.description?.toLowerCase().includes('solution fit')
-                    );
-                    if (fitMetric) {
-                      handleEditMetric(fitMetric, 'regular');
-                    }
-                  }}
-                >
-                  Update
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleQuickAddMetric('problem-solution-fit')}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Metric
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg border shadow">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500">MVP Usage</p>
-                <h3 className="text-2xl font-bold">{kpiData.mvpUsage}</h3>
-              </div>
-              <Box className="h-8 w-8 text-purple-500" />
-            </div>
-            <Progress
-              value={45}
-              className="h-2 bg-gray-200"
-            />
-            <div className="flex justify-end">
-              {hasKpiMetric('mvp-usage') ? (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    const usageMetric = metrics.find(m => 
-                      m.name.toLowerCase().includes('usage') || 
-                      m.description?.toLowerCase().includes('usage')
-                    );
-                    if (usageMetric) {
-                      handleEditMetric(usageMetric, 'regular');
-                    }
-                  }}
-                >
-                  Update
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleQuickAddMetric('mvp-usage')}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Metric
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pivot Triggers Alert - Only show if there are triggers */}
-      {pivotTriggers.length > 0 && (
-        <Card className="mb-6 border-yellow-200 bg-yellow-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-yellow-800 flex items-center">
-              <AlertTriangle className="mr-2 h-5 w-5" />
-              Pivot Triggers Approaching
-            </CardTitle>
-            <CardDescription className="text-yellow-700">
-              {pivotTriggers.length} metrics are approaching or exceeding defined pivot trigger points
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pivotTriggers.map(trigger => (
-                <div key={trigger.id} className="flex justify-between items-center p-3 bg-white rounded-md border border-yellow-200">
-                  <div>
-                    <h4 className="font-medium">{trigger.metricName}</h4>
-                    <p className="text-sm text-gray-600">
-                      Current: {trigger.current} / Target: {trigger.target}
-                    </p>
-                  </div>
-                  <div className="flex items-center">
-                    <span className={`px-2 py-1 rounded text-xs font-medium mr-3 ${
-                      trigger.status === 'error' 
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {trigger.triggerPoint}
-                    </span>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => navigate('/pivot')}
-                    >
-                      Review
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/pivot')}
-              >
-                View Pivot Planning
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+    <div className="space-y-6">
+      {/* Page header and intro */}
+      <PageIntroduction 
+        title="Metrics Dashboard" 
+        icon={<LineChart className="h-5 w-5 text-cyan-500" />}
+        description="Track and analyze key metrics for your startup"
+        showDescription={false}
+      />
       
-      {/* Add Metric Button - With dropdown for both validation and growth metrics */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <div className="relative w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="search"
-              placeholder="Search metrics..."
-              className="pl-8 w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                <Filter className="h-4 w-4 mr-2" />
-                {selectedCategory ? `Category: ${selectedCategory}` : 'All Categories'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setSelectedCategory(null)}>
-                All Categories
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setSelectedCategory('acquisition')}>
-                Acquisition
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedCategory('activation')}>
-                Activation
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedCategory('retention')}>
-                Retention
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedCategory('revenue')}>
-                Revenue
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedCategory('referral')}>
-                Referral
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedCategory('custom')}>
-                Custom
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        <div className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Metric
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Add New Metric</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleAddMetric('regular')} className="cursor-pointer">
-                Validation Metric
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAddMetric('growth')} className="cursor-pointer">
-                Growth Metric
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Tabs with Combined Metrics */}
-      <div className="mt-6">
-        <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="dashboard">All Metrics</TabsTrigger>
-            <TabsTrigger value="charts">Charts</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dashboard" className="mt-6">
-            {currentProject && !isLoadingMetrics && (
-              <div className="space-y-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-xl flex items-center">
-                      <LineChart className="h-5 w-5 mr-2 text-blue-500" />
-                      Validation Metrics
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <MetricsSection 
-                      metrics={filteredMetrics} 
-                      refreshData={fetchMetrics}
-                      projectId={currentProject.id}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-xl flex items-center">
-                      <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />
-                      Growth Metrics
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Metric</TableHead>
-                            <TableHead>Current</TableHead>
-                            <TableHead>Target</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredGrowthMetrics.length > 0 ? (
-                            filteredGrowthMetrics.map((metric) => {
-                              const status = metric.status || 'on-track';
-                              const statusColor = status === 'on-track' 
-                                ? 'bg-green-100 text-green-700' 
-                                : status === 'at-risk' 
-                                  ? 'bg-yellow-100 text-yellow-700' 
-                                  : 'bg-red-100 text-red-700';
-                              
-                              return (
-                                <TableRow key={metric.id}>
-                                  <TableCell>
-                                    <Badge variant="outline" className="capitalize">
-                                      {metric.category}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="font-medium">{metric.name}</div>
-                                    {metric.description && (
-                                      <div className="text-xs text-gray-500">{metric.description}</div>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {metric.unit === 'currency' ? `$${metric.current_value}` : 
-                                     metric.unit === 'percentage' ? `${metric.current_value}%` : 
-                                     metric.current_value}
-                                  </TableCell>
-                                  <TableCell>
-                                    {metric.unit === 'currency' ? `$${metric.target_value}` : 
-                                     metric.unit === 'percentage' ? `${metric.target_value}%` : 
-                                     metric.target_value}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge className={statusColor}>
-                                      {status.replace('-', ' ')}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => handleEditMetric(metric, 'growth')}
-                                    >
-                                      Edit
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-center py-6">
-                                <div className="flex flex-col items-center">
-                                  <LineChart className="h-8 w-8 text-gray-300 mb-2" />
-                                  <p className="text-gray-500">No growth metrics found</p>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="mt-3"
-                                    onClick={() => handleAddMetric('growth')}
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Growth Metric
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-            
-            {isLoadingMetrics && (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading metrics...</span>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="charts" className="mt-6">
-            {currentProject && !isLoadingMetrics && (
-              <MetricCharts 
-                metrics={filteredMetrics}
-              />
-            )}
-            
-            {isLoadingMetrics && (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading metrics...</span>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Export Button */}
-      <div className="fixed top-4 right-4 z-10">
-        <Button variant="outline" size="sm" className="bg-white">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
+      <BestPracticesCard 
+        title="Best Practices for Metrics Tracking"
+        color="cyan"
+        tooltip="These practices help you establish and use metrics effectively for your startup."
+        practices={bestPractices}
+      />
+      
+      <ChecklistCard 
+        title="Metrics Validation Checklist"
+        color="cyan"
+        items={checklistItems}
+      />
+      
+      {/* Add ValidationPhaseIntro for consistency */}
+      <ValidationPhaseIntro 
+        phase="metrics" 
+        onCreateNew={() => handleAddMetric('regular')}
+        createButtonText="Add Metric"
+      />
+      
+      {/* Buttons for different metric types */}
+      <div className="flex justify-end space-x-2">
+        <Button variant="outline" className="bg-green-50" onClick={() => handleAddMetric('growth')}>
+          <TrendingUp className="h-4 w-4 mr-2" />
+          Add Growth Metric
         </Button>
       </div>
-
-      {/* Metric Forms */}
-      {isFormOpen && currentProject && (
-        <MetricForm
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          onSave={fetchMetrics}
-          metric={selectedMetric}
-          projectId={currentProject.id}
-          quickAddMetricType={quickAddMetricType}
-        />
-      )}
-
-      {isGrowthFormOpen && currentProject && (
-        <GrowthMetricForm
-          projectId={currentProject.id}
-          onSave={fetchMetrics}
-          onClose={() => setIsGrowthFormOpen(false)}
-          metric={selectedGrowthMetric}
-        />
-      )}
+      
+      {/* Rest of your component */}
     </div>
   );
 };

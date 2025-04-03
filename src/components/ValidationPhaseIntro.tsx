@@ -1,126 +1,112 @@
-
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Info, Lightbulb, Beaker, Layers, TrendingUp, GitBranch } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import InfoTooltip from '@/components/InfoTooltip';
+import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-storage';
 
-interface PhaseInfo {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  graduationCriteria: string[];
-}
-
-const phaseData: Record<string, PhaseInfo> = {
+// Define styled types for each phase
+const PHASES = {
   problem: {
     title: 'Problem Validation Phase',
-    description: 'Verify that you are addressing a real problem that customers care about solving. Focus on understanding the problem space deeply through customer interviews and observation.',
-    icon: <Lightbulb className="h-6 w-6" />,
-    color: 'blue',
-    graduationCriteria: ['Conducted 10+ customer interviews', 'Identified a specific customer segment with this problem', 'Problem rated as "important" or "very important" by >70% of interviewees', 'Customers are actively trying to solve this problem already']
+    description: "Create and validate hypotheses about your target customers' problems and needs.",
+    icon: Plus,
+    color: 'text-blue-600',
+    bgClass: 'bg-blue-50 border-blue-100',
+    graduationCriteria: ['Created problem hypotheses', 'Conducted customer interviews', 'Identified pain points', 'Validated market need']
   },
   solution: {
     title: 'Solution Validation Phase',
-    description: 'Test your proposed solution with potential customers to determine if it successfully addresses the validated problem and if customers are willing to adopt it.',
-    icon: <Beaker className="h-6 w-6" />,
-    color: 'green',
-    graduationCriteria: ['Created low-fidelity prototypes or mockups', 'Tested solution concepts with 5+ potential customers', '>50% of testers express interest in using the solution', 'Identified key features for MVP']
+    description: 'Test whether your proposed solution effectively addresses the validated problem.',
+    icon: Plus,
+    color: 'text-green-600',
+    bgClass: 'bg-green-50 border-green-100',
+    graduationCriteria: ['Defined solution hypotheses', 'Created solution sketches', 'Tested with customers', 'Received positive feedback']
   },
   mvp: {
-    title: 'MVP Testing Phase',
+    title: 'Minimum Viable Product Phase',
     description: 'Build the smallest possible version of your product that delivers value and test it with real users to gather feedback and validate your business model.',
-    icon: <Layers className="h-6 w-6" />,
-    color: 'yellow',
-    graduationCriteria: ['MVP built with core features only', 'Acquired first set of real users', 'Users actively engaging with product', 'Identified key metrics for tracking product-market fit']
+    icon: Plus,
+    color: 'text-yellow-600',
+    bgClass: 'bg-yellow-50 border-yellow-100',
+    graduationCriteria: ['Defined core features', 'Built minimum viable product', 'Released to test users', 'Gathered usage metrics']
+  },
+  metrics: {
+    title: 'Metrics Definition Phase',
+    description: "Define and track key metrics to measure your product's performance and guide decision-making.",
+    icon: Plus,
+    color: 'text-cyan-600',
+    bgClass: 'bg-cyan-50 border-cyan-100',
+    graduationCriteria: ['Established key performance indicators (KPIs)', 'Implemented tracking systems for all metrics', 'Created dashboards for data visualization', 'Regularly using data to drive business decisions']
   },
   growth: {
-    title: 'Growth Model Validation Phase',
-    description: 'Design, test and optimize your growth model to scale customer acquisition, retention and revenue in a repeatable and sustainable way.',
-    icon: <TrendingUp className="h-6 w-6" />,
-    color: 'purple',
-    graduationCriteria: ['Acquisition cost lower than customer lifetime value', 'Identified scalable customer acquisition channels', 'Retention metrics show sustained usage', 'Revenue model demonstrating positive unit economics']
+    title: 'Growth & Scaling Phase',
+    description: 'Identify scalable acquisition channels and optimize your growth funnel to sustainably grow your product.',
+    icon: Plus,
+    color: 'text-indigo-600',
+    bgClass: 'bg-indigo-50 border-indigo-100',
+    graduationCriteria: ['Identified effective acquisition channels', 'Set up growth experiments', 'Optimized conversion funnel', 'Achieved repeatable, sustainable growth']
   },
   pivot: {
     title: 'Pivot Decision Phase',
-    description: 'Evaluate when a strategic change in direction is needed based on validated learning and systematic experimentation.',
-    icon: <GitBranch className="h-6 w-6" />,
-    color: 'orange',
-    graduationCriteria: ['Defined clear pivot triggers based on key metrics', 'Evaluated multiple pivot options with evidence', 'Maintained what\'s working while changing direction', 'Developed hypothesis and experiment plan for new direction']
+    description: 'Evaluate all validation data to determine if a fundamental change in strategy is needed.',
+    icon: Plus,
+    color: 'text-pink-600',
+    bgClass: 'bg-pink-50 border-pink-100',
+    graduationCriteria: ['Evaluated all validation data', 'Conducted pivot assessment', 'Made strategic decision', 'Documented reasoning']
   }
 };
 
 interface ValidationPhaseIntroProps {
-  phase: 'problem' | 'solution' | 'mvp' | 'growth' | 'pivot';
-  onCreateNew?: () => void;
-  createButtonText?: string;
+  phase: keyof typeof PHASES;
+  onCreateNew: () => void;
+  createButtonText: string;
 }
 
-const ValidationPhaseIntro = ({
-  phase,
-  onCreateNew,
-  createButtonText = 'Create New'
-}: ValidationPhaseIntroProps) => {
-  const phaseInfo = phaseData[phase];
-
+const ValidationPhaseIntro = ({ phase, onCreateNew, createButtonText }: ValidationPhaseIntroProps) => {
+  const [isExpanded, setIsExpanded] = useLocalStorage(`phase-intro-${phase}-expanded`, false);
+  
+  const phaseData = PHASES[phase];
+  
   return (
-    <Card className="bg-white mb-6 overflow-hidden">
-      <div className="p-6 border-b">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex items-start">
-            <div className={`p-3 rounded-full bg-${phaseInfo.color}-100 mr-4`}>
-              {phaseInfo.icon}
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-1 flex items-center">
-                {phaseInfo.title}
-                <InfoTooltip 
-                  text={`Learn more about the ${phaseInfo.title}`}
-                  link="/lean-startup-methodology"
-                  className="ml-2"
-                />
-              </h3>
-              <p className="text-gray-600">{phaseInfo.description}</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap md:flex-nowrap gap-2 mt-2 md:mt-0">
-            {onCreateNew && (
-              <Button 
-                onClick={onCreateNew}
-                id={`create-${phase}-button`}
-              >
-                {createButtonText}
-              </Button>
-            )}
-          </div>
+    <Card className={`${phaseData.bgClass} border shadow-sm`}>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className={`text-lg font-bold ${phaseData.color}`}>
+            {phaseData.title}
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
         </div>
-      </div>
+        <CardDescription>
+          {phaseData.description}
+        </CardDescription>
+      </CardHeader>
       
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="graduation-criteria">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline">
-            <div className="flex items-center">
-              <Info className="h-4 w-4 mr-2 text-blue-500" />
-              <span className="font-medium">Graduation Criteria</span>
+      {isExpanded && (
+        <CardContent className="pt-2">
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-semibold mb-2">To complete this phase:</h4>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {phaseData.graduationCriteria.map((criterion, index) => (
+                  <li key={index} className="text-gray-600">{criterion}</li>
+                ))}
+              </ul>
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-4">
-            <ul className="space-y-2">
-              {phaseInfo.graduationCriteria.map((criteria, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="inline-block h-5 w-5 rounded-full bg-gray-200 text-center text-sm font-medium leading-5 mr-3 mt-0.5">
-                    {index + 1}
-                  </span>
-                  <span>{criteria}</span>
-                </li>
-              ))}
-            </ul>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          </div>
+        </CardContent>
+      )}
+      
+      <div className="p-4 border-t border-gray-100 flex justify-end bg-white bg-opacity-50 rounded-b-lg">
+        <Button 
+          onClick={onCreateNew}
+          className={phaseData.color.replace('text', 'bg').replace('-600', '-600 hover:bg-slate-800')}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {createButtonText}
+        </Button>
+      </div>
     </Card>
   );
 };

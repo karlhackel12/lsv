@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +45,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [resultsInput, setResultsInput] = useState(experiment.results || '');
+  const [learningsInput, setLearningsInput] = useState(experiment.learnings || '');
   const [insightsInput, setInsightsInput] = useState(experiment.insights || '');
   const [decisionsInput, setDecisionsInput] = useState(experiment.decisions || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -75,6 +75,7 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
         .from('experiments')
         .update({
           results: resultsInput,
+          learnings: learningsInput,
           insights: insightsInput,
           decisions: decisionsInput,
           updated_at: new Date().toISOString()
@@ -233,6 +234,16 @@ const ExperimentDetailView: React.FC<ExperimentDetailViewProps> = ({
                         value={insightsInput}
                         onChange={(e) => setInsightsInput(e.target.value)}
                         placeholder="What insights did you gain from this experiment?"
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-md font-semibold mb-2">Key Learnings</h3>
+                      <Textarea 
+                        value={learningsInput}
+                        onChange={(e) => setLearningsInput(e.target.value)}
+                        placeholder="What are the most important things you learned from this experiment?"
                         className="min-h-[100px]"
                       />
                     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/hooks/use-project';
@@ -7,13 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { BookOpen, Target, Lightbulb, Beaker, BarChart2, TrendingUp, Users, Settings, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Layers } from 'lucide-react';
-import LeanStartupBanner from '@/components/dashboard/LeanStartupBanner';
-import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
 import InfoTooltip from '@/components/InfoTooltip';
 import { adaptGrowthExperimentToExperiment } from '@/utils/experiment-adapters';
 import { GrowthExperiment } from '@/types/database';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { RecommendedExperimentsPanel } from '@/components/ai/RecommendedExperimentsPanel';
+import { ExperimentInsightsPanel } from '@/components/ai/ExperimentInsightsPanel';
 
 const Dashboard = () => {
   const {
@@ -132,16 +131,13 @@ const Dashboard = () => {
   }
   
   return <div className="space-y-6">
-      <LeanStartupBanner />
-      <BusinessPlanBanner />
-      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
               <Lightbulb className="mr-2 h-5 w-5 text-blue-500" />
               Hypothesis Testing
-              <InfoTooltip text="Validate your business assumptions systematically" link="/lean-startup-methodology" className="ml-2" />
+              <InfoTooltip content="Validate your business assumptions systematically" className="ml-2" />
             </CardTitle>
             <CardDescription>Validate your business assumptions</CardDescription>
           </CardHeader>
@@ -159,7 +155,7 @@ const Dashboard = () => {
               </div>}
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full text-blue-600" onClick={() => navigate('/hypotheses')}>
+            <Button variant="outline" className="w-full text-blue-600" onClick={() => navigate('/problem-validation')}>
               View All Hypotheses
             </Button>
           </CardFooter>
@@ -170,7 +166,7 @@ const Dashboard = () => {
             <CardTitle className="text-lg flex items-center">
               <Beaker className="mr-2 h-5 w-5 text-green-500" />
               Experiments
-              <InfoTooltip text="Test and learn systematically through structured experiments" link="/lean-startup-methodology" className="ml-2" />
+              <InfoTooltip content="Test and learn systematically through structured experiments" className="ml-2" />
             </CardTitle>
             <CardDescription>Test and learn systematically</CardDescription>
           </CardHeader>
@@ -199,7 +195,7 @@ const Dashboard = () => {
             <CardTitle className="text-lg flex items-center">
               <Layers className="mr-2 h-5 w-5 text-yellow-500" />
               MVP Features
-              <InfoTooltip text="Minimum Viable Product features that deliver core value" link="/lean-startup-methodology" className="ml-2" />
+              <InfoTooltip content="Minimum Viable Product features that deliver core value" className="ml-2" />
             </CardTitle>
             <CardDescription>Track your core feature development</CardDescription>
           </CardHeader>
@@ -229,7 +225,7 @@ const Dashboard = () => {
           <CardTitle className="text-lg flex items-center">
             <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
             Growth Experiments
-            <InfoTooltip text="Optimize your growth metrics through focused experiments" link="/growth" className="ml-2" />
+            <InfoTooltip content="Optimize your growth metrics through focused experiments" className="ml-2" />
           </CardTitle>
           <CardDescription>Accelerate your growth metrics</CardDescription>
         </CardHeader>
@@ -269,18 +265,32 @@ const Dashboard = () => {
           )}
         </CardContent>
         <CardFooter>
-          <Button variant="outline" className="w-full text-purple-600" onClick={() => navigate('/experiments?type=growth')}>
-            View Growth Experiments
+          <Button variant="outline" className="w-full text-purple-600" onClick={() => navigate('/growth')}>
+            View Growth Strategy
           </Button>
         </CardFooter>
       </Card>
+      
+      {/* AI-powered sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* AI-recommended experiments */}
+        <RecommendedExperimentsPanel 
+          projectId={currentProject.id} 
+          stage={currentProject.current_stage || currentProject.stage}
+        />
+        
+        {/* AI-generated insights */}
+        <ExperimentInsightsPanel 
+          projectId={currentProject.id}
+        />
+      </div>
       
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <CheckCircle2 className="mr-2 h-5 w-5 text-teal-500" />
             Scaling Readiness
-            <InfoTooltip text="Track your startup's readiness to scale" link="/growth?tab=scaling_readiness" className="ml-2" />
+            <InfoTooltip content="Track your startup's readiness to scale" className="ml-2" />
           </CardTitle>
           <CardDescription>Evaluate your scaling readiness</CardDescription>
         </CardHeader>
