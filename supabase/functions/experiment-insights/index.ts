@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Database } from '../_shared/types.ts';
@@ -33,17 +34,56 @@ interface Insight {
 }
 
 Deno.serve(async (req) => {
+  console.log(`[experiment-insights] Received ${req.method} request`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('[experiment-insights] Handling CORS preflight request');
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // Check if OpenAI API key is configured
+    if (!openaiApiKey) {
+      console.error('[experiment-insights] Missing OPENAI_API_KEY environment variable');
+      return new Response(
+        JSON.stringify({ 
+          error: 'OpenAI API key is not configured',
+          configIssue: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
+    // Check if Supabase service role key is configured
+    if (!supabaseServiceKey) {
+      console.error('[experiment-insights] Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Supabase service role key is not configured',
+          configIssue: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
     // Parse request data
-    const requestData: InsightRequest = await req.json();
+    let requestData: InsightRequest;
+    try {
+      requestData = await req.json();
+      console.log('[experiment-insights] Request data:', JSON.stringify(requestData));
+    } catch (e) {
+      console.error('[experiment-insights] Error parsing request JSON:', e);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
     const { projectId, userId, experimentId } = requestData;
 
     if (!projectId || !userId) {
+      console.error('[experiment-insights] Missing required fields:', { projectId, userId });
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -69,10 +109,11 @@ Deno.serve(async (req) => {
     }
 
     // Execute the query
+    console.log('[experiment-insights] Fetching experiments data');
     const { data: experiments, error: experimentsError } = await experimentsQuery;
 
     if (experimentsError) {
-      console.error('Error fetching experiments:', experimentsError);
+      console.error('[experiment-insights] Error fetching experiments:', experimentsError);
       return new Response(
         JSON.stringify({ error: 'Failed to fetch experiments data' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -81,6 +122,7 @@ Deno.serve(async (req) => {
 
     // If no experiments are found or have results
     if (!experiments || experiments.length === 0) {
+      console.log('[experiment-insights] No completed experiments found');
       return new Response(
         JSON.stringify({ 
           error: 'No completed experiments found',
@@ -92,16 +134,18 @@ Deno.serve(async (req) => {
 
     // Fetch hypotheses related to these experiments
     const experimentIds = experiments.map(exp => exp.id);
+    console.log('[experiment-insights] Fetching hypotheses data');
     const { data: hypotheses, error: hypothesesError } = await supabase
       .from('hypotheses')
       .select('*')
       .in('id', experimentIds.map(id => id.toString()));
 
     if (hypothesesError) {
-      console.error('Error fetching hypotheses:', hypothesesError);
+      console.error('[experiment-insights] Error fetching hypotheses:', hypothesesError);
     }
 
     // Generate insights using AI
+    console.log('[experiment-insights] Generating insights with OpenAI');
     const insights = await generateInsights(experiments, hypotheses || []);
 
     return new Response(
@@ -109,9 +153,9 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('[experiment-insights] Error processing request:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
@@ -126,6 +170,7 @@ async function generateInsights(experiments: any[], hypotheses: any[]): Promise<
     );
 
     if (experimentsWithResults.length === 0) {
+      console.log('[experiment-insights] No experiments with meaningful results');
       return [];
     }
 
@@ -158,6 +203,7 @@ async function generateInsights(experiments: any[], hypotheses: any[]): Promise<
     Format the response as a JSON array of insight objects, with a unique ID for each insight.
     `;
 
+    console.log('[experiment-insights] Calling OpenAI API');
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -180,6 +226,7 @@ async function generateInsights(experiments: any[], hypotheses: any[]): Promise<
     }
 
     // Parse the JSON response
+    console.log('[experiment-insights] Parsing OpenAI response');
     const responseJson = JSON.parse(responseContent);
     
     // Ensure we have an array of insights
@@ -187,8 +234,8 @@ async function generateInsights(experiments: any[], hypotheses: any[]): Promise<
     
     return insights;
   } catch (error) {
-    console.error("Error generating insights:", error);
+    console.error("[experiment-insights] Error generating insights:", error);
     // Return an empty array if AI generation fails
     return [];
   }
-} 
+}

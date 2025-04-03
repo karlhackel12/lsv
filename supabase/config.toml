@@ -31,8 +31,8 @@ port = 54327
 
 [functions]
 [functions.experiment-insights]
-verify_jwt = true
+verify_jwt = false
 [functions.experiment-recommendations]
-verify_jwt = true
+verify_jwt = false
 [functions.smart-templates]
-verify_jwt = true
+verify_jwt = false
