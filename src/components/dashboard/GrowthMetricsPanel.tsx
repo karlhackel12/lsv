@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, ArrowRight, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProject } from '@/hooks/use-project';
 import { Button } from '@/components/ui/button';
-import InfoTooltip from '@/components/ui/InfoTooltip'; // Fixed import path
+import InfoTooltip from '@/components/InfoTooltip'; // Updated import path
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';

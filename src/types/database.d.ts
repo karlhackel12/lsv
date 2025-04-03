@@ -400,6 +400,15 @@ export interface Database {
   }
 }
 
+export interface Stage {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  link: string;
+  tracking?: any;
+}
+
 export type Metric = Database['public']['Tables']['metrics']['Row'];
 export type MetricHistory = Database['public']['Tables']['metric_history']['Row'];
 export type MetricThreshold = Database['public']['Tables']['metric_thresholds']['Row'];

@@ -8,7 +8,7 @@ export const adaptExperiment = (row: ExperimentRow): Experiment => {
   return {
     ...row,
     metrics: Array.isArray(row.metrics) ? row.metrics : 
-             (typeof row.metrics === 'string' ? [row.metrics] : [])
+             (typeof row.metrics === 'string' ? row.metrics.split(',') : [])
   };
 };
 

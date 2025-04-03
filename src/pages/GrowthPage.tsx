@@ -328,7 +328,7 @@ const GrowthPage = () => {
             </CardHeader>
             <CardContent className="p-6">
               {currentProject && (
-                <GrowthMetricsPanel projectId={currentProject.id} />
+                <GrowthMetricsPanel projectId={currentProject?.id || ''} />
               )}
             </CardContent>
           </Card>

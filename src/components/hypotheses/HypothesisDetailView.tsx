@@ -103,20 +103,21 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
   
   const fetchExperiments = async () => {
     try {
-      setIsLoadingExperiments(true);
-      
       const { data, error } = await supabase
         .from('experiments')
         .select('*')
         .eq('hypothesis_id', hypothesis.id);
-        
-      if (error) throw error;
       
-      setExperiments(adaptExperiments(data));
+      if (error) {
+        console.error('Error fetching experiments:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setExperiments(adaptExperiments(data));
+      }
     } catch (err) {
-      console.error('Error fetching related experiments:', err);
-    } finally {
-      setIsLoadingExperiments(false);
+      console.error('Error:', err);
     }
   };
 

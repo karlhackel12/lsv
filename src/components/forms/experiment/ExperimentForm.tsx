@@ -102,7 +102,7 @@ export default function ExperimentForm({
         hypothesis: values.hypothesis,
         status: values.status,
         results: values.results || null,
-        metrics: values.metrics?.join(',') || '',
+        metrics: Array.isArray(values.metrics) ? values.metrics.join(',') : values.metrics || '',
         learnings: values.learnings || null,
         decisions: values.decisions || null,
         insights: values.insights || null,

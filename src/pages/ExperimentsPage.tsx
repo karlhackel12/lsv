@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Experiment } from '@/types/database';
+import { Experiment, ExperimentTemplate } from '@/types/database';
 import { adaptExperiments } from '@/utils/experiment-adapter';
 import { FlaskConical, Info, ArrowLeft } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
@@ -12,6 +13,7 @@ import ExperimentDetailView from '@/components/experiments/ExperimentDetailView'
 import DeleteExperimentDialog from '@/components/experiments/DeleteExperimentDialog';
 import TemplateSelector from '@/components/experiments/TemplateSelector';
 import { useExperimentTemplates } from '@/hooks/use-experiment-templates';
+import ExperimentList from '@/components/experiments/ExperimentList'; // Add this import
 import { 
   Breadcrumb,
   BreadcrumbItem,
