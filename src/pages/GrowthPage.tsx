@@ -70,6 +70,7 @@ const GrowthPage = () => {
     if (!currentProject) return;
     
     try {
+      // Fetch project growth tracking data
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('*')
@@ -82,6 +83,7 @@ const GrowthPage = () => {
       }
       
       if (projectData) {
+        // Use type assertion to safely access growth_tracking
         const trackingData = (projectData as any).growth_tracking as GrowthTracking | null;
         if (trackingData) {
           setGrowthTracking(trackingData);
@@ -92,14 +94,18 @@ const GrowthPage = () => {
     }
   };
   
+  // Update growth tracking state
   const updateGrowthTracking = async (field: keyof GrowthTracking, value: boolean) => {
     if (!currentProject) return;
     
     try {
+      // Create a copy of the current tracking state
       const updatedTracking = { ...growthTracking, [field]: value };
       
+      // Optimistically update the UI
       setGrowthTracking(updatedTracking);
       
+      // Update the database with type assertion to Project interface
       const { error } = await supabase
         .from('projects')
         .update({ 
@@ -109,6 +115,7 @@ const GrowthPage = () => {
         
       if (error) throw error;
       
+      // Dispatch custom event to notify ValidationProgressSummary to refresh
       window.dispatchEvent(new CustomEvent('validation-progress-update'));
       
       toast({
@@ -118,6 +125,7 @@ const GrowthPage = () => {
     } catch (err) {
       console.error('Error updating growth tracking:', err);
       
+      // Revert the local state change on error
       setGrowthTracking(growthTracking);
     }
   };
@@ -130,6 +138,7 @@ const GrowthPage = () => {
     navigate('/metrics');
   };
   
+  // Generate best practices for the BestPracticesCard component
   const bestPractices: BestPractice[] = [
     {
       icon: <Megaphone />,
@@ -148,6 +157,7 @@ const GrowthPage = () => {
     }
   ];
   
+  // Generate checklist items for the ChecklistCard component
   const checklistItems: ChecklistItem[] = [
     {
       key: 'channels_identified',
@@ -184,6 +194,7 @@ const GrowthPage = () => {
   ];
 
   const renderPivotCTA = () => {
+    // Check if any metrics are at risk or failing
     const hasMetricsAtRisk = growthMetrics.some(m => m.status === 'off-track' || m.status === 'at-risk');
     
     if (hasMetricsAtRisk) {
@@ -255,6 +266,7 @@ const GrowthPage = () => {
         items={checklistItems}
       />
       
+      {/* Add ValidationPhaseIntro for consistency */}
       <ValidationPhaseIntro 
         phase="growth" 
         onCreateNew={() => navigate('/metrics?create=true')}
@@ -263,7 +275,9 @@ const GrowthPage = () => {
       
       {currentProject && (
         <div className="space-y-6">
+          {/* Analytics & Functional Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Acquisition Channels */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl flex items-center">
@@ -282,6 +296,7 @@ const GrowthPage = () => {
               </CardContent>
             </Card>
             
+            {/* Growth Experiments */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl flex items-center">
@@ -311,6 +326,7 @@ const GrowthPage = () => {
             </Card>
           </div>
           
+          {/* Metrics Dashboard */}
           <Card>
             <CardHeader className="pb-2 flex flex-row justify-between items-center">
               <CardTitle className="text-xl flex items-center">
@@ -327,12 +343,11 @@ const GrowthPage = () => {
               </Button>
             </CardHeader>
             <CardContent className="p-6">
-              {currentProject && (
-                <GrowthMetricsPanel projectId={currentProject?.id || ''} />
-              )}
+              <GrowthMetricsPanel />
             </CardContent>
           </Card>
           
+          {/* Scaling Readiness Section */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xl flex items-center">

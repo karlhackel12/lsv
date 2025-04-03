@@ -1,55 +1,50 @@
 
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Control, UseFormReturn } from 'react-hook-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UseFormReturn } from 'react-hook-form';
+import { Experiment } from '@/types/database';
 
-export interface CategorySelectProps {
-  control?: Control<any>;
-  form?: UseFormReturn<any>;
+interface CategorySelectProps {
+  form: UseFormReturn<Experiment>;
 }
 
-const CategorySelect = ({ control, form }: CategorySelectProps) => {
-  const controlToUse = form?.control || control;
-  
-  if (!controlToUse) {
-    console.error('Neither control nor form provided to CategorySelect');
-    return null;
-  }
+const EXPERIMENT_CATEGORIES = [
+  { value: 'problem', label: 'Problem' },
+  { value: 'solution', label: 'Solution' },
+  { value: 'business-model', label: 'Business Model' },
+  { value: 'growth', label: 'Growth' },
+  { value: 'other', label: 'Other' }
+];
+
+const CategorySelect = ({ form }: CategorySelectProps) => {
+  console.log("CategorySelect rendering with value:", form.watch('category'));
   
   return (
     <FormField
-      control={controlToUse}
+      control={form.control}
       name="category"
       render={({ field }) => (
-        <FormItem className="space-y-2">
+        <FormItem>
           <FormLabel>Category</FormLabel>
-          <FormControl>
-            <RadioGroup
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-              className="flex flex-col space-y-1"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="problem" id="problem" />
-                <label htmlFor="problem" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Problem Validation
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="solution" id="solution" />
-                <label htmlFor="solution" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Solution Validation
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="business-model" id="business-model" />
-                <label htmlFor="business-model" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Business Model Validation
-                </label>
-              </div>
-            </RadioGroup>
-          </FormControl>
+          <Select 
+            onValueChange={field.onChange} 
+            value={field.value || 'problem'}
+            defaultValue={field.value || 'problem'}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {EXPERIMENT_CATEGORIES.map(category => (
+                <SelectItem key={category.value} value={category.value}>
+                  {category.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FormMessage />
         </FormItem>
       )}

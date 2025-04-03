@@ -151,39 +151,6 @@ export type Database = {
           },
         ]
       }
-      experiment_templates: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          description: string | null
-          hypothesis_template: string | null
-          id: string
-          method: string | null
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          hypothesis_template?: string | null
-          id?: string
-          method?: string | null
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          hypothesis_template?: string | null
-          id?: string
-          method?: string | null
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       experiments: {
         Row: {
           category: string | null
@@ -193,7 +160,6 @@ export type Database = {
           hypothesis_id: string | null
           id: string
           insights: string | null
-          learnings: string | null
           method: string
           metrics: string
           project_id: string | null
@@ -214,7 +180,6 @@ export type Database = {
           hypothesis_id?: string | null
           id?: string
           insights?: string | null
-          learnings?: string | null
           method: string
           metrics: string
           project_id?: string | null
@@ -235,7 +200,6 @@ export type Database = {
           hypothesis_id?: string | null
           id?: string
           insights?: string | null
-          learnings?: string | null
           method?: string
           metrics?: string
           project_id?: string | null
@@ -807,44 +771,6 @@ export type Database = {
           },
         ]
       }
-      pivot_assessments: {
-        Row: {
-          answers: Json | null
-          created_at: string | null
-          id: string
-          notes: string | null
-          project_id: string
-          recommendation: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          answers?: Json | null
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          project_id: string
-          recommendation?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          answers?: Json | null
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          project_id?: string
-          recommendation?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pivot_assessments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pivot_metric_triggers: {
         Row: {
           created_at: string
@@ -1031,55 +957,28 @@ export type Database = {
       projects: {
         Row: {
           created_at: string
-          current_stage: string | null
           description: string
-          growth_tracking: Json | null
           id: string
-          metrics_tracking: Json | null
-          milestones: Json | null
-          mvp_tracking: Json | null
           name: string
           owner_id: string | null
-          pivot_assessment: Json | null
-          pivot_tracking: Json | null
-          problem_tracking: Json | null
-          solution_tracking: Json | null
           stage: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          current_stage?: string | null
           description: string
-          growth_tracking?: Json | null
           id?: string
-          metrics_tracking?: Json | null
-          milestones?: Json | null
-          mvp_tracking?: Json | null
           name: string
           owner_id?: string | null
-          pivot_assessment?: Json | null
-          pivot_tracking?: Json | null
-          problem_tracking?: Json | null
-          solution_tracking?: Json | null
           stage: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          current_stage?: string | null
           description?: string
-          growth_tracking?: Json | null
           id?: string
-          metrics_tracking?: Json | null
-          milestones?: Json | null
-          mvp_tracking?: Json | null
           name?: string
           owner_id?: string | null
-          pivot_assessment?: Json | null
-          pivot_tracking?: Json | null
-          problem_tracking?: Json | null
-          solution_tracking?: Json | null
           stage?: string
           updated_at?: string
         }

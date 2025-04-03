@@ -1,64 +1,60 @@
 
-import React, { useState, useEffect } from 'react';
-import { Control, UseFormReturn } from 'react-hook-form';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import React, { useEffect, useState } from 'react';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UseFormReturn } from 'react-hook-form';
+import { Experiment, Hypothesis } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
-import { Hypothesis } from '@/types/database';
+import { Loader2 } from 'lucide-react';
 
-export interface HypothesisSelectProps {
-  control?: Control<any>;
-  projectId?: string;
-  experimentType?: string;
-  setValue?: any;
+interface HypothesisSelectProps {
+  form: UseFormReturn<Experiment>;
+  projectId: string;
+  experimentType: 'problem' | 'solution' | 'business-model';
   onHypothesisSelected?: (hypothesis: Hypothesis | null) => void;
-  form?: UseFormReturn<any>;
 }
 
-const HypothesisSelect = ({ 
-  control, 
-  projectId, 
-  experimentType = 'problem',
-  setValue,
-  onHypothesisSelected,
-  form
-}: HypothesisSelectProps) => {
+const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelected }: HypothesisSelectProps) => {
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const controlToUse = form?.control || control;
   
-  if (!controlToUse) {
-    console.error('Neither control nor form provided to HypothesisSelect');
-    return null;
-  }
-
+  // Fetch hypotheses for the project
   useEffect(() => {
-    if (!projectId) return;
-    
     const fetchHypotheses = async () => {
+      if (!projectId) return;
+      
       setIsLoading(true);
       try {
-        let phase = 'problem';
-        if (experimentType === 'solution') {
-          phase = 'solution';
-        }
-
-        const { data, error } = await supabase
+        let query = supabase
           .from('hypotheses')
           .select('*')
-          .eq('project_id', projectId)
-          .eq('phase', phase);
-          
+          .eq('project_id', projectId);
+        
+        // Filter by category to match experiment type
+        if (experimentType === 'problem') {
+          query = query.eq('phase', 'problem');
+        } else if (experimentType === 'solution') {
+          query = query.eq('phase', 'solution');
+        }
+        
+        const { data, error } = await query.order('created_at', { ascending: false });
+        
         if (error) {
           console.error('Error fetching hypotheses:', error);
           return;
         }
         
-        // Convert to typed data
-        const typedData = data as unknown as Hypothesis[];
-        setHypotheses(typedData || []);
+        // Format hypotheses for the component
+        const formattedHypotheses = data.map(h => ({
+          ...h,
+          originalId: h.id,
+          // Ensure phase is a valid union type
+          phase: (h.phase === 'solution' ? 'solution' : 'problem') as 'problem' | 'solution'
+        }));
+        
+        setHypotheses(formattedHypotheses);
       } catch (err) {
-        console.error('Error fetching hypotheses:', err);
+        console.error('Error:', err);
       } finally {
         setIsLoading(false);
       }
@@ -66,53 +62,82 @@ const HypothesisSelect = ({
     
     fetchHypotheses();
   }, [projectId, experimentType]);
-
-  const handleHypothesisChange = (value: string) => {
-    if (value === 'none') {
-      if (onHypothesisSelected) {
-        onHypothesisSelected(null);
+  
+  // When a hypothesis is selected, update the form with its data
+  const handleHypothesisChange = (hypothesisId: string) => {
+    // Handle the "none" selection by setting to null instead of empty string
+    const actualHypothesisId = hypothesisId === "none" ? null : hypothesisId;
+    
+    form.setValue('hypothesis_id', actualHypothesisId);
+    
+    const selectedHypothesis = hypothesisId === "none" 
+      ? null
+      : hypotheses.find(h => h.id === hypothesisId) || null;
+    
+    // If we have a hypothesis, pre-populate form fields with hypothesis data
+    if (selectedHypothesis) {
+      // Only set these values if they're empty or if we're creating a new experiment
+      if (!form.getValues('title') || form.getValues('id') === undefined) {
+        form.setValue('title', `Experiment: ${selectedHypothesis.statement.substring(0, 50)}${selectedHypothesis.statement.length > 50 ? '...' : ''}`);
       }
-      return;
-    }
-    
-    const selectedHypothesis = hypotheses.find(h => h.id === value);
-    
-    if (selectedHypothesis && onHypothesisSelected) {
-      onHypothesisSelected(selectedHypothesis);
+      
+      if (!form.getValues('hypothesis') || form.getValues('id') === undefined) {
+        form.setValue('hypothesis', selectedHypothesis.statement);
+      }
+      
+      if (!form.getValues('metrics') || form.getValues('id') === undefined) {
+        form.setValue('metrics', selectedHypothesis.criteria);
+      }
+      
+      if (!form.getValues('method') || form.getValues('id') === undefined) {
+        form.setValue('method', selectedHypothesis.experiment);
+      }
+      
+      // Pass the selected hypothesis back to the parent
+      if (onHypothesisSelected) {
+        onHypothesisSelected(selectedHypothesis);
+      }
+    } else if (onHypothesisSelected) {
+      onHypothesisSelected(null);
     }
   };
-
+  
   return (
     <FormField
-      control={controlToUse}
+      control={form.control}
       name="hypothesis_id"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Related Hypothesis</FormLabel>
+          <FormLabel>Connected Hypothesis</FormLabel>
           <Select 
-            disabled={isLoading || hypotheses.length === 0}
+            onValueChange={handleHypothesisChange} 
             value={field.value || 'none'}
-            onValueChange={(value) => {
-              field.onChange(value === 'none' ? null : value);
-              handleHypothesisChange(value);
-            }}
+            defaultValue={field.value || 'none'}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder="Select a hypothesis" />
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+                    Loading...
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Select a hypothesis (optional)" />
+                )}
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {hypotheses.map((hypothesis) => (
+              <SelectItem value="none">None (standalone experiment)</SelectItem>
+              {hypotheses.map(hypothesis => (
                 <SelectItem key={hypothesis.id} value={hypothesis.id}>
-                  {hypothesis.statement.length > 60 
-                    ? `${hypothesis.statement.substring(0, 60)}...` 
-                    : hypothesis.statement}
+                  {hypothesis.statement.substring(0, 60)}{hypothesis.statement.length > 60 ? '...' : ''}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <FormDescription>
+            Connecting your experiment to a hypothesis will help track validation progress
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}

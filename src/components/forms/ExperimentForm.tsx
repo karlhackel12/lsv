@@ -62,10 +62,6 @@ const ExperimentForm = ({
       if (experiment) {
         console.log("Resetting form with existing experiment data:", experiment);
         
-        // Ensure metrics is always an array
-        const metricsValue = experiment.metrics || [];
-        const metrics = Array.isArray(metricsValue) ? metricsValue : [metricsValue];
-
         // Force form reset with all fields explicitly assigned to ensure proper data binding
         setTimeout(() => {
           form.reset({
@@ -74,7 +70,7 @@ const ExperimentForm = ({
             title: experiment.title || '',
             hypothesis: experiment.hypothesis || '',
             method: experiment.method || '',
-            metrics: metrics,
+            metrics: experiment.metrics || '',
             status: experiment.status || 'planned',
             category: experiment.category || experimentType || 'problem',
             results: experiment.results || '',
@@ -91,7 +87,7 @@ const ExperimentForm = ({
           title: '',
           hypothesis: '',
           method: '',
-          metrics: [''],
+          metrics: '',
           status: 'planned',
           category: experimentType || 'problem',
           results: '',
@@ -145,10 +141,10 @@ const ExperimentForm = ({
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           {!isGrowthExperiment && (
             <HypothesisSelect 
+              form={form}
               projectId={projectId}
               experimentType={experimentType}
               onHypothesisSelected={handleHypothesisSelected}
-              form={form}
             />
           )}
           

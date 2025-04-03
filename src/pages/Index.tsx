@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/use-project';
@@ -20,7 +19,7 @@ const Index = () => {
     currentProject, 
     isLoading, 
     error, 
-    updateCurrentStage,
+    updateCurrentStage 
   } = useProject();
   const navigate = useNavigate();
   const { toast } = useToast();

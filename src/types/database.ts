@@ -911,21 +911,23 @@ export const GROWTH_METRIC_TEMPLATES = {
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  stage: string;
+  description?: string;
+  user_id: string;
   created_at: string;
   updated_at: string;
-  owner_id?: string;
-  user_id?: string;
+  vision?: string;
+  problem_statement?: string;
+  customer_segments?: string[];
   current_stage?: string;
-  milestones?: any;
-  problem_tracking?: any;
-  solution_tracking?: any;
-  mvp_tracking?: any;
-  metrics_tracking?: any;
-  growth_tracking?: any;
-  pivot_tracking?: any;
-  pivot_assessment?: any;
+  owner_id?: string;
+  stage?: string;
+  mvp_tracking?: Record<string, boolean> | string;
+  metrics_tracking?: Record<string, boolean> | string;
+  growth_tracking?: Record<string, boolean> | string;
+  pivot_tracking?: Record<string, boolean> | string;
+  problem_tracking?: Record<string, boolean> | string;
+  solution_tracking?: Record<string, boolean> | string;
+  milestones?: string | any[];
 }
 
 export interface Hypothesis {
@@ -946,22 +948,22 @@ export interface Hypothesis {
 
 export interface Experiment {
   id: string;
-  originalId?: string;
   title: string;
+  description?: string;
   hypothesis: string;
   method: string;
-  metrics: string[];
-  status: 'planned' | 'in-progress' | 'completed';
-  category: string;
+  expected_outcome?: string;
   results?: string;
-  insights?: string;
-  decisions?: string;
+  status: 'planned' | 'in-progress' | 'completed';
   project_id: string;
-  hypothesis_id?: string | null;
   created_at: string;
   updated_at: string;
-  isGrowthExperiment?: boolean;
-  originalGrowthExperiment?: GrowthExperiment;
+  category?: string;
+  success_criteria?: string;
+  originalId?: string;
+  user_id?: string;
+  feedback?: string;
+  metrics?: string[];
   learnings?: string;
 }
 
