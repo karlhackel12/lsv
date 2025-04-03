@@ -1,5 +1,27 @@
 
-import { Experiment, ExperimentRow } from '@/types/database';
+import { Experiment } from '@/types/database';
+
+/**
+ * Define the database row format for experiments
+ */
+export interface ExperimentRow {
+  id: string;
+  title: string;
+  hypothesis: string;
+  method: string;
+  metrics: string;  // In database it's stored as string
+  status: 'planned' | 'in-progress' | 'completed';
+  category: string;
+  results?: string;
+  insights?: string;
+  decisions?: string;
+  learnings?: string;
+  project_id: string;
+  hypothesis_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  description?: string;
+}
 
 /**
  * Adapts an experiment from the database row format to the application format

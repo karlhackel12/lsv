@@ -60,7 +60,11 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
         
       if (error) throw error;
       
-      setLinkedExperiments(data || []);
+      if (data) {
+        setLinkedExperiments(adaptExperiments(data));
+      } else {
+        setLinkedExperiments([]);
+      }
     } catch (err) {
       console.error('Error fetching linked experiments:', err);
     } finally {
@@ -84,15 +88,9 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
           return;
         }
         
-        const typedData = data?.map(item => ({
-          ...item,
-          metrics: Array.isArray(item.metrics) ? item.metrics : [item.metrics || ''],
-          insights: item.insights || '',
-          decisions: item.decisions || '',
-          hypothesis_id: item.hypothesis_id || null
-        })) as Experiment[];
-        
-        setRelatedExperiments(typedData || []);
+        if (data) {
+          setRelatedExperiments(adaptExperiments(data));
+        }
       } catch (err) {
         console.error('Error:', err);
       }
