@@ -23,13 +23,13 @@ import {
 import { GrowthModel, GrowthMetric, GrowthHypothesis } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { FormController } from '@/components/ui/form-controller';
+import { FormSheet } from '@/components/ui/form-sheet';
 
 const formSchema = z.object({
-  action: z.string().min(10, 'A ação deve ter pelo menos 10 caracteres'),
-  outcome: z.string().min(10, 'O resultado deve ter pelo menos 10 caracteres'),
+  action: z.string().min(10, 'Action must be at least 10 characters'),
+  outcome: z.string().min(10, 'Outcome must be at least 10 characters'),
   success_criteria: z.string().optional(),
-  stage: z.string().min(1, 'Estágio é obrigatório'),
+  stage: z.string().min(1, 'Stage is required'),
   metric_id: z.string().optional(),
 });
 
@@ -104,8 +104,8 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
         if (error) throw error;
 
         toast({
-          title: 'Hipótese atualizada',
-          description: 'Sua hipótese de crescimento foi atualizada',
+          title: 'Hypothesis updated',
+          description: 'Your growth hypothesis has been updated',
         });
       } else {
         const { error } = await supabase
@@ -115,8 +115,8 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
         if (error) throw error;
 
         toast({
-          title: 'Hipótese criada',
-          description: 'Sua hipótese de crescimento foi criada',
+          title: 'Hypothesis created',
+          description: 'Your growth hypothesis has been created',
         });
       }
 
@@ -126,8 +126,8 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
     } catch (error: any) {
       console.error('Error saving hypothesis:', error);
       toast({
-        title: 'Erro',
-        description: error.message || 'Falha ao salvar hipótese',
+        title: 'Error',
+        description: error.message || 'Failed to save hypothesis',
         variant: 'destructive',
       });
     } finally {
@@ -136,23 +136,20 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
   };
 
   const stageOptions = [
-    { id: 'channel', name: 'Validação de Canal' },
-    { id: 'activation', name: 'Otimização de Ativação' },
-    { id: 'monetization', name: 'Teste de Monetização' },
-    { id: 'retention', name: 'Engenharia de Retenção' },
-    { id: 'referral', name: 'Motor de Indicações' },
-    { id: 'scaling', name: 'Preparação para Escala' },
+    { id: 'channel', name: 'Channel Validation' },
+    { id: 'activation', name: 'Activation Optimization' },
+    { id: 'monetization', name: 'Monetization Testing' },
+    { id: 'retention', name: 'Retention Engineering' },
+    { id: 'referral', name: 'Referral Engine' },
+    { id: 'scaling', name: 'Scaling Readiness' },
   ];
 
   return (
-    <FormController
+    <FormSheet
       isOpen={isOpen}
       onClose={onClose}
-      title={hypothesis ? 'Editar Hipótese de Crescimento' : 'Criar Hipótese de Crescimento'}
-      description="Estruture sua hipótese de crescimento para torná-la testável"
-      isSubmitting={isSubmitting}
-      submitLabel={hypothesis ? 'Atualizar' : 'Criar'}
-      onSubmit={form.handleSubmit(onSubmit)}
+      title={hypothesis ? 'Edit Growth Hypothesis' : 'Create Growth Hypothesis'}
+      description="Structure your growth hypothesis to make it testable"
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -161,14 +158,14 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             name="stage"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Estágio de Crescimento</FormLabel>
+                <FormLabel>Growth Stage</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um estágio de crescimento" />
+                      <SelectValue placeholder="Select a growth stage" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -189,10 +186,10 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             name="action"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nós acreditamos que</FormLabel>
+                <FormLabel>We believe that</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="ex.: implementar um programa de indicação com incentivos financeiros"
+                    placeholder="e.g., implementing a referral program with cash incentives"
                     className="min-h-[80px]"
                     {...field}
                   />
@@ -207,10 +204,10 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             name="outcome"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Resultará em</FormLabel>
+                <FormLabel>Will result in</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="ex.: um aumento de 30% na aquisição de usuários por canais de recomendação"
+                    placeholder="e.g., a 30% increase in user acquisition from word-of-mouth channels"
                     className="min-h-[80px]"
                     {...field}
                   />
@@ -225,10 +222,10 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             name="success_criteria"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Saberemos que estamos certos quando</FormLabel>
+                <FormLabel>We'll know we're right when</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="ex.: vermos o custo de aquisição de clientes cair pelo menos 15% dentro de 30 dias"
+                    placeholder="e.g., we see the customer acquisition cost drop by at least 15% within 30 days"
                     className="min-h-[80px]"
                     {...field}
                   />
@@ -243,20 +240,20 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
             name="metric_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Métrica de Crescimento Relacionada</FormLabel>
+                <FormLabel>Related Growth Metric</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma métrica de crescimento" />
+                      <SelectValue placeholder="Select a growth metric" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="">None</SelectItem>
                     {metrics.map((metric) => (
-                      <SelectItem key={metric.id} value={metric.id}>
+                      <SelectItem key={metric.id} value={metric.id || ''}>
                         {metric.name}
                       </SelectItem>
                     ))}
@@ -266,9 +263,22 @@ const StructuredHypothesisForm: React.FC<StructuredHypothesisFormProps> = ({
               </FormItem>
             )}
           />
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? 'Saving...'
+                : hypothesis
+                ? 'Update Hypothesis'
+                : 'Create Hypothesis'}
+            </Button>
+          </div>
         </form>
       </Form>
-    </FormController>
+    </FormSheet>
   );
 };
 

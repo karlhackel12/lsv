@@ -75,18 +75,10 @@ const MVPPage = () => {
       
       // Check if mvp_tracking exists in the projectData
       if (projectData) {
-        let trackingData: MVPTracking | null = null;
-        
-        if (projectData.mvp_tracking) {
-          try {
-            trackingData = typeof projectData.mvp_tracking === 'string'
-              ? JSON.parse(projectData.mvp_tracking)
-              : projectData.mvp_tracking as MVPTracking;
-              
-            setMvpTracking(trackingData);
-          } catch (err) {
-            console.error('Error parsing MVP tracking data:', err);
-          }
+        // Use type assertion and optional chaining to safely access mvp_tracking
+        const trackingData = (projectData as any).mvp_tracking as MVPTracking | null;
+        if (trackingData) {
+          setMvpTracking(trackingData);
         }
       }
     } catch (err) {

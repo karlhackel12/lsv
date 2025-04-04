@@ -11,23 +11,21 @@ import { useHypotheses } from '@/hooks/use-hypothesis';
 import { Loader2 } from 'lucide-react';
 
 interface HypothesesSectionProps {
-  title?: string;
   hypotheses: Hypothesis[];
+  refreshData: () => void;
+  projectId: string;
   isLoading?: boolean;
-  phase?: 'problem' | 'solution';
-  onCreateTrigger?: number;
-  onHypothesesUpdated?: () => void;
-  projectId?: string;
+  phaseType?: 'problem' | 'solution';
+  createTrigger?: number;
 }
 
 const HypothesesSection = ({
-  title,
   hypotheses,
+  refreshData,
+  projectId,
   isLoading = false,
-  phase = 'problem',
-  onCreateTrigger = 0,
-  onHypothesesUpdated,
-  projectId
+  phaseType = 'problem',
+  createTrigger = 0
 }: HypothesesSectionProps) => {
   const {
     isFormOpen,
@@ -47,39 +45,35 @@ const HypothesesSection = ({
     viewMode,
     setViewMode,
     handleViewDetail
-  } = useHypotheses(onHypothesesUpdated || (() => {}), phase);
+  } = useHypotheses(refreshData, phaseType);
   
   // Listen to createTrigger changes from parent component
   useEffect(() => {
-    if (onCreateTrigger > 0) {
+    if (createTrigger > 0) {
       handleCreateNew();
     }
-  }, [onCreateTrigger, handleCreateNew]);
+  }, [createTrigger]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 animate-pulse">
       <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
-      <span className="text-lg font-medium text-muted-foreground">Carregando hipóteses...</span>
+      <span className="text-lg font-medium text-validation-gray-600">Loading hypotheses...</span>
     </div>;
   }
   
   return (
     <div className="animate-fadeIn">
-      {title && (
-        <h2 className="text-2xl font-semibold mb-4">{title}</h2>
-      )}
-      
       {viewMode === 'list' ? (
         <>
           <HypothesisTemplates 
             showTemplates={showTemplates} 
             onClose={() => setShowTemplates(false)} 
             onApply={handleSaveHypothesis} 
-            phaseType={phase} 
+            phaseType={phaseType} 
           />
 
           {hypotheses.length === 0 ? (
-            <EmptyHypothesisState onCreateNew={handleCreateNew} phaseType={phase} />
+            <EmptyHypothesisState onCreateNew={handleCreateNew} phaseType={phaseType} />
           ) : (
             <HypothesisList 
               hypotheses={hypotheses} 
@@ -97,8 +91,8 @@ const HypothesesSection = ({
             hypothesis={selectedHypothesis} 
             onEdit={() => handleEdit(selectedHypothesis)} 
             onClose={() => setViewMode('list')} 
-            onRefresh={onHypothesesUpdated || (() => {})} 
-            projectId={projectId || selectedHypothesis.project_id} 
+            onRefresh={refreshData} 
+            projectId={projectId} 
           />
         )
       )}
@@ -109,8 +103,8 @@ const HypothesesSection = ({
         onClose={() => setIsFormOpen(false)} 
         onSave={handleSaveHypothesis} 
         hypothesis={selectedHypothesis} 
-        projectId={projectId || ''} 
-        phaseType={phase} 
+        projectId={projectId} 
+        phaseType={phaseType} 
       />
 
       {/* Delete Confirmation Dialog */}

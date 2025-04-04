@@ -13,7 +13,6 @@ interface FormSheetProps {
   submitLabel?: string;
   isSubmitting?: boolean;
   footer?: React.ReactNode;
-  side?: 'left' | 'right' | 'top' | 'bottom';
 }
 
 export function FormSheet({
@@ -26,14 +25,10 @@ export function FormSheet({
   submitLabel = 'Save',
   isSubmitting = false,
   footer,
-  side = 'right',
 }: FormSheetProps) {
   return (
     <Sheet open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
-      <SheetContent 
-        className="sm:max-w-[600px] overflow-y-auto flex flex-col h-full p-0 transition-transform duration-300 ease-in-out" 
-        side={side}
-      >
+      <SheetContent className="sm:max-w-[600px] overflow-y-auto flex flex-col h-full p-0" side="right">
         <SheetHeader className="px-6 pt-6 pb-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white">
           <SheetTitle className="text-xl font-bold text-white">{title}</SheetTitle>
           {description && (
@@ -54,7 +49,7 @@ export function FormSheet({
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={onClose} className="mr-2">
-                  Cancelar
+                  Cancel
                 </Button>
                 <Button 
                   type="submit"
@@ -62,7 +57,7 @@ export function FormSheet({
                   disabled={isSubmitting}
                   onClick={onSubmit}
                 >
-                  {isSubmitting ? 'Salvando...' : submitLabel}
+                  {isSubmitting ? 'Saving...' : submitLabel}
                 </Button>
               </>
             )}

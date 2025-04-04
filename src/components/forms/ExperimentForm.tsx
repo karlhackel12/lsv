@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FlaskConical, TrendingUp } from 'lucide-react';
 import { Experiment, Hypothesis } from '@/types/database';
 import { useExperimentForm } from '@/hooks/use-experiment-form';
-import { FormController } from '@/components/ui/form-controller';
+import { FormSheet } from '@/components/ui/form-sheet';
 import CategorySelect from './experiment/CategorySelect';
 import StatusRadioGroup from './experiment/StatusRadioGroup';
 import TextFieldGroup from './experiment/TextFieldGroup';
@@ -130,7 +131,7 @@ const ExperimentForm = ({
   const FormIcon = isGrowthExperiment ? TrendingUp : FlaskConical;
 
   return (
-    <FormController
+    <FormSheet
       isOpen={isOpen}
       onClose={onClose}
       title={getFormTitle()}
@@ -164,12 +165,12 @@ const ExperimentForm = ({
           )}
           
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit">{isEditing ? 'Atualizar' : 'Criar'}</Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit">{isEditing ? 'Update' : 'Create'}</Button>
           </div>
         </form>
       </Form>
-    </FormController>
+    </FormSheet>
   );
 };
 

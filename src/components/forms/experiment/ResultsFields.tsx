@@ -1,12 +1,11 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { Experiment } from '@/types/database';
+import { FormData } from '@/components/forms/ExperimentForm';
 
 interface ResultsFieldsProps {
-  form: UseFormReturn<Experiment>;
+  form: UseFormReturn<FormData>;
   isGrowthExperiment?: boolean;
 }
 
@@ -60,7 +59,7 @@ const ResultsFields: React.FC<ResultsFieldsProps> = ({
       
       <FormField
         control={form.control}
-        name="notes"
+        name="insights"
         render={({ field }) => (
           <FormItem>
             <FormLabel>
@@ -83,7 +82,7 @@ const ResultsFields: React.FC<ResultsFieldsProps> = ({
       {!isGrowthExperiment && (
         <FormField
           control={form.control}
-          name="next_steps"
+          name="decisions"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Next Steps / Decisions</FormLabel>

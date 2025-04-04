@@ -101,18 +101,9 @@ const PivotPage = () => {
       
       if (projectData) {
         // Use type assertion to safely access pivot_tracking
-        let trackingData: PivotTracking | null = null;
-        
-        if (projectData.pivot_tracking) {
-          try {
-            trackingData = typeof projectData.pivot_tracking === 'string'
-              ? JSON.parse(projectData.pivot_tracking)
-              : projectData.pivot_tracking as PivotTracking;
-              
-            setPivotTracking(trackingData);
-          } catch (err) {
-            console.error('Error parsing pivot tracking data:', err);
-          }
+        const trackingData = (projectData as any).pivot_tracking as PivotTracking | null;
+        if (trackingData) {
+          setPivotTracking(trackingData);
         }
       }
     } catch (err) {

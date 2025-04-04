@@ -3,20 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import PageIntroduction from '@/components/PageIntroduction';
 import { BookOpen, Lightbulb, FlaskConical, Layers, TrendingUp } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
 
 const LeanStartupPage = () => {
-  const { t } = useTranslation();
-  
   return (
     <div className="space-y-6 p-6">
       <PageIntroduction
-        title={t('leanStartup.title')}
+        title="Lean Startup Methodology"
         icon={<BookOpen className="h-5 w-5 text-blue-500" />}
         description={
           <>
             <p>
-              {t('leanStartup.description')}
+              The Lean Startup methodology is a scientific approach to creating and managing startups, 
+              designed to get a desired product to customers' hands faster. It teaches you how to drive a 
+              startup - when to turn, when to persevere, and how to grow a business with maximum acceleration.
             </p>
           </>
         }
@@ -28,64 +27,70 @@ const LeanStartupPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <BookOpen className="mr-2 h-5 w-5 text-blue-500" />
-              {t('leanStartup.corePrinciples')}
+              Core Principles
             </CardTitle>
             <CardDescription>
-              {t('leanStartup.corePrinciplesDesc')}
+              The fundamental concepts behind the Lean Startup methodology
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="build-measure-learn">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.buildMeasureLearn')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Build-Measure-Learn Loop</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.buildMeasureLearnDesc')}
+                      The fundamental activity of a startup is to turn ideas into products, measure how customers
+                      respond, and then learn whether to pivot or persevere. This feedback loop is at the core
+                      of the Lean Startup model and should be cycled through as quickly as possible.
                     </p>
                     <div className="mt-4 bg-blue-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.implementationSteps')}</h4>
+                      <h4 className="font-medium mb-2">Implementation Steps:</h4>
                       <ol className="list-decimal pl-5 space-y-2">
-                        <li>Construir um Produto Mínimo Viável (MVP) com recursos mínimos</li>
-                        <li>Medir métricas chave e comportamento do usuário</li>
-                        <li>Aprender com os dados para tomar decisões informadas</li>
-                        <li>Repetir o ciclo com melhorias baseadas no aprendizado</li>
+                        <li>Build a Minimum Viable Product (MVP) with minimal features</li>
+                        <li>Measure key metrics and user behavior</li>
+                        <li>Learn from the data to make informed decisions</li>
+                        <li>Repeat the cycle with improvements based on learning</li>
                       </ol>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="validated-learning">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.validatedLearning')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Validated Learning</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.validatedLearningDesc')}
+                      Validated learning is the process of demonstrating empirically that a team has discovered
+                      valuable truths about a startup's present and future business prospects. It is more concrete,
+                      more accurate, and faster than market forecasting or classic business planning.
                     </p>
                     <div className="mt-4 bg-blue-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.keyConcepts')}</h4>
+                      <h4 className="font-medium mb-2">Key Concepts:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Testar suposições com clientes reais</li>
-                        <li>Usar abordagem científica para validação de negócios</li>
-                        <li>Documentar aprendizados sistematicamente</li>
-                        <li>Focar em métricas acionáveis em vez de métricas de vaidade</li>
+                        <li>Test assumptions with real customers</li>
+                        <li>Use scientific approach to business validation</li>
+                        <li>Document learnings systematically</li>
+                        <li>Focus on actionable metrics over vanity metrics</li>
                       </ul>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="minimum-viable-product">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.minimumViableProduct')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Minimum Viable Product (MVP)</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.minimumViableProductDesc')}
+                      An MVP is the version of a new product that allows a team to collect the maximum amount of
+                      validated learning about customers with the least effort. The goal of an MVP is not to build
+                      a minimal product, but to test business hypotheses early in the product development cycle.
                     </p>
                     <div className="mt-4 bg-blue-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.mvpStrategies')}</h4>
+                      <h4 className="font-medium mb-2">MVP Strategies:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Landing pages para testar propostas de valor</li>
-                        <li>MVP de concierge (serviço manual antes de automatizar)</li>
-                        <li>Teste de Mágico de Oz (humano por trás de fachada automatizada)</li>
-                        <li>Lançamento de software com recursos mínimos</li>
+                        <li>Landing pages to test value propositions</li>
+                        <li>Concierge MVP (manual service before automating)</li>
+                        <li>Wizard of Oz testing (human behind automated facade)</li>
+                        <li>Feature-minimal software release</li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -99,53 +104,56 @@ const LeanStartupPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Lightbulb className="mr-2 h-5 w-5 text-blue-500" />
-              {t('leanStartup.problemValidation')}
+              Problem Validation Phase
             </CardTitle>
             <CardDescription>
-              {t('leanStartup.problemValidationDesc')}
+              Verify you're solving a real problem worth solving
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p>
-                Antes de construir qualquer solução, valide que o problema que você está tentando resolver 
-                realmente existe e é significativo o suficiente para que os clientes paguem por uma solução.
+                Before building any solution, validate that the problem you're trying to solve
+                actually exists and is significant enough for customers to pay for a solution.
               </p>
               
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="customer-interviews">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.customerInterviews')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Customer Interviews</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.customerInterviewsDesc')}
+                      Conduct interviews with potential customers to understand their challenges, needs, and
+                      how they currently solve the problem. Focus on open-ended questions and avoid pitching
+                      your solution during this phase.
                     </p>
                     <div className="mt-4 bg-blue-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.bestPractices')}</h4>
+                      <h4 className="font-medium mb-2">Best Practices:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Realizar entre 10-20 entrevistas por segmento de cliente</li>
-                        <li>Perguntar sobre os problemas deles, não sobre sua solução</li>
-                        <li>Procurar padrões e problemas recorrentes</li>
-                        <li>Quantificar a severidade e frequência do problema</li>
+                        <li>Target 10-20 interviews per customer segment</li>
+                        <li>Ask about their problems, not your solution</li>
+                        <li>Look for patterns and recurring issues</li>
+                        <li>Quantify problem severity and frequency</li>
                       </ul>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="problem-hypotheses">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.problemHypotheses')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Problem Hypotheses</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.problemHypothesesDesc')}
+                      Create clear, testable hypotheses about the problems you believe your target customers
+                      face. These should be specific enough to validate or invalidate through research.
                     </p>
                     <div className="mt-4 bg-blue-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.hypothesisStructure')}</h4>
+                      <h4 className="font-medium mb-2">Hypothesis Structure:</h4>
                       <p className="italic mb-2">
-                        &quot;Acreditamos que [segmento de cliente] experimenta [problema] quando tenta [objetivo/atividade],
-                        o que causa [impacto negativo].&quot;
+                        &quot;We believe [customer segment] experiences [problem] when trying to [goal/activity],
+                        which causes [negative impact].&quot;
                       </p>
                       <p>
-                        Suas hipóteses devem ser falsificáveis, específicas e focadas em problemas ao invés de
-                        soluções nesta fase.
+                        Your hypotheses should be falsifiable, specific, and focused on problems rather than
+                        solutions at this stage.
                       </p>
                     </div>
                   </AccordionContent>
@@ -159,51 +167,53 @@ const LeanStartupPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <FlaskConical className="mr-2 h-5 w-5 text-green-500" />
-              {t('leanStartup.solutionValidation')}
+              Solution Validation Phase
             </CardTitle>
             <CardDescription>
-              {t('leanStartup.solutionValidationDesc')}
+              Test if your proposed solution addresses the validated problem
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p>
-                Uma vez que você validou o problema, comece a testar soluções potenciais com
-                clientes para determinar se eles usariam e pagariam pelo que você está propondo.
+                Once you've validated the problem, start testing potential solutions with
+                customers to determine if they'd use and pay for what you're proposing.
               </p>
               
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="solution-prototyping">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.solutionPrototyping')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Solution Prototyping</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.solutionPrototypingDesc')}
+                      Create low-fidelity prototypes to visualize your solution and get early feedback. These
+                      can be wireframes, mockups, or simple interactive models that demonstrate core functionality.
                     </p>
                     <div className="mt-4 bg-green-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.prototypingMethods')}</h4>
+                      <h4 className="font-medium mb-2">Prototyping Methods:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Protótipos de papel para testes iniciais</li>
-                        <li>Wireframes clicáveis usando ferramentas de design</li>
-                        <li>Landing pages que descrevem a solução</li>
-                        <li>Vídeos de demonstração mostrando o conceito</li>
+                        <li>Paper prototypes for initial testing</li>
+                        <li>Clickable wireframes using design tools</li>
+                        <li>Landing pages that describe the solution</li>
+                        <li>Demo videos showcasing the concept</li>
                       </ul>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="solution-experiments">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.solutionExperiments')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Solution Experiments</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.solutionExperimentsDesc')}
+                      Design experiments to test specific aspects of your solution. Each experiment should have 
+                      clear success criteria and validate or invalidate specific assumptions about your solution.
                     </p>
                     <div className="mt-4 bg-green-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">{t('leanStartup.experimentTypes')}</h4>
+                      <h4 className="font-medium mb-2">Experiment Types:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Testes de fumaça (pré-venda antes de construir)</li>
-                        <li>Serviços de concierge (entregando valor manualmente)</li>
-                        <li>Testes de porta falsa (oferecendo recursos que ainda não existem)</li>
-                        <li>Testes A/B comparando diferentes soluções</li>
+                        <li>Smoke tests (pre-selling before building)</li>
+                        <li>Concierge services (manually delivering value)</li>
+                        <li>Fake door tests (offering features that don't exist yet)</li>
+                        <li>A/B tests comparing different solutions</li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -217,53 +227,54 @@ const LeanStartupPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Layers className="mr-2 h-5 w-5 text-yellow-500" />
-              {t('leanStartup.mvpTesting')}
+              MVP Testing Phase
             </CardTitle>
             <CardDescription>
-              {t('leanStartup.mvpTestingDesc')}
+              Build and test the smallest version of your product that delivers value
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p>
-                A fase de MVP envolve construir uma versão mínima mas funcional do seu produto
-                para coletar dados reais de usuários e validar seu modelo de negócios no mercado.
+                The MVP phase involves building a minimal but functional version of your product
+                to gather real user data and validate your business model in the market.
               </p>
               
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="building-mvp">
-                  <AccordionTrigger className="font-medium">{t('leanStartup.buildingMvp')}</AccordionTrigger>
+                  <AccordionTrigger className="font-medium">Building an MVP</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      {t('leanStartup.buildingMvpDesc')}
+                      Focus on core features that address the primary problem and deliver the main value
+                      proposition. Resist the urge to add "nice to have" features before validating the core.
                     </p>
                     <div className="mt-4 bg-yellow-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">Dicas para MVP eficaz:</h4>
+                      <h4 className="font-medium mb-2">MVP Principles:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Defina seu conjunto mínimo de recursos (MFS)</li>
-                        <li>Prefira disponibilização rápida à perfeição</li>
-                        <li>Comece com um público-alvo específico</li>
-                        <li>Use ferramentas e templates para economizar tempo</li>
+                        <li>Identify the one key problem to solve</li>
+                        <li>Build only features that directly address that problem</li>
+                        <li>Launch quickly, even if you're embarrassed by the product</li>
+                        <li>Set clear success metrics before launching</li>
                       </ul>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="measuring-mvp">
-                  <AccordionTrigger className="font-medium">Medindo o Sucesso do MVP</AccordionTrigger>
+                <AccordionItem value="measuring-success">
+                  <AccordionTrigger className="font-medium">Measuring MVP Success</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      Estabeleça métricas claras para avaliar o desempenho do seu MVP. Concentre-se em métricas
-                      acionáveis que informam decisões e indicam progresso real no mercado.
+                      Establish key metrics to determine if your MVP is solving the problem and
+                      delivering value. Use both qualitative feedback and quantitative data.
                     </p>
                     <div className="mt-4 bg-yellow-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">Métricas-chave para avaliar:</h4>
+                      <h4 className="font-medium mb-2">Key Metrics to Consider:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>Taxa de aquisição de usuários</li>
-                        <li>Engajamento dos usuários e ativação</li>
-                        <li>Taxa de retenção após 7 e 30 dias</li>
-                        <li>Métricas de referência e orgânicas</li>
-                        <li>Conversão para pagamento (se aplicável)</li>
+                        <li>User acquisition and activation rates</li>
+                        <li>Retention and engagement metrics</li>
+                        <li>Customer satisfaction scores</li>
+                        <li>Conversion rates (for paid products)</li>
+                        <li>Cost of customer acquisition</li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -277,62 +288,55 @@ const LeanStartupPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="mr-2 h-5 w-5 text-purple-500" />
-              Fase de Crescimento
+              Growth Model Validation Phase
             </CardTitle>
             <CardDescription>
-              Ampliar o alcance após validar o encaixe produto-mercado
+              Optimize your acquisition, retention and revenue mechanisms
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p>
-                Após validar que seu produto resolve um problema real e demonstrar tração, você
-                pode focar na otimização, escalabilidade e crescimento sustentável do negócio.
+                Once you've validated your MVP, focus on finding repeatable, scalable strategies
+                for acquiring and retaining customers, and generating revenue.
               </p>
               
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="growth-engines">
-                  <AccordionTrigger className="font-medium">Motores de Crescimento</AccordionTrigger>
+                <AccordionItem value="growth-metrics">
+                  <AccordionTrigger className="font-medium">Growth Metrics Framework</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      Os motores de crescimento são mecanismos que impulsionam o crescimento sustentável.
-                      A maioria das startups bem-sucedidas se concentra em um tipo principal de motor de crescimento.
+                      The AARRR framework (Acquisition, Activation, Retention, Referral, Revenue) provides a 
+                      comprehensive approach to measuring growth across the customer lifecycle.
                     </p>
                     <div className="mt-4 bg-purple-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">Três principais motores:</h4>
+                      <h4 className="font-medium mb-2">AARRR Metrics:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li>
-                          <span className="font-medium">Motor Viral</span>: Crescimento através de referência de clientes
-                          (coeficiente viral &gt; 1)
-                        </li>
-                        <li>
-                          <span className="font-medium">Motor Pago</span>: Crescimento através de publicidade paga
-                          (margem de lucro &gt; custo de aquisição)
-                        </li>
-                        <li>
-                          <span className="font-medium">Motor Aderente</span>: Crescimento através de alta retenção
-                          (taxa de aquisição &gt; taxa de abandono)
-                        </li>
+                        <li><strong>Acquisition:</strong> How do users find you? (CAC, channel effectiveness)</li>
+                        <li><strong>Activation:</strong> Do users have a good first experience? (onboarding completion)</li>
+                        <li><strong>Retention:</strong> Do users come back? (daily/weekly active users, churn)</li>
+                        <li><strong>Referral:</strong> Do users tell others? (viral coefficient, NPS)</li>
+                        <li><strong>Revenue:</strong> Can you monetize? (LTV, conversion rates, ARPU)</li>
                       </ul>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="growth-metrics">
-                  <AccordionTrigger className="font-medium">Framework AARRR</AccordionTrigger>
+                <AccordionItem value="scaling-readiness">
+                  <AccordionTrigger className="font-medium">Scaling Readiness</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      O framework de métricas AARRR (também conhecido como "métricas piratas") divide o processo
-                      de crescimento em estágios mensuráveis para que você possa otimizar cada um.
+                      Before scaling aggressively, validate that your growth model is working and sustainable.
+                      This requires proving unit economics and identifying replicable growth channels.
                     </p>
                     <div className="mt-4 bg-purple-50 p-4 rounded-md">
-                      <h4 className="font-medium mb-2">Estágios do AARRR:</h4>
+                      <h4 className="font-medium mb-2">Scaling Readiness Checklist:</h4>
                       <ul className="list-disc pl-5 space-y-2">
-                        <li><span className="font-medium">Aquisição</span>: Como os usuários encontram você</li>
-                        <li><span className="font-medium">Ativação</span>: Quão boa é a primeira experiência</li>
-                        <li><span className="font-medium">Retenção</span>: Usuários voltam e continuam usando</li>
-                        <li><span className="font-medium">Referência</span>: Usuários recomendam a outros</li>
-                        <li><span className="font-medium">Receita</span>: Usuários pagam ou geram valor</li>
+                        <li>LTV &gt; 3x CAC (customer lifetime value exceeds acquisition cost)</li>
+                        <li>Payback period &lt; 12 months</li>
+                        <li>At least two reliable acquisition channels identified</li>
+                        <li>Retention metrics meet or exceed industry benchmarks</li>
+                        <li>Revenues growing faster than costs</li>
                       </ul>
                     </div>
                   </AccordionContent>

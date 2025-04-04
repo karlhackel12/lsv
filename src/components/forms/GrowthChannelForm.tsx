@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,6 @@ import {
 } from '@/components/ui/popover';
 import { ChevronDown } from 'lucide-react';
 import useGrowthModels from '@/hooks/growth/use-growth-models';
-import { useTranslation } from '@/hooks/use-translation';
 
 interface GrowthChannelFormProps {
   growthModel?: GrowthModel; // Make growthModel optional
@@ -46,7 +46,6 @@ const GrowthChannelForm = ({
   onClose 
 }: GrowthChannelFormProps) => {
   const { toast } = useToast();
-  const { t } = useTranslation();
   const isEditing = !!channel;
   // Get the active model ID from the hook if not provided directly
   const { activeModelId } = useGrowthModels(projectId);
@@ -96,8 +95,8 @@ const GrowthChannelForm = ({
         if (error) throw error;
         
         toast({
-          title: t('growth.channelUpdated'),
-          description: t('growth.channelUpdatedDesc'),
+          title: 'Channel updated',
+          description: 'Your channel has been successfully updated',
         });
       } else {
         const { error } = await supabase
@@ -116,8 +115,8 @@ const GrowthChannelForm = ({
         if (error) throw error;
         
         toast({
-          title: t('growth.channelCreated'),
-          description: t('growth.channelCreatedDesc'),
+          title: 'Channel created',
+          description: 'Your new channel has been created',
         });
       }
       
@@ -126,8 +125,8 @@ const GrowthChannelForm = ({
     } catch (error) {
       console.error('Error saving channel:', error);
       toast({
-        title: t('messages.error'),
-        description: t('growth.failedToSaveChannel'),
+        title: 'Error',
+        description: 'Failed to save channel. Please try again.',
         variant: 'destructive',
       });
     }
@@ -149,22 +148,22 @@ const GrowthChannelForm = ({
                   name="category"
                   render={({ field }) => (
                     <FormItem className="flex-1 mr-2">
-                      <FormLabel>{t('growth.channels')}</FormLabel>
+                      <FormLabel>Category</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t('common.selectOption')} />
+                            <SelectValue placeholder="Select a category" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="organic">Orgânico</SelectItem>
-                          <SelectItem value="paid">Pago</SelectItem>
-                          <SelectItem value="partnership">Parceria</SelectItem>
-                          <SelectItem value="content">Conteúdo</SelectItem>
-                          <SelectItem value="other">Outro</SelectItem>
+                          <SelectItem value="organic">Organic</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="partnership">Partnership</SelectItem>
+                          <SelectItem value="content">Content</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -175,14 +174,14 @@ const GrowthChannelForm = ({
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="mt-7 whitespace-nowrap">
-                      Exemplos <ChevronDown className="ml-1 h-4 w-4" />
+                      Examples <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-60 p-0" align="end">
                     <div className="p-4 border-b">
-                      <h4 className="text-sm font-semibold mb-1">Exemplos de Canais</h4>
+                      <h4 className="text-sm font-semibold mb-1">Channel Examples</h4>
                       <p className="text-xs text-gray-500">
-                        Escolha entre canais comuns
+                        Choose from common channels
                       </p>
                     </div>
                     <div className="max-h-60 overflow-y-auto p-2">
@@ -207,10 +206,10 @@ const GrowthChannelForm = ({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome do Canal</FormLabel>
+                    <FormLabel>Channel Name</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="ex: Anúncios do Google"
+                        placeholder="e.g. Google Search Ads"
                         {...field}
                       />
                     </FormControl>
@@ -227,13 +226,13 @@ const GrowthChannelForm = ({
                     <FormItem>
                       <FormLabel>
                         CAC
-                        <span className="text-xs text-gray-500 ml-1">(opcional)</span>
+                        <span className="text-xs text-gray-500 ml-1">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           step="any"
-                          placeholder="R$"
+                          placeholder="$"
                           {...field}
                           onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                           value={field.value !== undefined ? field.value : ''}
@@ -250,8 +249,8 @@ const GrowthChannelForm = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Taxa Conv.
-                        <span className="text-xs text-gray-500 ml-1">(opcional)</span>
+                        Conv. Rate
+                        <span className="text-xs text-gray-500 ml-1">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -275,7 +274,7 @@ const GrowthChannelForm = ({
                     <FormItem>
                       <FormLabel>
                         Volume
-                        <span className="text-xs text-gray-500 ml-1">(opcional)</span>
+                        <span className="text-xs text-gray-500 ml-1">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -305,13 +304,13 @@ const GrowthChannelForm = ({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('common.selectOption')} />
+                          <SelectValue placeholder="Select a status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="testing">Em Teste</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="testing">Testing</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -322,10 +321,10 @@ const GrowthChannelForm = ({
 
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                {t('common.cancel')}
+                Cancel
               </Button>
               <Button type="submit">
-                {isEditing ? t('common.update') : t('common.add')}
+                {isEditing ? 'Update Channel' : 'Add Channel'}
               </Button>
             </div>
           </form>

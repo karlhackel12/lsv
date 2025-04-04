@@ -1,23 +1,21 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
 import HypothesesSection from '@/components/HypothesesSection';
 import PageIntroduction from '@/components/PageIntroduction';
-import { Lightbulb, PenTool, Users, MessageCircle, Plus } from 'lucide-react';
+import { FlaskConical, Users, MessageCircle, Target } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
+import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import BestPracticesCard, { BestPractice } from '@/components/ui/best-practices-card';
 import ChecklistCard, { ChecklistItem } from '@/components/ui/checklist-card';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/use-translation';
-import { Button } from '@/components/ui/button';
 
 // Define the interface for solution tracking
 interface SolutionTracking {
-  solution_hypotheses_created: boolean;
+  solution_hypotheses_defined: boolean;
   solution_sketches_created: boolean;
-  customer_testing_conducted: boolean;
-  customer_feedback_implemented: boolean;
+  tested_with_customers: boolean;
+  positive_feedback_received: boolean;
 }
 
 const SolutionValidationPage = () => {
@@ -26,13 +24,12 @@ const SolutionValidationPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createHypothesisTrigger, setCreateHypothesisTrigger] = useState(0);
   const { toast } = useToast();
-  const { validation, hypotheses: hypothesesText, common } = useTranslation();
   
   const [solutionTracking, setSolutionTracking] = useState<SolutionTracking>({
-    solution_hypotheses_created: false,
+    solution_hypotheses_defined: false,
     solution_sketches_created: false,
-    customer_testing_conducted: false,
-    customer_feedback_implemented: false
+    tested_with_customers: false,
+    positive_feedback_received: false
   });
   
   const fetchHypotheses = async () => {
@@ -64,8 +61,8 @@ const SolutionValidationPage = () => {
       setHypotheses(processedData || []);
       
       // Auto-update the solution_hypotheses_defined flag if hypotheses exist
-      if (processedData && processedData.length > 0 && !solutionTracking.solution_hypotheses_created) {
-        updateSolutionTracking('solution_hypotheses_created', true);
+      if (processedData && processedData.length > 0 && !solutionTracking.solution_hypotheses_defined) {
+        updateSolutionTracking('solution_hypotheses_defined', true);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -116,64 +113,36 @@ const SolutionValidationPage = () => {
   const updateSolutionTracking = async (field: keyof SolutionTracking, value: boolean) => {
     if (!currentProject) return;
     
-    // Primeiro, atualize o estado local para garantir que a UI seja responsiva
-    const updatedTracking = { ...solutionTracking, [field]: value };
-    setSolutionTracking(updatedTracking);
-    
-    // Função para salvar os dados no Supabase
-    const saveToDatabase = async (retryCount = 0, maxRetries = 3) => {
-      try {
-        // Atualiza o banco de dados
-        const { error } = await supabase
-          .from('projects')
-          .update({ 
-            solution_tracking: JSON.stringify(updatedTracking) // Garante que os dados sejam salvos como JSON
-          })
-          .eq('id', currentProject.id);
-          
-        // Se houver erro, tente novamente até atingir o máximo de tentativas
-        if (error) {
-          if (retryCount < maxRetries) {
-            // Aguarde um tempo exponencial entre as tentativas (300ms, 900ms, 2700ms...)
-            const waitTime = 300 * Math.pow(3, retryCount);
-            console.warn(`Tentativa ${retryCount + 1} falhou, tentando novamente em ${waitTime}ms`, error);
-            
-            setTimeout(() => {
-              saveToDatabase(retryCount + 1, maxRetries);
-            }, waitTime);
-            return;
-          } else {
-            throw error;
-          }
-        }
+    try {
+      // Create a copy of the current tracking state
+      const updatedTracking = { ...solutionTracking, [field]: value };
+      
+      // Optimistically update the UI
+      setSolutionTracking(updatedTracking);
+      
+      // Update the database
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          solution_tracking: updatedTracking 
+        })
+        .eq('id', currentProject.id);
         
-        // Se salvou com sucesso, dispare o evento de atualização
-        window.dispatchEvent(new CustomEvent('validation-progress-update'));
-        
-        toast({
-          title: validation.progress.updated,
-          description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? validation.progress.completed : validation.progress.incomplete}`,
-          variant: "default",
-        });
-        
-      } catch (err) {
-        console.error('Erro ao atualizar o rastreamento da solução:', err);
-        
-        // Mesmo se falhar após todas as tentativas, mantenha a UI atualizada
-        // para evitar confusão do usuário, mas mostre uma mensagem de erro
-        toast({
-          title: validation.progress.warning.title,
-          description: validation.progress.warning.saveFailed,
-          variant: 'destructive',
-        });
-        
-        // Importante: NÃO revertemos o estado local aqui para evitar confusão do usuário
-        // A alteração continua visível, mesmo que não tenha sido salva no banco
-      }
-    };
-    
-    // Inicie o processo de salvamento
-    saveToDatabase();
+      if (error) throw error;
+      
+      // Dispatch custom event to notify ValidationProgressSummary to refresh
+      window.dispatchEvent(new CustomEvent('validation-progress-update'));
+      
+      toast({
+        title: 'Solution Progress Updated',
+        description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? 'completed' : 'marked as incomplete'}.`
+      });
+    } catch (err) {
+      console.error('Error updating solution tracking:', err);
+      
+      // Revert the local state change on error
+      setSolutionTracking(solutionTracking);
+    }
   };
   
   useEffect(() => {
@@ -190,114 +159,104 @@ const SolutionValidationPage = () => {
   // Generate best practices for the BestPracticesCard component
   const bestPractices: BestPractice[] = [
     {
-      icon: <PenTool />,
-      title: validation.solution.bestPractices.sketchSolutions.title,
-      description: validation.solution.bestPractices.sketchSolutions.description
+      icon: <Users />,
+      title: 'Test with Real Users',
+      description: "Show prototypes to potential users who have the problem you're solving."
     },
     {
-      icon: <Users />,
-      title: validation.solution.bestPractices.testWithCustomers.title,
-      description: validation.solution.bestPractices.testWithCustomers.description
+      icon: <Target />,
+      title: 'Measure Solution-Problem Fit',
+      description: 'Assess how well your solution addresses the validated problem.'
     },
     {
       icon: <MessageCircle />,
-      title: validation.solution.bestPractices.iterateBasedOnFeedback.title,
-      description: validation.solution.bestPractices.iterateBasedOnFeedback.description
+      title: 'Collect Actionable Feedback',
+      description: 'Get specific feedback about what works and what needs improvement.'
     }
   ];
   
   // Generate checklist items for the ChecklistCard component
   const checklistItems: ChecklistItem[] = [
     {
-      key: 'solution_hypotheses_created',
-      label: validation.solution.checklist.solutionHypothesesCreated.label,
-      description: validation.solution.checklist.solutionHypothesesCreated.description,
-      icon: <Lightbulb />,
-      checked: solutionTracking.solution_hypotheses_created,
+      key: 'solution_hypotheses_defined',
+      label: 'Solution Hypotheses Defined',
+      description: 'Automatically tracked when you create solution hypotheses',
+      icon: <FlaskConical />,
+      checked: solutionTracking.solution_hypotheses_defined,
       disabled: true
     },
     {
       key: 'solution_sketches_created',
-      label: validation.solution.checklist.solutionSketchesCreated.label,
-      description: validation.solution.checklist.solutionSketchesCreated.description,
-      icon: <PenTool />,
+      label: 'Solution Sketches Created',
+      description: 'Toggle when you\'ve created wireframes or mockups',
+      icon: <Target />,
       checked: solutionTracking.solution_sketches_created,
       onCheckedChange: (checked) => updateSolutionTracking('solution_sketches_created', checked)
     },
     {
-      key: 'customer_testing_conducted',
-      label: validation.solution.checklist.customerTestingConducted.label,
-      description: validation.solution.checklist.customerTestingConducted.description,
+      key: 'tested_with_customers',
+      label: 'Tested With Customers',
+      description: 'Toggle when you\'ve shown your solution to potential customers',
       icon: <Users />,
-      checked: solutionTracking.customer_testing_conducted,
-      onCheckedChange: (checked) => updateSolutionTracking('customer_testing_conducted', checked)
+      checked: solutionTracking.tested_with_customers,
+      onCheckedChange: (checked) => updateSolutionTracking('tested_with_customers', checked)
     },
     {
-      key: 'customer_feedback_implemented',
-      label: validation.solution.checklist.customerFeedbackImplemented.label,
-      description: validation.solution.checklist.customerFeedbackImplemented.description,
+      key: 'positive_feedback_received',
+      label: 'Positive Feedback Received',
+      description: 'Toggle when you\'ve received positive validation from users',
       icon: <MessageCircle />,
-      checked: solutionTracking.customer_feedback_implemented,
-      onCheckedChange: (checked) => updateSolutionTracking('customer_feedback_implemented', checked)
+      checked: solutionTracking.positive_feedback_received,
+      onCheckedChange: (checked) => updateSolutionTracking('positive_feedback_received', checked)
     }
   ];
   
-  // Show a message if no project is selected
   if (!currentProject) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-lg text-gray-500">Por favor, selecione um projeto para visualizar a validação de solução.</p>
+    return <div className="flex justify-center items-center h-full p-8">
+      <div className="text-center">
+        <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
+        <p className="text-gray-500">Select a project from the dropdown in the header to view hypotheses.</p>
       </div>
-    );
+    </div>;
   }
   
   return (
-    <div className="container mx-auto p-4">
+    <div className="space-y-6 animate-fadeIn">
       <PageIntroduction 
-        title={validation.solution.title}
-        description={validation.solution.description}
+        title="Solution Validation" 
+        icon={<FlaskConical className="h-5 w-5 text-blue-500" />}
+        description="Test whether your proposed solution effectively addresses the validated problem."
+        showDescription={false}
       />
       
-      <div className="flex justify-between items-center mt-6 mb-4">
-        <h2 className="text-xl font-semibold">{hypothesesText.solutionHypotheses}</h2>
-        <Button 
-          onClick={handleCreateHypothesis} 
-          variant="default" 
-          size="sm" 
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          New Solution Hypothesis
-        </Button>
-      </div>
+      <BestPracticesCard 
+        title="Best Practices for Solution Validation"
+        color="green"
+        tooltip="These practices help you validate your solution ideas more effectively."
+        practices={bestPractices}
+      />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <div className="lg:col-span-2">
-          <HypothesesSection
-            title=""
-            hypotheses={hypotheses}
-            isLoading={isLoading}
-            phase="solution"
-            onCreateTrigger={createHypothesisTrigger}
-            onHypothesesUpdated={fetchHypotheses}
-          />
-        </div>
-        
-        <div className="space-y-6">
-          <BestPracticesCard 
-            title={common.bestPractices}
-            practices={bestPractices}
-            color="cyan"
-            tooltip="Follow these best practices to effectively validate your solution"
-          />
-          
-          <ChecklistCard
-            title={common.progressChecklist}
-            color="cyan"
-            items={checklistItems}
-          />
-        </div>
-      </div>
+      <ChecklistCard 
+        title="Solution Validation Checklist"
+        color="green"
+        items={checklistItems}
+      />
+      
+      <ValidationPhaseIntro 
+        phase="solution" 
+        onCreateNew={handleCreateHypothesis}
+        createButtonText="Create Solution Hypothesis"
+      />
+      
+      <HypothesesSection 
+        hypotheses={hypotheses}
+        refreshData={fetchHypotheses}
+        projectId={currentProject.id}
+        isLoading={isLoading}
+        phaseType="solution"
+        createTrigger={createHypothesisTrigger}
+      />
     </div>
   );
 };
