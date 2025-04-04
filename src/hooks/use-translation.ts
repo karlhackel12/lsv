@@ -33,45 +33,107 @@ export function useTranslation() {
   }, []);
 
   /**
-   * Retrocompatibilidade com o acesso direto à propriedade t
-   * Esta abordagem permite acessar traduções como t.validation.solution.title
+   * Create a complete translation object with nested structure
    */
-  const tProxy = new Proxy({} as any, {
-    get: (target, prop) => {
-      // Se a propriedade não existe no objeto translations, retorna um novo proxy
-      if (typeof prop === 'string' && prop !== 'toString' && prop !== 'valueOf') {
-        return new Proxy({} as any, {
-          get: (subTarget, subProp) => {
-            // Agora temos a 2ª parte do caminho
-            if (typeof subProp === 'string' && subProp !== 'toString' && subProp !== 'valueOf') {
-              return new Proxy({} as any, {
-                get: (finalTarget, finalProp) => {
-                  // Agora temos o caminho completo path.subPath.finalPath
-                  if (typeof finalProp === 'string' && finalProp !== 'toString' && finalProp !== 'valueOf') {
-                    const fullPath = `${prop}.${subProp}.${finalProp}`;
-                    return t(fullPath);
-                  }
-                  return undefined;
-                }
-              });
-            }
-            return undefined;
+  const translationObject = {
+    validation: {
+      problem: {
+        title: 'Problem Validation',
+        description: 'Create and test hypotheses to validate if your target customers have the problem you think they have.',
+        bestPractices: {
+          targetCustomers: {
+            title: 'Identify Target Customers',
+            description: 'Define who your potential customers are and what problems they face'
+          },
+          conductInterviews: {
+            title: 'Conduct Customer Interviews',
+            description: 'Talk to potential customers to understand their pain points'
+          },
+          testHypotheses: {
+            title: 'Test Your Hypotheses',
+            description: 'Validate whether your assumptions about customer problems are correct'
           }
-        });
+        },
+        checklist: {
+          hypothesesCreated: {
+            label: 'Problem Hypotheses Created',
+            description: 'Create hypotheses about customer problems'
+          },
+          interviewsConducted: {
+            label: 'Customer Interviews Conducted',
+            description: 'Interview potential customers to understand their problems'
+          },
+          painPointsIdentified: {
+            label: 'Pain Points Identified',
+            description: 'Identify key pain points from customer interviews'
+          },
+          marketNeedValidated: {
+            label: 'Market Need Validated',
+            description: 'Validate that there is a significant market need'
+          }
+        }
+      },
+      solution: {
+        title: 'Solution Validation',
+        description: 'Test whether your proposed solution effectively addresses the validated problem.',
+        bestPractices: {
+          sketchSolutions: {
+            title: 'Sketch Solution Ideas',
+            description: 'Create sketches or prototypes to visualize your solutions'
+          },
+          testWithCustomers: {
+            title: 'Test with Real Customers',
+            description: 'Validate your solution with potential customers through interviews or prototypes'
+          },
+          iterateBasedOnFeedback: {
+            title: 'Iterate Based on Feedback',
+            description: 'Refine your solution based on customer feedback'
+          }
+        },
+        checklist: {
+          solutionHypothesesCreated: {
+            label: 'Solution Hypotheses Created',
+            description: 'Create hypotheses about your solution'
+          },
+          solutionSketchesCreated: {
+            label: 'Solution Sketches Created',
+            description: 'Create sketches or prototypes of your solution'
+          },
+          customerTestingConducted: {
+            label: 'Customer Testing Conducted',
+            description: 'Test your solution with potential customers'
+          },
+          customerFeedbackImplemented: {
+            label: 'Customer Feedback Implemented',
+            description: 'Implement feedback received from customers'
+          }
+        }
+      },
+      progress: {
+        updated: 'Progress Updated',
+        completed: 'marked as completed',
+        incomplete: 'marked as incomplete',
+        warning: {
+          title: 'Warning',
+          saveFailed: 'Failed to save progress update'
+        }
       }
-      return undefined;
+    },
+    hypotheses: {
+      problemHypotheses: 'Problem Hypotheses',
+      solutionHypotheses: 'Solution Hypotheses'
+    },
+    common: {
+      bestPractices: 'Best Practices',
+      progressChecklist: 'Progress Checklist'
     }
-  });
+  };
 
-  /**
-   * Retorna a função de tradução e o objeto completo de traduções para acesso direto
-   * @returns The translation function and complete translations object
-   */
   return { 
     t, 
     translations,
-    // Support for dot notation access via proxy
-    tProxy
+    // Support for object-style access to translations
+    ...translationObject
   };
 }
 

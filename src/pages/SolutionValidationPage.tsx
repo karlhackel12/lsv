@@ -25,65 +25,7 @@ const SolutionValidationPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createHypothesisTrigger, setCreateHypothesisTrigger] = useState(0);
   const { toast } = useToast();
-  const { t: translate } = useTranslation();
-  
-  // Ensure we have fallback translations in case they're missing
-  const t = {
-    validation: {
-      solution: {
-        title: 'Solution Validation',
-        description: 'Test whether your proposed solution effectively addresses the validated problem.',
-        bestPractices: {
-          sketchSolutions: {
-            title: 'Sketch Solution Ideas',
-            description: 'Create sketches or prototypes to visualize your solutions'
-          },
-          testWithCustomers: {
-            title: 'Test with Real Customers',
-            description: 'Validate your solution with potential customers through interviews or prototypes'
-          },
-          iterateBasedOnFeedback: {
-            title: 'Iterate Based on Feedback',
-            description: 'Refine your solution based on customer feedback'
-          }
-        },
-        checklist: {
-          solutionHypothesesCreated: {
-            label: 'Solution Hypotheses Created',
-            description: 'Create hypotheses about your solution'
-          },
-          solutionSketchesCreated: {
-            label: 'Solution Sketches Created',
-            description: 'Create sketches or prototypes of your solution'
-          },
-          customerTestingConducted: {
-            label: 'Customer Testing Conducted',
-            description: 'Test your solution with potential customers'
-          },
-          customerFeedbackImplemented: {
-            label: 'Customer Feedback Implemented',
-            description: 'Implement feedback received from customers'
-          }
-        }
-      },
-      progress: {
-        updated: 'Progress Updated',
-        completed: 'marked as completed',
-        incomplete: 'marked as incomplete',
-        warning: {
-          title: 'Warning',
-          saveFailed: 'Failed to save progress update'
-        }
-      }
-    },
-    hypotheses: {
-      solutionHypotheses: 'Solution Hypotheses'
-    },
-    common: {
-      bestPractices: 'Best Practices',
-      progressChecklist: 'Progress Checklist'
-    }
-  };
+  const { validation, hypotheses: hypothesesText, common } = useTranslation();
   
   const [solutionTracking, setSolutionTracking] = useState<SolutionTracking>({
     solution_hypotheses_created: false,
@@ -208,9 +150,9 @@ const SolutionValidationPage = () => {
         window.dispatchEvent(new CustomEvent('validation-progress-update'));
         
         toast({
-          title: t.validation.progress.updated,
-          description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? t.validation.progress.completed : t.validation.progress.incomplete}.`,
-          variant: 'success',
+          title: validation.progress.updated,
+          description: `${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ${value ? validation.progress.completed : validation.progress.incomplete}`,
+          variant: "default",
         });
         
       } catch (err) {
@@ -219,8 +161,8 @@ const SolutionValidationPage = () => {
         // Mesmo se falhar após todas as tentativas, mantenha a UI atualizada
         // para evitar confusão do usuário, mas mostre uma mensagem de erro
         toast({
-          title: t.validation.progress.warning.title,
-          description: t.validation.progress.warning.saveFailed,
+          title: validation.progress.warning.title,
+          description: validation.progress.warning.saveFailed,
           variant: 'destructive',
         });
         
@@ -248,18 +190,18 @@ const SolutionValidationPage = () => {
   const bestPractices: BestPractice[] = [
     {
       icon: <PenTool />,
-      title: t.validation.solution.bestPractices.sketchSolutions.title,
-      description: t.validation.solution.bestPractices.sketchSolutions.description
+      title: validation.solution.bestPractices.sketchSolutions.title,
+      description: validation.solution.bestPractices.sketchSolutions.description
     },
     {
       icon: <Users />,
-      title: t.validation.solution.bestPractices.testWithCustomers.title,
-      description: t.validation.solution.bestPractices.testWithCustomers.description
+      title: validation.solution.bestPractices.testWithCustomers.title,
+      description: validation.solution.bestPractices.testWithCustomers.description
     },
     {
       icon: <MessageCircle />,
-      title: t.validation.solution.bestPractices.iterateBasedOnFeedback.title,
-      description: t.validation.solution.bestPractices.iterateBasedOnFeedback.description
+      title: validation.solution.bestPractices.iterateBasedOnFeedback.title,
+      description: validation.solution.bestPractices.iterateBasedOnFeedback.description
     }
   ];
   
@@ -267,32 +209,32 @@ const SolutionValidationPage = () => {
   const checklistItems: ChecklistItem[] = [
     {
       key: 'solution_hypotheses_created',
-      label: t.validation.solution.checklist.solutionHypothesesCreated.label,
-      description: t.validation.solution.checklist.solutionHypothesesCreated.description,
+      label: validation.solution.checklist.solutionHypothesesCreated.label,
+      description: validation.solution.checklist.solutionHypothesesCreated.description,
       icon: <Lightbulb />,
       checked: solutionTracking.solution_hypotheses_created,
       disabled: true
     },
     {
       key: 'solution_sketches_created',
-      label: t.validation.solution.checklist.solutionSketchesCreated.label,
-      description: t.validation.solution.checklist.solutionSketchesCreated.description,
+      label: validation.solution.checklist.solutionSketchesCreated.label,
+      description: validation.solution.checklist.solutionSketchesCreated.description,
       icon: <PenTool />,
       checked: solutionTracking.solution_sketches_created,
       onCheckedChange: (checked) => updateSolutionTracking('solution_sketches_created', checked)
     },
     {
       key: 'customer_testing_conducted',
-      label: t.validation.solution.checklist.customerTestingConducted.label,
-      description: t.validation.solution.checklist.customerTestingConducted.description,
+      label: validation.solution.checklist.customerTestingConducted.label,
+      description: validation.solution.checklist.customerTestingConducted.description,
       icon: <Users />,
       checked: solutionTracking.customer_testing_conducted,
       onCheckedChange: (checked) => updateSolutionTracking('customer_testing_conducted', checked)
     },
     {
       key: 'customer_feedback_implemented',
-      label: t.validation.solution.checklist.customerFeedbackImplemented.label,
-      description: t.validation.solution.checklist.customerFeedbackImplemented.description,
+      label: validation.solution.checklist.customerFeedbackImplemented.label,
+      description: validation.solution.checklist.customerFeedbackImplemented.description,
       icon: <MessageCircle />,
       checked: solutionTracking.customer_feedback_implemented,
       onCheckedChange: (checked) => updateSolutionTracking('customer_feedback_implemented', checked)
@@ -311,14 +253,14 @@ const SolutionValidationPage = () => {
   return (
     <div className="container mx-auto p-4">
       <PageIntroduction 
-        title={t.validation.solution.title}
-        description={t.validation.solution.description}
+        title={validation.solution.title}
+        description={validation.solution.description}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         <div className="lg:col-span-2">
           <HypothesesSection
-            title={t.hypotheses.solutionHypotheses}
+            title={hypothesesText.solutionHypotheses}
             hypotheses={hypotheses}
             isLoading={isLoading}
             phase="solution"
@@ -329,14 +271,14 @@ const SolutionValidationPage = () => {
         
         <div className="space-y-6">
           <BestPracticesCard 
-            title={t.common.bestPractices}
+            title={common.bestPractices}
             practices={bestPractices}
             color="cyan"
             tooltip="Follow these best practices to effectively validate your solution"
           />
           
           <ChecklistCard
-            title={t.common.progressChecklist}
+            title={common.progressChecklist}
             color="cyan"
             items={checklistItems}
           />
