@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
 import HypothesesSection from '@/components/HypothesesSection';
 import PageIntroduction from '@/components/PageIntroduction';
-import { Lightbulb, Users, MessageCircle, CheckSquare } from 'lucide-react';
+import { Lightbulb, Users, MessageCircle, CheckSquare, Plus } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
 import ValidationPhaseIntro from '@/components/ValidationPhaseIntro';
 import BestPracticesCard, { BestPractice } from '@/components/ui/best-practices-card';
 import ChecklistCard, { ChecklistItem } from '@/components/ui/checklist-card';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
+import { Button } from '@/components/ui/button';
 
 // Define the interface for problem tracking
 interface ProblemTracking {
@@ -280,11 +281,24 @@ const ProblemValidationPage = () => {
         title={validation.problem.title}
         description={validation.problem.description}
       />
+
+      <div className="flex justify-between items-center mt-6 mb-4">
+        <h2 className="text-xl font-semibold">{hypothesesText.problemHypotheses}</h2>
+        <Button 
+          onClick={handleCreateHypothesis} 
+          variant="default" 
+          size="sm" 
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          New Problem Hypothesis
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         <div className="lg:col-span-2">
           <HypothesesSection
-            title={hypothesesText.problemHypotheses}
+            title=""
             hypotheses={hypotheses}
             isLoading={isLoading}
             phase="problem"
