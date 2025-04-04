@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Hypothesis } from '@/types/database';
 import HypothesisForm from './forms/HypothesisForm';
@@ -53,7 +54,7 @@ const HypothesesSection = ({
     if (onCreateTrigger > 0) {
       handleCreateNew();
     }
-  }, [onCreateTrigger]);
+  }, [onCreateTrigger, handleCreateNew]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 animate-pulse">

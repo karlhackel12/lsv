@@ -46,7 +46,7 @@ const DeleteHypothesisDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            className="bg-validation-red-600 hover:bg-validation-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white"
             onClick={onConfirmDelete}
           >
             Delete

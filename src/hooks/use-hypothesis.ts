@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
@@ -41,17 +42,20 @@ export const useHypotheses = (
     if (!hypothesisToDelete) return;
 
     try {
+      // Use the originalId if it exists, otherwise use the regular id
+      const idToDelete = hypothesisToDelete.originalId || hypothesisToDelete.id;
+      
       const { error } = await supabase
         .from('hypotheses')
         .delete()
-        .eq('id', hypothesisToDelete.id);
+        .eq('id', idToDelete);
 
       if (error) throw error;
 
       toast({
         title: 'Hipótese excluída',
         description: 'A hipótese foi excluída com sucesso',
-        variant: 'success',
+        variant: 'default',
       });
 
       onHypothesesUpdated();
@@ -68,19 +72,22 @@ export const useHypotheses = (
   }, [hypothesisToDelete, onHypothesesUpdated, toast]);
 
   const updateHypothesisStatus = useCallback(
-    async (hypothesis: Hypothesis, status: string) => {
+    async (hypothesis: Hypothesis, status: 'validated' | 'validating' | 'not-started' | 'invalid') => {
       try {
+        // Use the originalId if it exists, otherwise use the regular id
+        const idToUpdate = hypothesis.originalId || hypothesis.id;
+        
         const { error } = await supabase
           .from('hypotheses')
           .update({ status })
-          .eq('id', hypothesis.id);
+          .eq('id', idToUpdate);
 
         if (error) throw error;
 
         toast({
           title: 'Status atualizado',
           description: `A hipótese foi marcada como ${status}`,
-          variant: 'success',
+          variant: 'default',
         });
 
         onHypothesesUpdated();
@@ -114,7 +121,7 @@ export const useHypotheses = (
             ...formData,
             project_id,
             phase: phaseType,
-            status: 'unvalidated',
+            status: 'not-started' as 'not-started',
             created_at: new Date().toISOString(),
           };
         }
@@ -123,13 +130,16 @@ export const useHypotheses = (
         
         if (isNew) {
           // Create new hypothesis
-          result = await supabase.from('hypotheses').insert([formData]).select();
+          result = await supabase.from('hypotheses').insert(formData).select();
         } else {
+          // Use the originalId if it exists, otherwise use the regular id
+          const idToUpdate = formData.originalId || formData.id;
+          
           // Update existing hypothesis
           result = await supabase
             .from('hypotheses')
             .update(formData)
-            .eq('id', formData.id as string)
+            .eq('id', idToUpdate as string)
             .select();
         }
 
@@ -138,7 +148,7 @@ export const useHypotheses = (
         toast({
           title: isNew ? 'Hipótese criada' : 'Hipótese atualizada',
           description: isNew ? 'Hipótese criada com sucesso' : 'Hipótese atualizada com sucesso',
-          variant: 'success',
+          variant: 'default',
         });
 
         setIsFormOpen(false);
