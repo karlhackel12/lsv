@@ -1,98 +1,80 @@
-import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { FormData } from '@/components/forms/ExperimentForm';
 
-interface ResultsFieldsProps {
-  form: UseFormReturn<FormData>;
+import React from 'react';
+import { Control, UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+
+export interface ResultsFieldsProps {
+  control?: Control<any>;
   isGrowthExperiment?: boolean;
+  form?: UseFormReturn<any>;
 }
 
-const ResultsFields: React.FC<ResultsFieldsProps> = ({ 
-  form,
-  isGrowthExperiment = false
-}) => {
+const ResultsFields = ({ control, isGrowthExperiment = false, form }: ResultsFieldsProps) => {
+  const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to ResultsFields');
+    return null;
+  }
+  
   return (
-    <div className="space-y-4 border-t pt-4">
-      <h3 className="text-md font-medium">Results & Insights</h3>
+    <div className="space-y-4 border-t pt-4 mt-4">
+      <h3 className="text-lg font-medium mb-4">Results & Learnings</h3>
       
       <FormField
-        control={form.control}
+        control={controlToUse}
         name="results"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              {isGrowthExperiment ? 'Actual Results' : 'Results'}
-            </FormLabel>
+            <FormLabel>Results</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder={isGrowthExperiment 
-                  ? "The actual results of your growth experiment"
-                  : "What were the results of your experiment?"
-                }
-                className="min-h-[80px] resize-y"
-                {...field}
+              <Textarea 
+                placeholder="What were the outcomes of your experiment?"
+                className="min-h-[100px]"
+                {...field} 
               />
             </FormControl>
-          </FormItem>
-        )}
-      />
-      
-      <FormField
-        control={form.control}
-        name="learnings"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Key Learnings</FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="What are the most important things you learned from this experiment?"
-                className="min-h-[80px] resize-y"
-                {...field}
-                value={field.value || ''}
-              />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      
-      <FormField
-        control={form.control}
-        name="insights"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              {isGrowthExperiment ? 'Notes' : 'Insights'}
-            </FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder={isGrowthExperiment 
-                  ? "Additional notes about the experiment"
-                  : "What insights did you gain?"
-                }
-                className="min-h-[80px] resize-y"
-                {...field}
-              />
-            </FormControl>
+            <FormMessage />
           </FormItem>
         )}
       />
       
       {!isGrowthExperiment && (
         <FormField
-          control={form.control}
+          control={controlToUse}
+          name="insights"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Insights</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="What insights did you gain?"
+                  className="min-h-[100px]"
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+      
+      {!isGrowthExperiment && (
+        <FormField
+          control={controlToUse}
           name="decisions"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Next Steps / Decisions</FormLabel>
+              <FormLabel>Decisions & Next Steps</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="What decisions or next steps follow from these results?"
-                  className="min-h-[80px] resize-y"
-                  {...field}
+                <Textarea 
+                  placeholder="What decisions will you make based on these results? What are your next steps?"
+                  className="min-h-[100px]"
+                  {...field} 
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

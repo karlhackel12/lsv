@@ -1,211 +1,128 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-project';
-import StageEditDialog from '@/components/stage/StageEditDialog';
-import StepJourney, { Step } from '@/components/StepJourney';
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import Card from '@/components/Card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Check, ArrowRight, CircleHelp } from 'lucide-react';
+import { Stage } from '@/types/database';
+import { toast } from '@/hooks/use-toast';
+import InfoTooltip from '@/components/InfoTooltip';
 
-// Update the StatusType definition to match the enum from the database
-type StatusType = 'not-started' | 'in-progress' | 'complete';
+interface OverviewSectionProps {
+  onboardingComplete?: boolean;
+}
 
-const OverviewSection = () => {
-  const { currentProject, fetchProjectStages, updateStage } = useProject();
-  const [currentStages, setCurrentStages] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  }[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedStage, setSelectedStage] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  } | null>(null);
+const OverviewSection = ({ onboardingComplete }: OverviewSectionProps = {}) => {
+  const { currentProject, isLoading } = useProject();
+  const [stages, setStages] = useState<Stage[]>([]);
 
   useEffect(() => {
-    const loadStages = async () => {
-      if (currentProject) {
-        const stages = await fetchProjectStages(currentProject.id);
-        // Ensure the status is of type StatusType
-        const typedStages = stages.map(stage => ({
-          ...stage,
-          status: stage.status as StatusType,
-        }));
-        setCurrentStages(typedStages);
-      }
-    };
-
-    loadStages();
-  }, [currentProject, fetchProjectStages]);
-
-  const handleEditStage = (stage: {
-    id: string;
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  }) => {
-    setSelectedStage(stage);
-    setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setSelectedStage(null);
-  };
-
-  const handleStageSave = async (stageData: Partial<{
-    name: string;
-    description: string;
-    position: number;
-    status: StatusType;
-    project_id: string;
-    created_at: string;
-    updated_at: string;
-  }>) => {
-    if (selectedStage) {
-      await updateStage(selectedStage.id, stageData);
-      // Refresh stages after saving
-      if (currentProject) {
-        const stages = await fetchProjectStages(currentProject.id);
-        // Ensure the status is of type StatusType
-        const typedStages = stages.map(stage => ({
-          ...stage,
-          status: stage.status as StatusType,
-        }));
-        setCurrentStages(typedStages);
-      }
+    if (currentProject) {
+      const projectStages: Stage[] = [
+        {
+          id: 'problem',
+          title: 'Problem Validation',
+          description: 'Understand the problem you are solving and validate the market need.',
+          status: currentProject.problem_tracking?.market_need_validated ? 'completed' :
+                    currentProject.problem_tracking?.customer_interviews_conducted ? 'in-progress' : 'not-started',
+          link: '/problem-validation',
+          tracking: currentProject.problem_tracking,
+        },
+        {
+          id: 'solution',
+          title: 'Solution Validation',
+          description: 'Define and validate your proposed solution with potential customers.',
+          status: currentProject.solution_tracking?.positive_feedback_received ? 'completed' :
+                    currentProject.solution_tracking?.tested_with_customers ? 'in-progress' : 'not-started',
+          link: '/solution-validation',
+          tracking: currentProject.solution_tracking,
+        },
+        {
+          id: 'mvp',
+          title: 'MVP & Testing',
+          description: 'Build a Minimum Viable Product and gather initial user feedback.',
+          status: currentProject.mvp_tracking?.metrics_gathered ? 'completed' :
+                    currentProject.mvp_tracking?.released_to_users ? 'in-progress' : 'not-started',
+          link: '/mvp',
+          tracking: currentProject.mvp_tracking,
+        },
+        {
+          id: 'metrics',
+          title: 'Metrics & Analysis',
+          description: 'Establish key metrics and analyze your product performance.',
+          status: currentProject.metrics_tracking?.data_driven_decisions ? 'completed' :
+                    currentProject.metrics_tracking?.dashboards_created ? 'in-progress' : 'not-started',
+          link: '/metrics',
+          tracking: currentProject.metrics_tracking,
+        },
+        {
+          id: 'growth',
+          title: 'Growth & Scaling',
+          description: 'Focus on scaling your product and expanding your user base.',
+          status: currentProject.growth_tracking?.repeatable_growth ? 'completed' :
+                    currentProject.growth_tracking?.funnel_optimized ? 'in-progress' : 'not-started',
+          link: '/growth',
+          tracking: currentProject.growth_tracking,
+        },
+        {
+          id: 'pivot',
+          title: 'Pivot or Persevere',
+          description: 'Evaluate your progress and decide whether to pivot or continue.',
+          status: currentProject.pivot_tracking?.strategic_decision_made ? 'completed' :
+                    currentProject.pivot_tracking?.reasoning_documented ? 'in-progress' : 'not-started',
+          link: '/pivot',
+          tracking: currentProject.pivot_tracking,
+        },
+      ];
+      setStages(projectStages);
     }
-  };
+  }, [currentProject]);
 
-  // Convert stages to steps for the StepJourney component
-  const stageSteps: Step[] = currentStages.map(stage => {
-    let icon;
-    switch (stage.status) {
-      case 'complete':
-        icon = <CheckCircle2 className="h-5 w-5 text-green-500" />;
-        break;
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!currentProject) {
+    return <p>No project selected.</p>;
+  }
+
+  // Fix the button variant type error - changing 'success' to 'default'
+  const getButtonVariant = (stageStatus: string) => {
+    switch(stageStatus) {
+      case 'completed':
+        return 'default'; // Changed from 'success' to 'default'
       case 'in-progress':
-        icon = <Clock className="h-5 w-5 text-blue-500" />;
-        break;
+        return 'secondary';
       default:
-        icon = <AlertCircle className="h-5 w-5 text-gray-400" />;
+        return 'outline';
     }
-    
-    return {
-      id: stage.id,
-      label: stage.name,
-      description: stage.description,
-      icon
-    };
-  });
-
-  // Get the current active stage (the first in-progress one, or the last complete one)
-  const getCurrentStageId = () => {
-    const inProgressStage = currentStages.find(stage => stage.status === 'in-progress');
-    if (inProgressStage) return inProgressStage.id;
-    
-    // If no in-progress stage, get the last complete one
-    const completeStages = currentStages.filter(stage => stage.status === 'complete');
-    if (completeStages.length > 0) {
-      return completeStages[completeStages.length - 1].id;
-    }
-    
-    // If no stages are complete, return the first one
-    return currentStages.length > 0 ? currentStages[0].id : '';
-  };
-
-  // Get completed stage IDs
-  const getCompletedStageIds = () => {
-    return currentStages
-      .filter(stage => stage.status === 'complete')
-      .map(stage => stage.id);
   };
 
   return (
-    <div className="mb-8">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">Project Overview</h3>
-      
-      {currentStages.length > 0 ? (
-        <Card className="p-5" variant="muted">
-          <StepJourney
-            steps={stageSteps}
-            currentStepId={getCurrentStageId()}
-            completedStepIds={getCompletedStageIds()}
-            variant="cards"
-            className="mb-6"
-          />
-          
-          <div className="mt-4 space-y-4">
-            {currentStages.map((stage) => (
-              <div key={stage.id} className="mb-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-gray-700">{stage.name}</h4>
-                  <button
-                    onClick={() => handleEditStage(stage)}
-                    className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
-                  >
-                    Edit
-                  </button>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 my-2">
-                  <div
-                    className={`h-2.5 rounded-full ${
-                      stage.status === 'complete'
-                        ? 'bg-green-600' 
-                        : stage.status === 'in-progress'
-                        ? 'bg-blue-600'
-                        : 'bg-gray-400'
-                    }`}
-                    style={{ width: getStatusPercentage(stage.status) }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {stages.map((stage) => (
+        <Card key={stage.id} className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium flex items-center">
+              {stage.status === 'completed' && <Check className="mr-2 h-4 w-4 text-green-500" />}
+              {stage.title}
+              <InfoTooltip content={stage.description} className="ml-2" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs text-gray-500">
+              {stage.description}
+            </CardDescription>
+          </CardContent>
+          <Button asChild variant={getButtonVariant(stage.status)} className="w-full justify-start rounded-none rounded-b-md text-xs">
+            <a href={stage.link} className="flex justify-between w-full items-center">
+              <span>{stage.status === 'completed' ? 'View Results' : 'Get Started'}</span>
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
         </Card>
-      ) : (
-        <Card className="p-5 text-center" variant="muted">
-          <p className="text-gray-500">No project stages defined yet.</p>
-        </Card>
-      )}
-
-      <StageEditDialog
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        stage={selectedStage}
-        onSave={handleStageSave}
-      />
+      ))}
     </div>
   );
-};
-
-// Make sure getStatusPercentage function uses the correct types:
-const getStatusPercentage = (status: StatusType) => {
-  switch (status) {
-    case 'complete':
-      return '100%';
-    case 'in-progress':
-      return '50%';
-    case 'not-started':
-    default:
-      return '0%';
-  }
 };
 
 export default OverviewSection;

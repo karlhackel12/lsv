@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Experiment, ExperimentTemplate } from '@/types/database';
-import ExperimentList from '@/components/experiments/ExperimentList';
+import { adaptExperiments } from '@/utils/experiment-adapter';
 import { FlaskConical, Info, ArrowLeft } from 'lucide-react';
 import { useProject } from '@/hooks/use-project';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import ExperimentDetailView from '@/components/experiments/ExperimentDetailView'
 import DeleteExperimentDialog from '@/components/experiments/DeleteExperimentDialog';
 import TemplateSelector from '@/components/experiments/TemplateSelector';
 import { useExperimentTemplates } from '@/hooks/use-experiment-templates';
+import ExperimentList from '@/components/experiments/ExperimentList'; // Add this import
 import { 
   Breadcrumb,
   BreadcrumbItem,
@@ -63,13 +65,10 @@ const ExperimentsPage = () => {
         return;
       }
       
-      const processedData = data?.map(item => ({
-        ...item,
-        originalId: item.id
-      })) as Experiment[];
+      const processedData = adaptExperiments(data || []);
       
       console.log("Fetched experiments:", processedData);
-      setExperiments(processedData || []);
+      setExperiments(processedData);
     } catch (err) {
       console.error('Error:', err);
     } finally {
@@ -95,7 +94,6 @@ const ExperimentsPage = () => {
   }, [searchParams, experiments]);
   
   useEffect(() => {
-    // Check for create=true in URL to open form
     const createParam = searchParams.get('create');
     if (createParam === 'true') {
       handleCreateNew();
@@ -107,8 +105,6 @@ const ExperimentsPage = () => {
   }
   
   const handleCreateNew = () => {
-    // Temporarily open form directly instead of showing template selector
-    // setIsTemplateSelectorOpen(true);
     setIsFormOpen(true);
   };
   
@@ -116,7 +112,6 @@ const ExperimentsPage = () => {
     setSelectedTemplate(template);
     setIsTemplateSelectorOpen(false);
     
-    // Open the form with template data
     setSelectedExperiment({
       id: '',
       title: template.name,
@@ -126,6 +121,7 @@ const ExperimentsPage = () => {
       status: 'planned',
       category: template.category || 'problem',
       project_id: currentProject.id,
+      metrics: [''], // Ensure metrics is an array
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     } as Experiment);
@@ -176,7 +172,6 @@ const ExperimentsPage = () => {
     <div className="space-y-6">
       {viewMode === 'list' ? (
         <>
-          {/* Breadcrumb */}
           <div className="mb-4">
             <Breadcrumb>
               <BreadcrumbList>

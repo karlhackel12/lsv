@@ -1,59 +1,65 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Control, UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { FormData } from '@/components/forms/ExperimentForm';
 
-interface StatusRadioGroupProps {
-  form: UseFormReturn<FormData>;
+export interface StatusRadioGroupProps {
+  control?: Control<any>;
   isGrowthExperiment?: boolean;
+  form?: UseFormReturn<any>;
 }
 
-const StatusRadioGroup: React.FC<StatusRadioGroupProps> = ({ 
-  form,
-  isGrowthExperiment = false 
-}) => {
+const StatusRadioGroup = ({ control, isGrowthExperiment = false, form }: StatusRadioGroupProps) => {
+  const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to StatusRadioGroup');
+    return null;
+  }
+  
   return (
     <FormField
-      control={form.control}
+      control={controlToUse}
       name="status"
       render={({ field }) => (
-        <FormItem className="space-y-3">
+        <FormItem className="space-y-2">
           <FormLabel>Status</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
               defaultValue={field.value}
-              className="flex flex-wrap space-y-1"
+              className="flex flex-col space-y-1"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="planned" id="planned" />
-                <Label htmlFor="planned">
-                  {isGrowthExperiment ? 'Planned' : 'Planned'}
-                </Label>
+                <label htmlFor="planned" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Planned
+                </label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="in-progress" id="in-progress" />
-                <Label htmlFor="in-progress">
-                  {isGrowthExperiment ? 'Running' : 'In Progress'}
-                </Label>
+                <RadioGroupItem value={isGrowthExperiment ? "running" : "in-progress"} id="in-progress" />
+                <label htmlFor="in-progress" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  In Progress
+                </label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="completed" id="completed" />
-                <Label htmlFor="completed">
-                  {isGrowthExperiment ? 'Completed' : 'Completed'}
-                </Label>
+                <label htmlFor="completed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Completed
+                </label>
               </div>
               {isGrowthExperiment && (
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="failed" id="failed" />
-                  <Label htmlFor="failed">Failed</Label>
+                  <label htmlFor="failed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Abandoned
+                  </label>
                 </div>
               )}
             </RadioGroup>
           </FormControl>
+          <FormMessage />
         </FormItem>
       )}
     />

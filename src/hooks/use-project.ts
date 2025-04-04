@@ -1,318 +1,168 @@
+
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Project } from '@/types/database';
-import { useToast } from '@/hooks/use-toast';
 
-export function useProject() {
+export const useProject = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const { toast } = useToast();
-
-  const { data: projects = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      try {
-        // First try to get projects the user owns
-        const { data: ownedProjects, error: ownedError } = await supabase
-          .from('projects')
-          .select('*')
-          .order('name');
-        
-        if (ownedError) {
-          console.error('Error fetching owned projects:', ownedError);
-          throw ownedError;
-        }
-        
-        console.log('Fetched projects:', ownedProjects);
-        return ownedProjects as Project[];
-      } catch (err) {
-        console.error('Error in projects query:', err);
-        toast({
-          title: 'Error loading projects',
-          description: err instanceof Error ? err.message : 'Unknown error occurred',
-          variant: 'destructive',
-        });
-        return [];
-      }
-    },
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Set the first project as current if none is selected and projects are loaded
-    if (projects && projects.length > 0 && !currentProject) {
-      console.log('Setting initial project:', projects[0]);
-      setCurrentProject(projects[0]);
-    }
-  }, [projects, currentProject]);
+    fetchProjects();
+  }, []);
 
-  const selectProject = (project: Project) => {
-    console.log('Selecting project:', project);
-    setCurrentProject(project);
-    // Save to localStorage for persistence
-    localStorage.setItem('selectedProjectId', project.id);
-  };
-
-  // Create a new project
-  const createProject = async (projectData: { name: string; description: string; stage: string }) => {
+  const fetchProjects = async () => {
     try {
-      const now = new Date().toISOString();
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('projects')
-        .insert({
-          name: projectData.name,
-          description: projectData.description,
-          stage: projectData.stage,
-          created_at: now,
-          updated_at: now
-        })
-        .select()
-        .single();
-      
+        .select('*')
+        .order('name', { ascending: true });
+
       if (error) throw error;
-      
-      if (data) {
-        // Refetch the projects list
-        refetch();
-        
-        // Set the newly created project as the current project
-        selectProject(data as Project);
-        
-        // Create default stages for the new project
-        await createDefaultStages(data.id);
-        
-        toast({
-          title: 'Project Created',
-          description: `"${projectData.name}" has been created successfully.`,
-        });
-        
-        return data as Project;
+
+      // Convert to typed data
+      const typedData = data as unknown as Project[];
+      setProjects(typedData || []);
+
+      // Set first project as current if none is selected
+      if (typedData?.length > 0 && !currentProject) {
+        setCurrentProject(typedData[0] as Project);
       }
     } catch (err) {
-      console.error('Error creating project:', err);
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to create project',
-        variant: 'destructive',
-      });
+      console.error('Error fetching projects:', err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const selectProject = async (projectId: string) => {
+    try {
+      const selectedProject = projects.find(p => p.id === projectId);
+      if (selectedProject) {
+        setCurrentProject(selectedProject as Project);
+        // Store in local storage for persistence
+        localStorage.setItem('currentProjectId', projectId);
+      }
+    } catch (err) {
+      console.error('Error selecting project:', err);
       throw err;
     }
   };
 
-  // Used to update project stage when moving to next stage
-  const updateProjectStage = async (projectId: string, newStage: string) => {
+  const createProject = async (projectData: { name: string; description: string }) => {
     try {
-      const now = new Date().toISOString(); // Convert Date to ISO string format
       const { data, error } = await supabase
         .from('projects')
-        .update({ stage: newStage, updated_at: now })
-        .eq('id', projectId)
-        .select()
-        .single();
-      
+        .insert([
+          { 
+            name: projectData.name, 
+            description: projectData.description, 
+            stage: 'problem',
+            current_stage: 'problem'
+          }
+        ])
+        .select();
+
       if (error) throw error;
       
-      if (data) {
-        // Update the current project in state
-        setCurrentProject(prev => prev?.id === projectId ? data as Project : prev);
-        
-        toast({
-          title: 'Project Updated',
-          description: `Project stage updated to ${newStage.replace('-', ' ')}`,
-        });
-        
-        return data as Project;
+      await fetchProjects();
+      
+      // Set as current project if it's our first project
+      if (data && data.length > 0) {
+        setCurrentProject(data[0] as Project);
+        localStorage.setItem('currentProjectId', data[0].id);
       }
+      
+      return data;
     } catch (err) {
-      console.error('Error updating project stage:', err);
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update project stage',
-        variant: 'destructive',
-      });
-      return null;
+      console.error('Error creating project:', err);
+      throw err;
     }
   };
 
-  // Fetch project stages from the database
-  const fetchProjectStages = async (projectId: string) => {
+  // New methods to handle stages
+  const fetchProjectStages = async () => {
     try {
+      if (!currentProject) return [];
+      
       const { data, error } = await supabase
         .from('stages')
         .select('*')
-        .eq('project_id', projectId)
-        .order('position');
-      
+        .eq('project_id', currentProject.id)
+        .order('position', { ascending: true });
+        
       if (error) throw error;
       
-      return data || [];
+      return data;
     } catch (err) {
       console.error('Error fetching project stages:', err);
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to fetch project stages',
-        variant: 'destructive',
-      });
       return [];
     }
   };
 
-  // Update an existing stage
-  const updateStage = async (stageId: string, stageData: any) => {
+  const updateStage = async (stageId: string, updates: any) => {
     try {
-      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('stages')
-        .update({ ...stageData, updated_at: now })
+        .update(updates)
         .eq('id', stageId)
-        .select()
-        .single();
-      
+        .select();
+        
       if (error) throw error;
-      
-      toast({
-        title: 'Stage Updated',
-        description: 'The stage has been successfully updated.',
-      });
       
       return data;
     } catch (err) {
       console.error('Error updating stage:', err);
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update stage',
-        variant: 'destructive',
-      });
-      return null;
+      throw err;
     }
   };
 
-  // Create default stages if none exist
-  const createDefaultStages = async (projectId: string) => {
+  const updateProjectStage = async (stage: string) => {
+    if (!currentProject) return;
+    
     try {
-      const defaultStages = [
-        { 
-          id: 'problem-validation', 
-          name: 'Problem Validation', 
-          description: 'Identify and validate the problem your solution addresses', 
-          position: 1, 
-          status: 'in-progress' as const, 
-          project_id: projectId 
-        },
-        { 
-          id: 'solution-validation', 
-          name: 'Solution Validation', 
-          description: 'Test your proposed solution with potential users', 
-          position: 2, 
-          status: 'not-started' as const, 
-          project_id: projectId 
-        },
-        { 
-          id: 'mvp', 
-          name: 'MVP Development', 
-          description: 'Build a minimum viable product to test with users', 
-          position: 3, 
-          status: 'not-started' as const, 
-          project_id: projectId 
-        },
-        { 
-          id: 'product-market-fit', 
-          name: 'Product-Market Fit', 
-          description: 'Achieve measurable traction that proves market demand', 
-          position: 4, 
-          status: 'not-started' as const, 
-          project_id: projectId 
-        },
-        { 
-          id: 'scale', 
-          name: 'Scale', 
-          description: 'Scale your solution to reach more users', 
-          position: 5, 
-          status: 'not-started' as const, 
-          project_id: projectId 
-        },
-        { 
-          id: 'mature', 
-          name: 'Mature', 
-          description: 'Optimize and expand your validated business', 
-          position: 6, 
-          status: 'not-started' as const, 
-          project_id: projectId 
-        },
-      ];
-      
       const { error } = await supabase
-        .from('stages')
-        .insert(defaultStages);
-      
+        .from('projects')
+        .update({ current_stage: stage })
+        .eq('id', currentProject.id);
+        
       if (error) throw error;
       
-      toast({
-        title: 'Stages Created',
-        description: 'Default stages have been created for your project.',
-      });
+      // Update local state
+      const updatedProject = { ...currentProject, current_stage: stage };
+      setCurrentProject(updatedProject as Project);
       
-      return defaultStages;
+      return updatedProject;
     } catch (err) {
-      console.error('Error creating default stages:', err);
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to create default stages',
-        variant: 'destructive',
-      });
-      return [];
+      console.error('Error updating project stage:', err);
+      throw err;
     }
   };
-
-  // Load selected project from localStorage on init
-  useEffect(() => {
-    const savedProjectId = localStorage.getItem('selectedProjectId');
-    if (savedProjectId && projects && projects.length > 0) {
-      const savedProject = projects.find(p => p.id === savedProjectId);
-      if (savedProject) {
-        console.log('Loading saved project:', savedProject);
-        setCurrentProject(savedProject);
-      }
-    }
-  }, [projects]);
-
-  // Update the current validation stage of a project
+  
   const updateCurrentStage = async (projectId: string, stageName: string) => {
     try {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('projects')
-        .update({ 
-          current_stage: stageName,
-          updated_at: now
-        })
-        .eq('id', projectId)
-        .select()
-        .single();
-      
+        .update({ current_stage: stageName })
+        .eq('id', projectId);
+        
       if (error) throw error;
       
-      // Update the current project in state
-      if (data && currentProject?.id === projectId) {
-        setCurrentProject({
-          ...currentProject,
-          current_stage: stageName
-        });
+      // Update local state if this is the current project
+      if (currentProject && currentProject.id === projectId) {
+        const updatedProject = { ...currentProject, current_stage: stageName };
+        setCurrentProject(updatedProject as Project);
       }
       
-      toast({
-        title: 'Validation Stage Updated',
-        description: `Project validation stage updated to ${stageName}`,
-      });
-      
-      return data;
+      // Refresh projects list
+      await fetchProjects();
     } catch (err) {
       console.error('Error updating current stage:', err);
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update validation stage',
-        variant: 'destructive',
-      });
-      return null;
+      throw err;
     }
   };
 
@@ -321,12 +171,13 @@ export function useProject() {
     currentProject,
     selectProject,
     createProject,
-    updateProjectStage,
-    fetchProjectStages,
-    updateStage,
-    createDefaultStages,
-    updateCurrentStage,
+    fetchProjects,
     isLoading,
     error,
+    // Add new methods
+    fetchProjectStages,
+    updateStage,
+    updateProjectStage,
+    updateCurrentStage
   };
-}
+};

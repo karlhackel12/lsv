@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -11,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { adaptExperiments } from '@/utils/experiment-adapter';
 
 interface HypothesisDetailViewProps {
   hypothesis: Hypothesis;
@@ -34,7 +34,9 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
   const [evidenceInput, setEvidenceInput] = useState(hypothesis.evidence || '');
   const [resultInput, setResultInput] = useState(hypothesis.result || '');
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [relatedExperiments, setRelatedExperiments] = useState<Experiment[]>([]);
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
+
   useEffect(() => {
     if (hypothesis && hypothesis.id) {
       fetchLinkedExperiments();
@@ -49,6 +51,7 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
   const fetchLinkedExperiments = async () => {
     try {
       setIsLoadingExperiments(true);
+      
       const { data, error } = await supabase
         .from('experiments')
         .select('*')
@@ -57,7 +60,11 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
         
       if (error) throw error;
       
-      setLinkedExperiments(data || []);
+      if (data) {
+        setLinkedExperiments(adaptExperiments(data));
+      } else {
+        setLinkedExperiments([]);
+      }
     } catch (err) {
       console.error('Error fetching linked experiments:', err);
     } finally {
@@ -65,6 +72,53 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
     }
   };
   
+  useEffect(() => {
+    const fetchRelatedExperiments = async () => {
+      try {
+        if (!hypothesis || !projectId) return;
+        
+        const { data, error } = await supabase
+          .from('experiments')
+          .select('*')
+          .eq('project_id', projectId)
+          .eq('hypothesis_id', hypothesis.id);
+          
+        if (error) {
+          console.error('Error fetching related experiments:', error);
+          return;
+        }
+        
+        if (data) {
+          setRelatedExperiments(adaptExperiments(data));
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    };
+    
+    fetchRelatedExperiments();
+  }, [hypothesis, projectId]);
+  
+  const fetchExperiments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('experiments')
+        .select('*')
+        .eq('hypothesis_id', hypothesis.id);
+      
+      if (error) {
+        console.error('Error fetching experiments:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setExperiments(adaptExperiments(data));
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
   const handleCreateExperiment = () => {
     navigate('/experiments', { 
       state: { 
@@ -147,7 +201,6 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
   
   return (
     <div className="animate-fadeIn">
-      {/* Header section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-bold leading-tight tracking-tight text-gray-800">
@@ -159,7 +212,6 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
           />
         </div>
         
-        {/* Progress bar */}
         <div className="w-full">
           <div className="w-full bg-gray-200 rounded-full h-4">
             <div 
@@ -175,7 +227,6 @@ const HypothesisDetailView: React.FC<HypothesisDetailViewProps> = ({
         </div>
       </div>
       
-      {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card className="shadow-sm hover:shadow-md transition-shadow">

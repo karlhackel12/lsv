@@ -1,30 +1,34 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Control, UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { FormData } from '@/components/forms/ExperimentForm';
 
-interface TextFieldGroupProps {
-  form: UseFormReturn<FormData>;
+export interface TextFieldGroupProps {
+  control?: Control<any>;
   isGrowthExperiment?: boolean;
+  form?: UseFormReturn<any>;
 }
 
-const TextFieldGroup: React.FC<TextFieldGroupProps> = ({ 
-  form,
-  isGrowthExperiment = false
-}) => {
+const TextFieldGroup = ({ control, isGrowthExperiment = false, form }: TextFieldGroupProps) => {
+  const controlToUse = form?.control || control;
+  
+  if (!controlToUse) {
+    console.error('Neither control nor form provided to TextFieldGroup');
+    return null;
+  }
+  
   return (
-    <>
+    <div className="space-y-4">
       <FormField
-        control={form.control}
+        control={controlToUse}
         name="title"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Title</FormLabel>
             <FormControl>
-              <Input placeholder="Experiment title" {...field} />
+              <Input placeholder="Enter a title for the experiment" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -32,21 +36,16 @@ const TextFieldGroup: React.FC<TextFieldGroupProps> = ({
       />
       
       <FormField
-        control={form.control}
+        control={controlToUse}
         name="hypothesis"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              {isGrowthExperiment ? 'Growth Hypothesis' : 'Hypothesis'}
-            </FormLabel>
+            <FormLabel>Hypothesis</FormLabel>
             <FormControl>
-              <Textarea
-                placeholder={isGrowthExperiment 
-                  ? "Our action will lead to X% improvement in metric Y"
-                  : "We believe that..."
-                }
-                className="min-h-[80px] resize-y"
-                {...field}
+              <Textarea 
+                placeholder="We believe that..." 
+                className="min-h-[100px]"
+                {...field} 
               />
             </FormControl>
             <FormMessage />
@@ -54,46 +53,47 @@ const TextFieldGroup: React.FC<TextFieldGroupProps> = ({
         )}
       />
       
-      {!isGrowthExperiment && (
-        <>
-          <FormField
-            control={form.control}
-            name="method"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Method</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="How will you run the experiment?"
-                    className="min-h-[80px] resize-y"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="metrics"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Metrics</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="What metrics will you measure?"
-                    className="min-h-[80px] resize-y"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </>
-      )}
-    </>
+      <FormField
+        control={controlToUse}
+        name="method"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Method</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="How will you test this hypothesis?"
+                className="min-h-[100px]"
+                {...field} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={controlToUse}
+        name="metrics"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Success Criteria / Metrics</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="What will you measure? What outcomes indicate success?"
+                className="min-h-[100px]"
+                value={Array.isArray(field.value) ? field.value.join('\n') : field.value}
+                onChange={(e) => {
+                  // Convert textarea input to array
+                  const metricsArray = e.target.value.split('\n').filter(Boolean);
+                  field.onChange(metricsArray.length > 0 ? metricsArray : ['']);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 };
 

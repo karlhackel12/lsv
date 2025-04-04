@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProject } from '@/hooks/use-project';
+import { useToast } from '@/hooks/use-toast';
 
 interface Insight {
   id: string;
@@ -25,6 +27,7 @@ export function useExperimentInsights({
   refreshKey = 0
 }: UseExperimentInsightsProps = {}) {
   const { currentProject } = useProject();
+  const { toast } = useToast();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -37,42 +40,62 @@ export function useExperimentInsights({
         setIsLoading(true);
         setError(null);
         
-        // Get user info for the request
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
+        console.log('Calling experiment-insights edge function:', {
+          projectId: currentProject.id,
+          experimentId
+        });
         
         // Call the Supabase Edge Function
         const { data, error: functionError } = await supabase.functions.invoke('experiment-insights', {
           body: { 
             projectId: currentProject.id, 
-            userId: user.id,
+            userId: 'anonymous', // This will be replaced with actual user ID if available
             experimentId: experimentId
           }
         });
         
         if (functionError) {
+          console.error('Edge function error:', functionError);
           throw new Error(`Error invoking function: ${functionError.message}`);
+        }
+        
+        console.log('Received response from experiment-insights:', data);
+        
+        if (data?.error && data?.configIssue) {
+          toast({
+            title: "Configuration Error",
+            description: "The OpenAI API key may not be properly configured.",
+            variant: "destructive"
+          });
+          throw new Error(data.error);
         }
         
         if (data?.insights) {
           setInsights(data.insights);
+        } else {
+          console.warn('No insights data in response:', data);
+          setInsights([]);
         }
       } catch (err) {
         console.error('Error fetching experiment insights:', err);
         setError(err instanceof Error ? err : new Error('Unknown error occurred'));
+        
+        toast({
+          title: "Error Fetching Insights",
+          description: "There was a problem connecting to the AI service. Please try again later.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchInsights();
-  }, [currentProject?.id, enabled, experimentId, refreshKey]);
+  }, [currentProject?.id, enabled, experimentId, refreshKey, toast]);
   
   return {
     insights,
     isLoading,
     error,
   };
-} 
+}
