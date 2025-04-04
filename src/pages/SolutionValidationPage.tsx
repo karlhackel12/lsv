@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Hypothesis } from '@/types/database';
@@ -24,7 +25,65 @@ const SolutionValidationPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createHypothesisTrigger, setCreateHypothesisTrigger] = useState(0);
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t: translate } = useTranslation();
+  
+  // Ensure we have fallback translations in case they're missing
+  const t = {
+    validation: {
+      solution: {
+        title: 'Solution Validation',
+        description: 'Test whether your proposed solution effectively addresses the validated problem.',
+        bestPractices: {
+          sketchSolutions: {
+            title: 'Sketch Solution Ideas',
+            description: 'Create sketches or prototypes to visualize your solutions'
+          },
+          testWithCustomers: {
+            title: 'Test with Real Customers',
+            description: 'Validate your solution with potential customers through interviews or prototypes'
+          },
+          iterateBasedOnFeedback: {
+            title: 'Iterate Based on Feedback',
+            description: 'Refine your solution based on customer feedback'
+          }
+        },
+        checklist: {
+          solutionHypothesesCreated: {
+            label: 'Solution Hypotheses Created',
+            description: 'Create hypotheses about your solution'
+          },
+          solutionSketchesCreated: {
+            label: 'Solution Sketches Created',
+            description: 'Create sketches or prototypes of your solution'
+          },
+          customerTestingConducted: {
+            label: 'Customer Testing Conducted',
+            description: 'Test your solution with potential customers'
+          },
+          customerFeedbackImplemented: {
+            label: 'Customer Feedback Implemented',
+            description: 'Implement feedback received from customers'
+          }
+        }
+      },
+      progress: {
+        updated: 'Progress Updated',
+        completed: 'marked as completed',
+        incomplete: 'marked as incomplete',
+        warning: {
+          title: 'Warning',
+          saveFailed: 'Failed to save progress update'
+        }
+      }
+    },
+    hypotheses: {
+      solutionHypotheses: 'Solution Hypotheses'
+    },
+    common: {
+      bestPractices: 'Best Practices',
+      progressChecklist: 'Progress Checklist'
+    }
+  };
   
   const [solutionTracking, setSolutionTracking] = useState<SolutionTracking>({
     solution_hypotheses_created: false,
