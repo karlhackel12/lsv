@@ -60,7 +60,7 @@ const ResultsFields: React.FC<ResultsFieldsProps> = ({
       
       <FormField
         control={form.control}
-        name="notes"
+        name="insights"
         render={({ field }) => (
           <FormItem>
             <FormLabel>
@@ -83,7 +83,7 @@ const ResultsFields: React.FC<ResultsFieldsProps> = ({
       {!isGrowthExperiment && (
         <FormField
           control={form.control}
-          name="next_steps"
+          name="decisions"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Next Steps / Decisions</FormLabel>

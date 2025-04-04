@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Hypothesis } from '@/types/database';
 import HypothesisForm from './forms/HypothesisForm';
@@ -17,6 +18,8 @@ interface HypothesesSectionProps {
   onCreateTrigger?: number;
   onHypothesesUpdated?: () => void;
   projectId?: string;
+  phaseType?: string;
+  refreshData?: () => Promise<void>;
 }
 
 const HypothesesSection = ({
@@ -26,7 +29,8 @@ const HypothesesSection = ({
   phase = 'problem',
   onCreateTrigger = 0,
   onHypothesesUpdated,
-  projectId
+  projectId,
+  refreshData,
 }: HypothesesSectionProps) => {
   const {
     isFormOpen,

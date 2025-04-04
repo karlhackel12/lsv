@@ -21,7 +21,7 @@ export const adaptGrowthExperimentToExperiment = (growthExperiment: GrowthExperi
     title: growthExperiment.title,
     hypothesis: growthExperiment.hypothesis,
     method: `Growth experiment targeting ${growthExperiment.expected_lift}% lift`,
-    metrics: growthExperiment.metric_id ? `Metric ID: ${growthExperiment.metric_id}` : 'No metric specified',
+    metrics: `Metric ID: ${growthExperiment.metric_id || 'No metric specified'}`,
     status,
     category: 'business-model', // Default to business-model for growth experiments
     results: growthExperiment.actual_lift !== null ? `Actual lift: ${growthExperiment.actual_lift}%` : '',

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ export function FormSheet({
                 </Button>
                 <Button 
                   type="submit"
+                  variant="default"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={isSubmitting}
                   onClick={onSubmit}
