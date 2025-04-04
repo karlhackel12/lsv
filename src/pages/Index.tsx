@@ -11,7 +11,6 @@ import ValidationProgressSummary from '@/components/dashboard/ValidationProgress
 import MilestoneAchievements from '@/components/dashboard/MilestoneAchievements';
 import BusinessPlanBanner from '@/components/dashboard/BusinessPlanBanner';
 import { useToast } from '@/hooks/use-toast';
-import HelloPeople from '@/components/HelloPeople';
 
 const Index = () => {
   const { user } = useAuth();
@@ -103,12 +102,27 @@ const Index = () => {
       </Card>
     );
   }
-
-  // Show the HelloPeople component as the main content
+  
+  if (!projects?.length) {
+    return (
+      <Card className="bg-blue-50 border border-blue-200 p-6 shadow-md">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="bg-blue-100 p-3 rounded-full">
+            <Lightbulb className="h-8 w-8 text-blue-500" />
+          </div>
+          <h3 className="font-semibold text-xl text-blue-700">No Projects Found</h3>
+          <p className="text-blue-600 max-w-md">Create your first project to start validating your business ideas using the Lean Startup methodology.</p>
+          <Button className="mt-4" onClick={() => document.getElementById('create-project-button')?.click()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Project
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+  
   return (
     <div className="space-y-6">
-      <HelloPeople />
-      
       {currentProject && (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

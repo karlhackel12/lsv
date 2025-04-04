@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -22,12 +21,6 @@ export interface Database {
           results: string | null
           status: string | null
           updated_at: string | null
-          insights: string | null
-          decisions: string | null
-          metrics: string | null
-          title: string | null
-          method: string | null
-          hypothesis_id: string | null
         }
         Insert: {
           category?: string | null
@@ -40,12 +33,6 @@ export interface Database {
           results?: string | null
           status?: string | null
           updated_at?: string | null
-          insights?: string | null
-          decisions?: string | null
-          metrics?: string | null
-          title?: string | null
-          method?: string | null
-          hypothesis_id?: string | null
         }
         Update: {
           category?: string | null
@@ -58,12 +45,6 @@ export interface Database {
           results?: string | null
           status?: string | null
           updated_at?: string | null
-          insights?: string | null
-          decisions?: string | null
-          metrics?: string | null
-          title?: string | null
-          method?: string | null
-          hypothesis_id?: string | null
         }
         Relationships: [
           {
@@ -427,55 +408,6 @@ export type PivotMetricTrigger = Database['public']['Tables']['pivot_metric_trig
 export type GrowthMetric = Database['public']['Tables']['growth_metrics']['Row'];
 export type GrowthModel = Database['public']['Tables']['growth_models']['Row'];
 
-export interface Hypothesis {
-  id: string;
-  statement: string;
-  category: string;
-  criteria: string;
-  experiment: string;
-  evidence?: string;
-  result?: string;
-  status: "validated" | "validating" | "not-started" | "invalid";
-  phase: "problem" | "solution";
-  project_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Experiment {
-  id: string;
-  originalId?: string;
-  title: string;
-  hypothesis: string;
-  method: string;
-  metrics: string;
-  status: "planned" | "in-progress" | "completed";
-  category?: string;
-  results?: string;
-  insights?: string;
-  decisions?: string;
-  project_id: string;
-  hypothesis_id?: string | null;
-  created_at: string;
-  updated_at: string;
-  success_criteria?: string;
-  user_id?: string;
-  description?: string;
-  isGrowthExperiment?: boolean;
-  originalGrowthExperiment?: GrowthExperiment;
-}
-
-export interface ExperimentTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  method?: string;
-  hypothesis_template?: string;
-  category?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface ScalingReadinessMetric {
   id: string;
   name: string;
@@ -495,7 +427,6 @@ export interface ScalingReadinessMetric {
 
 export interface GrowthExperiment {
   id: string;
-  originalId?: string;
   title: string;
   hypothesis: string;
   expected_lift: number;
@@ -510,79 +441,4 @@ export interface GrowthExperiment {
   scaling_metric_id?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface GrowthChannel {
-  id: string;
-  name: string;
-  category: string;
-  status: "active" | "testing" | "inactive";
-  cac: number;
-  conversion_rate: number;
-  volume: number;
-  growth_model_id?: string;
-  project_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface GrowthHypothesis {
-  id: string;
-  originalId?: string;
-  action: string;
-  outcome: string;
-  success_criteria?: string;
-  stage: string;
-  metric_id?: string;
-  growth_model_id: string;
-  project_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  stage: string;
-  owner_id?: string;
-  created_at: string;
-  updated_at: string;
-  current_stage?: string;
-  problem_tracking?: {
-    hypotheses_created: boolean;
-    customer_interviews_conducted: boolean;
-    pain_points_identified: boolean;
-    market_need_validated: boolean;
-  };
-  solution_tracking?: {
-    solution_hypotheses_defined: boolean;
-    solution_sketches_created: boolean;
-    tested_with_customers: boolean;
-    positive_feedback_received: boolean;
-  };
-  mvp_tracking?: {
-    core_features_defined: boolean;
-    mvp_built: boolean;
-    released_to_users: boolean;
-    metrics_gathered: boolean;
-  };
-  metrics_tracking?: {
-    key_metrics_established: boolean;
-    tracking_systems_setup: boolean;
-    dashboards_created: boolean;
-    data_driven_decisions: boolean;
-  };
-  growth_tracking?: {
-    channels_identified: boolean;
-    growth_experiments_setup: boolean;
-    funnel_optimized: boolean;
-    repeatable_growth: boolean;
-  };
-  pivot_tracking?: {
-    validation_data_evaluated: boolean;
-    pivot_assessment_conducted: boolean;
-    reasoning_documented: boolean;
-    strategic_decision_made: boolean;
-  };
 }

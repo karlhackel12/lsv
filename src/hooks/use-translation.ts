@@ -2,21 +2,6 @@
 import { useCallback } from 'react';
 import { translations } from '@/components/ui/translation-constants';
 
-type ValidationProps = {
-  problem: {
-    hypotheses_created: boolean;
-    customer_interviews_conducted: boolean;
-    pain_points_identified: boolean;
-    market_need_validated: boolean;
-  };
-  solution: {
-    solution_hypotheses_defined: boolean;
-    solution_sketches_created: boolean;
-    tested_with_customers: boolean;
-    positive_feedback_received: boolean;
-  };
-};
-
 /**
  * Hook para gerenciar traduções na aplicação
  * Permite acessar as traduções de forma consistente em todos os componentes
@@ -47,38 +32,13 @@ export function useTranslation() {
     return value;
   }, []);
 
-  // Add validation section helper for problem and solution validation
-  const validation = {
-    progress: {
-      updated: translations.validation.progress.updated,
-      completed: translations.validation.progress.completed,
-      incomplete: translations.validation.progress.incomplete,
-      warning: {
-        title: translations.validation.progress.warning.title,
-        saveFailed: translations.validation.progress.warning.saveFailed
-      }
-    },
-    problem: {
-      title: translations.validation.problem.title,
-      description: translations.validation.problem.description,
-      bestPractices: translations.validation.problem.bestPractices,
-      checklist: translations.validation.problem.checklist
-    },
-    solution: {
-      title: translations.validation.solution.title,
-      description: translations.validation.solution.description,
-      bestPractices: translations.validation.solution.bestPractices,
-      checklist: translations.validation.solution.checklist
-    }
-  };
-
-  // Return the updated translation hook with validation helpers
+  /**
+   * Retorna a função de tradução e o objeto completo de traduções para acesso direto
+   * @returns The translation function and complete translations object
+   */
   return { 
     t, 
-    translations,
-    validation,
-    hypotheses: translations.hypotheses,
-    common: translations.common
+    translations 
   };
 }
 
