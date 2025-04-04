@@ -330,7 +330,9 @@ const SolutionValidationPage = () => {
         <div className="space-y-6">
           <BestPracticesCard 
             title={t.common.bestPractices}
-            practices={bestPractices} 
+            practices={bestPractices}
+            color="cyan"
+            tooltip="Follow these best practices to effectively validate your solution"
           />
           
           <ChecklistCard

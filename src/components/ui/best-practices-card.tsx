@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import InfoTooltip from '@/components/InfoTooltip';
@@ -10,15 +11,15 @@ export type BestPractice = {
 
 interface BestPracticesCardProps {
   title: string;
-  color: string;
-  tooltip: string;
+  color?: string;
+  tooltip?: string;
   practices: BestPractice[];
 }
 
 /**
  * A standardized best practices card component that can be used across all validation phases
  */
-const BestPracticesCard = ({ title, color, tooltip, practices }: BestPracticesCardProps) => {
+const BestPracticesCard = ({ title, color = "blue", tooltip, practices }: BestPracticesCardProps) => {
   // Determine color classes based on provided color name
   const getColorClasses = (colorName: string) => {
     const colorMap: Record<string, { border: string, bg: string, text: string }> = {
@@ -40,10 +41,12 @@ const BestPracticesCard = ({ title, color, tooltip, practices }: BestPracticesCa
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold mb-3 flex items-center">
           {title}
-          <InfoTooltip 
-            content={tooltip} 
-            className="ml-2"
-          />
+          {tooltip && (
+            <InfoTooltip 
+              content={tooltip} 
+              className="ml-2"
+            />
+          )}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -66,4 +69,4 @@ const BestPracticesCard = ({ title, color, tooltip, practices }: BestPracticesCa
   );
 };
 
-export default BestPracticesCard; 
+export default BestPracticesCard;

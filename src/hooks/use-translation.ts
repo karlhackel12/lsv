@@ -70,8 +70,8 @@ export function useTranslation() {
   return { 
     t, 
     translations,
-    // Add the proxy as a property t to support the old access pattern
-    t: tProxy
+    // Support for dot notation access via proxy
+    tProxy
   };
 }
 
