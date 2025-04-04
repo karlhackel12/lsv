@@ -503,4 +503,4 @@ export function t(path: string): string {
   return value;
 }
 
-export default translations; 
+export default translations;
