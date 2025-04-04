@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FormSheet } from './form-sheet';
 
@@ -7,7 +8,7 @@ interface FormControllerProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  onSubmit?: () => void;
+  onSubmit?: (e?: React.FormEvent) => void;
   submitLabel?: string;
   isSubmitting?: boolean;
   footer?: React.ReactNode;

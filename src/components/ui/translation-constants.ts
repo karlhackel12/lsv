@@ -1,3 +1,4 @@
+
 // Constantes de tradução para toda a aplicação
 // Organizado por seções para facilitar a manutenção
 
@@ -487,20 +488,5 @@ export const translations = {
   }
 };
 
-// Exportar funções auxiliares para acessar traduções
-export function t(path: string): string {
-  const keys = path.split('.');
-  let value: any = translations;
-  
-  for (const key of keys) {
-    if (value[key] === undefined) {
-      console.warn(`Translation missing for key: ${path}`);
-      return path;
-    }
-    value = value[key];
-  }
-  
-  return value;
-}
-
+// Export the translations object
 export default translations;

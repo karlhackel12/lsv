@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { translations, t as tFunction } from '@/components/ui/translation-constants';
+import { translations } from '@/components/ui/translation-constants';
 
 /**
  * Hook para gerenciar traduções na aplicação
@@ -18,14 +18,28 @@ export function useTranslation() {
    * @returns Translated string or the path itself if translation is not found
    */
   const t = useCallback((path: string): string => {
-    return tFunction(path);
+    const keys = path.split('.');
+    let value: any = translations;
+    
+    for (const key of keys) {
+      if (value[key] === undefined) {
+        console.warn(`Translation missing for key: ${path}`);
+        return path;
+      }
+      value = value[key];
+    }
+    
+    return value;
   }, []);
 
   /**
    * Retorna a função de tradução e o objeto completo de traduções para acesso direto
    * @returns The translation function and complete translations object
    */
-  return { t, translations };
+  return { 
+    t, 
+    translations 
+  };
 }
 
 export default useTranslation;

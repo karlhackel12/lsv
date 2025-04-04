@@ -251,7 +251,7 @@ const Dashboard = () => {
                     <div className="ml-4 flex items-center mt-1 text-xs text-gray-500">
                       <span>{t('dashboard.expectedLift')}: {experiment.expected_lift}%</span>
                       {experiment.actual_lift ? (
-                        <Badge variant={parseFloat(experiment.actual_lift) > 0 ? "success" : "destructive"} className="ml-2">
+                        <Badge variant={parseFloat(experiment.actual_lift) > 0 ? "default" : "destructive"} className="ml-2">
                           {experiment.actual_lift}%
                         </Badge>
                       ) : null}

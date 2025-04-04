@@ -68,7 +68,8 @@ const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelecte
     // Handle the "none" selection by setting to null instead of empty string
     const actualHypothesisId = hypothesisId === "none" ? null : hypothesisId;
     
-    form.setValue('hypothesis_id', actualHypothesisId);
+    // Set the related hypothesis ID
+    form.setValue('related_hypothesis_id', actualHypothesisId);
     
     const selectedHypothesis = hypothesisId === "none" 
       ? null
@@ -86,7 +87,8 @@ const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelecte
       }
       
       if (!form.getValues('metrics') || form.getValues('id') === undefined) {
-        form.setValue('metrics', selectedHypothesis.criteria);
+        // Ensure metrics is properly formatted as array
+        form.setValue('metrics', [selectedHypothesis.criteria]);
       }
       
       if (!form.getValues('method') || form.getValues('id') === undefined) {
@@ -105,7 +107,7 @@ const HypothesisSelect = ({ form, projectId, experimentType, onHypothesisSelecte
   return (
     <FormField
       control={form.control}
-      name="hypothesis_id"
+      name="related_hypothesis_id"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Connected Hypothesis</FormLabel>

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, 
   Folders, 
   Lightbulb, 
-  Flask, 
+  FlaskConical, 
   BarChart, 
   Building, 
   TrendingUp, 
@@ -72,7 +72,7 @@ const MainNavigation: React.FC = () => {
       
       <NavItem 
         to="/experiments"
-        icon={<Flask className="h-4 w-4" />}
+        icon={<FlaskConical className="h-4 w-4" />}
         label={t('navigation.experiments')}
       />
       
